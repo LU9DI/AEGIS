@@ -66,3 +66,12 @@ Permanecem bloqueadores de arquitetura: rollback por restauração de uma cópia
 ## Acompanhamento de hardening de caminhos
 
 O risco residual de manipulação de diretórios ancestrais e corridas sob o mesmo UID foi registrado para trabalho separado na [issue #10](https://github.com/LU9DI/AEGIS/issues/10). A issue exige modelo de ameaça explícito, abertura relativa a descritores de diretório quando suportada, testes adversariais de troca de caminho e validação completa no CI. Até esse trabalho ser implementado e revisado, a proteção atual deve ser descrita como mitigação limitada, não como abertura totalmente livre de corridas.
+
+
+## Confirmação CI no HEAD atual — 2026-10-10
+
+Após as atualizações de documentação acima, o workflow **Recovery archive validation** também terminou com sucesso no HEAD `2e914acbc7de68fc5de6fd459642c60e1a24a184`: [execução 38077424279](https://github.com/LU9DI/AEGIS/actions/runs/38077424279).
+
+O job `recovered-source` concluiu com sucesso a verificação de checksum/integridade do ZIP, compilação da fonte recuperada e testes, instalação/verificação de dependências, validação de entry points e verificação da árvore Git. Etapas de recuperação/publicação de arquivos foram corretamente ignoradas por não serem necessárias neste PR.
+
+Isso valida o workflow automatizado neste commit, não a ausência de corridas TOCTOU, rollback por restauração de backup, nem a segurança do protocolo PIR. A PR segue aberta como draft; os bloqueadores arquiteturais e a revisão independente continuam pendentes.
