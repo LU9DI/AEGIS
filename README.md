@@ -1,5 +1,7 @@
 # AEGIS / MALEBOLGE — recovered research archive
 
+**AEGIS** stands for **Anonymous Encrypted Garlic-routed Internet Shield**. This repository contains recovered research code and is not a production anonymity network.
+
 This repository is being populated incrementally from recovered project files. **The Git tree is not yet a complete mirror of the recovered source tree.** Do not treat the current tree as a complete source release.
 
 ## Current upload status
