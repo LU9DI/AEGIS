@@ -394,11 +394,13 @@ class AuthenticatedPirRpcServer:
     async def __aexit__(self, exc_type, exc, tb) -> None:
         await self.close()
 
-    def _accept_nonce(self, nonce_text: str, issued_at: int) -> None:
+    def _validate_nonce(self, nonce_text: str, issued_at: int) -> None:
+        """Validate freshness/replay without reserving cache capacity for rejected work."""
         now = time.time()
         if abs(now - issued_at) > MAX_CLOCK_SKEW_SECONDS:
             raise PirRpcProtocolError("request timestamp is outside accepted window")
-        # Expire old entries before inserting. Cache is bounded to avoid unbounded memory use.
+        # Expire old entries before checking. Cache is bounded; removing expired
+        # entries is safe even when the current request is subsequently rate-limited.
         cutoff = now - MAX_CLOCK_SKEW_SECONDS
         while self._seen_nonces:
             oldest_nonce, oldest_seen = next(iter(self._seen_nonces.items()))
@@ -407,7 +409,10 @@ class AuthenticatedPirRpcServer:
             self._seen_nonces.pop(oldest_nonce, None)
         if nonce_text in self._seen_nonces:
             raise PirRpcProtocolError("request replay detected")
-        self._seen_nonces[nonce_text] = now
+
+    def _remember_nonce(self, nonce_text: str) -> None:
+        """Reserve a nonce only after the request passes admission control."""
+        self._seen_nonces[nonce_text] = time.time()
         while len(self._seen_nonces) > self._replay_capacity:
             self._seen_nonces.popitem(last=False)
 
@@ -437,14 +442,14 @@ class AuthenticatedPirRpcServer:
                 raise PirRpcProtocolError("issued_at must be an integer Unix timestamp")
             nonce_text = payload["nonce"]
             query = _decode_b64(payload["query"], "query")
-            # Apply admission control before mutating replay state. In anonymous
-            # TLS mode, a remote peer can construct syntactically valid requests;
-            # rate-limited traffic must not churn the bounded nonce cache and evict
-            # entries for requests that were actually admitted.
+            # Check replays before rate limiting so a captured/replayed request
+            # cannot drain the shared token bucket. Reserve cache capacity only
+            # after admission, so rejected fresh requests cannot churn the cache.
+            self._validate_nonce(nonce_text, issued_at)
             if not self._rate_limiter.acquire():
                 self._requests_rate_limited += 1
                 return
-            self._accept_nonce(nonce_text, issued_at)
+            self._remember_nonce(nonce_text)
             answer = self._reference.answer(query)
             self._requests_accepted += 1
             response = {
