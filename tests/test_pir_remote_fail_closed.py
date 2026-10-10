@@ -23,6 +23,22 @@ class RemotePirFailClosedTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(PirRpcProtocolError, "not cryptographically verifiable"):
             await retrieve_four_server_pir_rpc_checked(self.endpoints, 8, 3, record_bytes=16)
 
+    async def test_explicit_unverified_override_cannot_enable_remote_queries(self):
+        with self.assertRaisesRegex(PirRpcProtocolError, "no unverified-remote override"):
+            await retrieve_two_server_pir_rpc(
+                self.endpoints[:2], 8, 3, record_bytes=16, allow_unverified_remote=True
+            )
+
+    async def test_dns_hostname_is_treated_as_remote_and_rejected_before_io(self):
+        hostname_endpoints = (
+            PirRpcEndpoint("dns-a", "pir-a.example.invalid", 443, ssl_context=self.endpoints[0].ssl_context,
+                           server_hostname="pir-a.example.invalid"),
+            PirRpcEndpoint("dns-b", "pir-b.example.invalid", 443, ssl_context=self.endpoints[1].ssl_context,
+                           server_hostname="pir-b.example.invalid"),
+        )
+        with self.assertRaisesRegex(PirRpcProtocolError, "remote PIR computation is disabled"):
+            await retrieve_two_server_pir_rpc(hostname_endpoints, 8, 3, record_bytes=16)
+
     async def test_remote_research_mode_must_be_explicitly_boolean(self):
         with self.assertRaisesRegex(ValueError, "must be a bool"):
             await retrieve_two_server_pir_rpc(self.endpoints[:2], 8, 3, record_bytes=16, allow_unverified_remote=1)
