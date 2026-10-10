@@ -506,5 +506,44 @@ class SignedDirectoryTests(unittest.TestCase):
             self.verifier.verify_circuit_descriptors(descriptors * 2, now=self.now + 1, max_hops=1)
 
 
+    def test_durable_authority_preserves_historical_serials_after_rotation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            authority = DirectoryAuthority(
+                self.authority.private_key, state_path=Path(directory) / "authority.sqlite3"
+            )
+            first = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="9" * 32,
+            )
+            authority.certify(first, now=self.now)
+            rotated = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(X25519PrivateKey.generate()), "127.0.0.1", 9001,
+                now=self.now + 1, sequence=2, serial="8" * 32,
+            )
+            authority.certify(rotated, now=self.now + 1)
+            another_identity = Ed25519PrivateKey.generate()
+            reused = create_relay_descriptor(
+                another_identity, raw_x25519_public(X25519PrivateKey.generate()), "127.0.0.1", 9002,
+                now=self.now + 1, sequence=1, serial="9" * 32,
+            )
+            with self.assertRaisesRegex(ValueError, "already been used"):
+                authority.certify(reused, now=self.now + 1)
+
+    def test_durable_authority_fails_closed_on_corrupt_database(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "authority.sqlite3"
+            state_path.write_bytes(b"not a sqlite database")
+            if os.name == "posix":
+                state_path.chmod(0o600)
+            authority = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            descriptor = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="7" * 32,
+            )
+            with self.assertRaises(Exception):
+                authority.certify(descriptor, now=self.now)
+            self.assertEqual(state_path.read_bytes(), b"not a sqlite database")
+
+
 if __name__ == "__main__":
     unittest.main()
