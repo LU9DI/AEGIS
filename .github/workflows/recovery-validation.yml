@@ -12,7 +12,7 @@ permissions:
 jobs:
   recovered-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -21,6 +21,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
 
       - name: Verify archive checksum and nested ZIP integrity
         shell: bash
@@ -29,19 +30,18 @@ jobs:
           echo "ae59e83cf68caebdebeb7522dd36c0bc16f9bbe288bbff1ce99bd7880c659be3  AEGIS-consolidated-recovery-2026-10-09.zip" | sha256sum --check
           python - <<'PY'
           from pathlib import Path
-          from zipfile import ZipFile, BadZipFile
+          from zipfile import ZipFile
+          import io
           outer = Path("AEGIS-consolidated-recovery-2026-10-09.zip")
           with ZipFile(outer) as archive:
               bad = archive.testzip()
               if bad:
                   raise SystemExit(f"Corrupt outer ZIP member: {bad}")
               nested = [name for name in archive.namelist() if name.lower().endswith(".zip")]
-              if not nested:
-                  raise SystemExit("No nested research ZIP archives found")
+              if len(nested) != 8:
+                  raise SystemExit(f"Expected 8 nested research ZIPs, found {len(nested)}")
               for name in nested:
-                  data = archive.read(name)
-                  import io
-                  with ZipFile(io.BytesIO(data)) as inner:
+                  with ZipFile(io.BytesIO(archive.read(name))) as inner:
                       bad = inner.testzip()
                       if bad:
                           raise SystemExit(f"Corrupt nested member {name}: {bad}")
@@ -65,13 +65,21 @@ jobs:
               if len(matches) != 1:
                   raise SystemExit(f"Expected exactly one {target_name}, found {len(matches)}")
               with ZipFile(io.BytesIO(archive.read(matches[0]))) as snapshot:
+                  bad = snapshot.testzip()
+                  if bad:
+                      raise SystemExit(f"Corrupt source snapshot member: {bad}")
                   snapshot.extractall(destination)
-          roots = list(destination.rglob("pyproject.toml"))
-          roots = [p.parent for p in roots if (p.parent / "src" / "anonlab").is_dir() and (p.parent / "tests").is_dir()]
+          roots = [p.parent for p in destination.rglob("pyproject.toml")
+                   if (p.parent / "src" / "anonlab").is_dir() and (p.parent / "tests").is_dir()]
           if len(roots) != 1:
               raise SystemExit(f"Expected one complete source root, found {len(roots)}")
-          print(f"Recovered source root: {roots[0]}")
-          Path("recovered-source-root.txt").write_text(str(roots[0]), encoding="utf-8")
+          root = roots[0]
+          modules = list((root / "src" / "anonlab").glob("*.py"))
+          tests = list((root / "tests").glob("test_*.py"))
+          if len(modules) != 42 or len(tests) != 25:
+              raise SystemExit(f"Unexpected source inventory: {len(modules)} modules, {len(tests)} test files")
+          print(f"Recovered {len(modules)} modules and {len(tests)} test files from {root}")
+          Path("recovered-source-root.txt").write_text(str(root), encoding="utf-8")
           PY
 
       - name: Compile recovered source and tests
@@ -81,11 +89,46 @@ jobs:
           ROOT="$(cat recovered-source-root.txt)"
           python -m compileall -q "$ROOT/src" "$ROOT/tests"
 
+      - name: Install the recovered package and validate dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          ROOT="$(cat recovered-source-root.txt)"
+          cd "$ROOT"
+          python -m pip install -e ".[onion-lab]" pytest
+          python -m pip check
+
+      - name: Validate every declared console entry point
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$(cat "$GITHUB_WORKSPACE/recovered-source-root.txt")"
+          cd "$ROOT"
+          python - <<'PY'
+          from importlib.metadata import entry_points
+          from importlib.util import find_spec
+          eps = entry_points(group="console_scripts")
+          project_eps = {ep.name: ep for ep in eps if ep.name.startswith(("aegis", "rea-anon"))}
+          if len(project_eps) < 35:
+              raise SystemExit(f"Expected at least 35 AEGIS/REA console scripts, found {len(project_eps)}")
+          failures = []
+          for name, ep in sorted(project_eps.items()):
+              module = ep.value.split(":", 1)[0]
+              if find_spec(module) is None:
+                  failures.append(f"{name} -> missing module {module}")
+              if not __import__("shutil").which(name):
+                  failures.append(f"{name} -> executable not installed")
+          if failures:
+              raise SystemExit("\n".join(failures))
+          print(f"Validated {len(project_eps)} installed console entry points")
+          PY
+          aegis --help >/dev/null
+
       - name: Run recovered test suite
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install --upgrade pip pytest cryptography
           ROOT="$(cat recovered-source-root.txt)"
           cd "$ROOT"
-          PYTHONPATH=src python -m pytest -q
+          python -m pytest -q
