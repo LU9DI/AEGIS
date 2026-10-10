@@ -17,3 +17,16 @@ A inicialização agora falha de forma fechada se o fingerprint da chave da auto
 - Emissão de descritores e publicação de revogações usam transações duráveis separadas. A integridade de cada registro é protegida, mas ainda não existe uma transação de protocolo que faça as duas operações avançarem em conjunto.
 - A verificação criptográfica da correção do PIR permanece uma lacuna independente e bloqueadora para uso sensível.
 - Esta alteração precisa passar pelo CI completo e por revisão independente antes de qualquer alegação de prontidão operacional.
+
+
+## Revisão adicional de segurança do caminho SQLite
+
+A revisão estática do commit atual identificou um hardening pendente no tratamento do arquivo de estado:
+
+- A checagem Path.is_symlink() ocorre antes de sqlite3.connect(). Se um agente hostil puder modificar o diretório pai durante essa janela, a checagem e a abertura não são atômicas (risco TOCTOU).
+- O arquivo é colocado em modo 0600 com chmod somente depois de a conexão SQLite abrir/criar o arquivo. Portanto, numa criação nova, as permissões iniciais dependem do umask e podem ficar mais permissivas por um intervalo curto.
+- A permissão do diretório pai não é validada. A proteção contra troca de caminho depende, portanto, de o diretório que contém o banco não ser gravável por um atacante.
+
+**Estado:** achado de revisão estática, ainda não corrigido nem validado por teste. A PR não deve ser tratada como hardening completo para um ambiente multiusuário hostil até resolver a abertura segura do arquivo, a criação com permissões restritas desde o primeiro instante e testes de regressão adequados. O teste existente que rejeita um symlink cobre o caso estático, não a corrida TOCTOU.
+
+Esse achado não altera o resultado do CI existente: o workflow testa o código submetido, mas não comprova ausência desse tipo de corrida. Também não resolve o rollback por restauração de backup antigo, que exige uma âncora monotônica externa ou testemunhas independentes.
