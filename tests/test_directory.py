@@ -93,7 +93,7 @@ class SignedDirectoryTests(unittest.TestCase):
                 other_identity, raw_x25519_public(X25519PrivateKey.generate()), "127.0.0.1", 9002,
                 now=self.now, sequence=1, serial="d" * 32,
             )
-            with self.assertRaises(Exception):
+            with self.assertRaisesRegex(ValueError, "already been used"):
                 authority.certify(second, now=self.now)
 
     def test_valid_descriptor_round_trips_and_verifies(self) -> None:
