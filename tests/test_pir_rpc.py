@@ -170,6 +170,49 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             PirRpcEndpoint("remote", "192.0.2.1", 1234, secrets.token_bytes(32))
 
+    async def test_remote_tls_pir_fails_closed_even_with_legacy_override(self):
+        # The legacy override is intentionally ignored. A remote endpoint must not
+        # be queried until a real privacy-preserving proof of computation exists.
+        import ssl
+
+        context = ssl.create_default_context()
+        remote_a = PirRpcEndpoint(
+            "remote-a", "192.0.2.10", 1234, None, ssl_context=context,
+        )
+        remote_b = PirRpcEndpoint(
+            "remote-b", "192.0.2.11", 1235, None, ssl_context=context,
+        )
+        for allow_override in (False, True):
+            with self.subTest(allow_unverified_remote=allow_override):
+                with self.assertRaisesRegex(PirRpcProtocolError, "remote PIR computation is disabled"):
+                    await retrieve_two_server_pir_rpc(
+                        (remote_a, remote_b), len(self.records), 3,
+                        record_bytes=4, timeout_seconds=0.1,
+                        allow_unverified_remote=allow_override,
+                    )
+
+    async def test_four_server_remote_tls_pir_fails_closed_even_with_legacy_override(self):
+        # The four-server fault detector is not a proof system and must share the
+        # same remote safety boundary as the two-server client.
+        import ssl
+
+        context = ssl.create_default_context()
+        endpoints = tuple(
+            PirRpcEndpoint(
+                f"remote-{index}", f"192.0.2.{10 + index}", 1234 + index,
+                None, ssl_context=context,
+            )
+            for index in range(4)
+        )
+        for allow_override in (False, True):
+            with self.subTest(allow_unverified_remote=allow_override):
+                with self.assertRaisesRegex(PirRpcProtocolError, "remote PIR computation is disabled"):
+                    await retrieve_four_server_pir_rpc_checked(
+                        endpoints, len(self.records), 3, record_bytes=4,
+                        timeout_seconds=0.1,
+                        allow_unverified_remote=allow_override,
+                    )
+
     async def test_mismatched_replica_shape_is_rejected(self):
         different_records = self.records[:-1]
         key_c = secrets.token_bytes(32)
