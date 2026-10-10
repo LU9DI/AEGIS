@@ -424,6 +424,11 @@ class StrictJsonEnvelopeTests(unittest.TestCase):
         with self.assertRaisesRegex(PirRpcProtocolError, "duplicate key"):
             _verify_transport_envelope(raw, None, _RESPONSE_DOMAIN)
 
+    def test_tls_envelope_rejects_non_utf8_json_encoding(self):
+        raw = '{"payload":{"protocol":"AEGIS-PIR-RPC-v1"}}'.encode("utf-16")
+        with self.assertRaises((PirRpcProtocolError, UnicodeDecodeError)):
+            _verify_transport_envelope(raw, None, _RESPONSE_DOMAIN)
+
 
 if __name__ == "__main__":
     unittest.main()
