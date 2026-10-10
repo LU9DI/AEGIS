@@ -73,8 +73,11 @@ def _reject_nonfinite_json_constant(value: str) -> object:
 
 
 def _strict_json_loads(raw: bytes) -> object:
+    # The wire protocol emits canonical ASCII JSON. Decode explicitly as UTF-8
+    # so Python's bytes-aware JSON decoder cannot silently accept UTF-16/UTF-32.
+    text = raw.decode("utf-8", errors="strict")
     return json.loads(
-        raw,
+        text,
         object_pairs_hook=_reject_duplicate_json_keys,
         parse_constant=_reject_nonfinite_json_constant,
     )
