@@ -79,6 +79,21 @@ def _now_seconds(now: int | None) -> int:
     return value
 
 
+def _validate_private_state_parent(path: Path) -> None:
+    """Reject symlinked ancestors and unsafe immediate state directories."""
+    for ancestor in (path.parent, *path.parent.parents):
+        try:
+            info = ancestor.lstat()
+        except FileNotFoundError:
+            continue
+        if stat.S_ISLNK(info.st_mode):
+            raise ValueError("directory state path ancestors must not be symbolic links")
+    if os.name == "posix":
+        parent_info = path.parent.stat()
+        if parent_info.st_uid != os.geteuid() or parent_info.st_mode & (stat.S_IWGRP | stat.S_IWOTH):
+            raise ValueError("directory state directory must be owned by the current user and not group/world-writable")
+
+
 def _public_bytes(key: Ed25519PublicKey) -> bytes:
     return key.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
 
@@ -717,6 +732,7 @@ class DirectoryVerifier:
                 raise ValueError("persistent directory state is required")
             return
         path.parent.mkdir(parents=True, exist_ok=True)
+        _validate_private_state_parent(path)
         if path.is_symlink():
             raise ValueError("directory state path must not be a symbolic link")
         encoded = _canonical(state)
@@ -753,20 +769,32 @@ class DirectoryVerifier:
     def _load_state(self) -> None:
         assert self._state_path is not None
         path = self._state_path
-        if path.is_symlink() or not path.is_file():
+        _validate_private_state_parent(path)
+        if path.is_symlink():
             raise ValueError("directory state must be a regular non-symlink file")
-        metadata = path.stat()
-        if metadata.st_size > MAX_STATE_BYTES:
-            raise ValueError("directory state exceeds the configured size limit")
-        if os.name == "posix" and metadata.st_mode & (stat.S_IRWXG | stat.S_IRWXO):
-            raise ValueError("directory state permissions are too broad; require mode 0600")
-        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
-        fd = os.open(path, flags)
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
         try:
+            fd = os.open(path, flags)
+        except OSError as exc:
+            raise ValueError("directory state must be a regular non-symlink file") from exc
+        try:
+            metadata = os.fstat(fd)
+            if not stat.S_ISREG(metadata.st_mode):
+                raise ValueError("directory state must be a regular non-symlink file")
+            if metadata.st_nlink != 1:
+                raise ValueError("directory state file must not have multiple hard links")
+            if os.name == "posix" and metadata.st_uid != os.geteuid():
+                raise ValueError("directory state file must be owned by the current user")
+            if metadata.st_size > MAX_STATE_BYTES:
+                raise ValueError("directory state exceeds the configured size limit")
+            if os.name == "posix" and metadata.st_mode & (stat.S_IRWXG | stat.S_IRWXO):
+                raise ValueError("directory state permissions are too broad; require mode 0600")
             with os.fdopen(fd, "rb", closefd=True) as stream:
+                fd = -1
                 raw = stream.read(MAX_STATE_BYTES + 1)
-        except Exception:
-            raise
+        finally:
+            if fd >= 0:
+                os.close(fd)
         if len(raw) > MAX_STATE_BYTES:
             raise ValueError("directory state exceeds the configured size limit")
         def strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
