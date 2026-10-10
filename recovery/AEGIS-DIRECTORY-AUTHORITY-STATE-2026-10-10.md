@@ -41,3 +41,6 @@ Após registrar o achado, a implementação foi endurecida na branch desta PR:
 - O teste de symlink existente foi preservado e foi adicionado `test_durable_authority_rejects_group_or_world_writable_state_directory`.
 
 **Validação ainda pendente:** no momento deste registro, as execuções CI para os commits que contêm o hardening e o teste estão em andamento/fila. Não considerar a mitigação validada até o workflow do HEAD mais recente terminar com sucesso. A proteção reduz a exposição a troca do caminho por outros usuários locais, mas não protege contra processos maliciosos executados sob o mesmo UID, comprometimento do host ou rollback do arquivo por backup antigo.
+
+
+A revisão também adicionou rejeição explícita de arquivos de estado com mais de um hard link (`st_nlink != 1`) e o teste `test_durable_authority_rejects_hard_linked_state_file`, para evitar que a aplicação altere um arquivo externo compartilhando o mesmo inode. O HEAD agora inclui esse teste; a execução CI correspondente ainda precisa terminar para validar a alteração integrada.
