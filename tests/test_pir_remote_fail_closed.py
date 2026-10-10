@@ -20,7 +20,7 @@ class RemotePirFailClosedTests(unittest.IsolatedAsyncioTestCase):
             await retrieve_two_server_pir_rpc(self.endpoints[:2], 8, 3, record_bytes=16)
 
     async def test_four_server_remote_pir_is_rejected_by_default_before_network_io(self):
-        with self.assertRaisesRegex(PirRpcProtocolError, "not cryptographically verifiable"):
+        with self.assertRaisesRegex(PirRpcProtocolError, "remote PIR computation is disabled"):
             await retrieve_four_server_pir_rpc_checked(self.endpoints, 8, 3, record_bytes=16)
 
     async def test_explicit_unverified_override_cannot_enable_remote_queries(self):
