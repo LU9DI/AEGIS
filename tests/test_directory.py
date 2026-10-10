@@ -165,6 +165,25 @@ class SignedDirectoryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "symbolic link"):
                 authority.certify(descriptor, now=self.now)
 
+    @unittest.skipUnless(os.name == "posix", "POSIX directory permissions are required")
+    def test_durable_authority_rejects_group_or_world_writable_state_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory) / "unsafe"
+            parent.mkdir()
+            state_path = parent / "authority.sqlite3"
+            parent.chmod(0o777)
+            try:
+                authority = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+                descriptor = create_relay_descriptor(
+                    self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                    now=self.now, sequence=1, serial="2" * 32,
+                )
+                with self.assertRaisesRegex(ValueError, "directory must be owned by the current user"):
+                    authority.certify(descriptor, now=self.now)
+                self.assertFalse(state_path.exists())
+            finally:
+                parent.chmod(0o700)
+
     def test_durable_authority_revocation_epochs_survive_restart(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             state_path = Path(directory) / "authority.sqlite3"
