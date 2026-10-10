@@ -263,6 +263,7 @@ class DirectoryAuthority:
             connection.execute("PRAGMA journal_mode = DELETE")
             connection.execute("CREATE TABLE IF NOT EXISTS authority_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
             connection.execute("CREATE TABLE IF NOT EXISTS issued_descriptors (relay_id TEXT PRIMARY KEY, sequence INTEGER NOT NULL, descriptor_digest TEXT NOT NULL, serial TEXT NOT NULL UNIQUE)")
+            connection.execute("CREATE TABLE IF NOT EXISTS issued_serials (serial TEXT PRIMARY KEY, relay_id TEXT NOT NULL, sequence INTEGER NOT NULL, descriptor_digest TEXT NOT NULL)")
             fingerprint = hashlib.sha256(self.public_key_bytes).hexdigest()
             row = connection.execute("SELECT value FROM authority_meta WHERE key='authority_key_fingerprint'").fetchone()
             if row is None:
@@ -310,6 +311,16 @@ class DirectoryAuthority:
                             raise ValueError("authority same-sequence descriptor serial conflict")
                         connection.execute("COMMIT")
                         return certified
+                prior_serial = connection.execute(
+                    "SELECT relay_id, sequence, descriptor_digest FROM issued_serials WHERE serial=?",
+                    (body["serial"],),
+                ).fetchone()
+                if prior_serial is not None:
+                    raise ValueError("authority descriptor serial has already been used")
+                connection.execute(
+                    "INSERT INTO issued_serials(serial, relay_id, sequence, descriptor_digest) VALUES(?, ?, ?, ?)",
+                    (body["serial"], body["relay_id"], body["sequence"], digest),
+                )
                 connection.execute(
                     "INSERT INTO issued_descriptors(relay_id, sequence, descriptor_digest, serial) VALUES(?, ?, ?, ?) "
                     "ON CONFLICT(relay_id) DO UPDATE SET sequence=excluded.sequence, descriptor_digest=excluded.descriptor_digest, serial=excluded.serial",
