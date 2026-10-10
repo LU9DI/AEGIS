@@ -117,6 +117,23 @@ class SignedDirectoryTests(unittest.TestCase):
                 ))
             self.assertTrue(all(result == results[0] for result in results))
 
+    def test_durable_authority_fails_closed_if_key_fingerprint_is_deleted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "authority.sqlite3"
+            authority = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            descriptor = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="9" * 32,
+            )
+            authority.certify(descriptor, now=self.now)
+            with sqlite3.connect(state_path) as connection:
+                connection.execute("DELETE FROM authority_meta WHERE key='authority_key_fingerprint'")
+                connection.commit()
+
+            replacement_authority = DirectoryAuthority(Ed25519PrivateKey.generate(), state_path=state_path)
+            with self.assertRaisesRegex(ValueError, "missing its key fingerprint"):
+                replacement_authority.certify(descriptor, now=self.now)
+
     def test_durable_authority_state_is_bound_to_authority_key(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             state_path = Path(directory) / "authority.sqlite3"
