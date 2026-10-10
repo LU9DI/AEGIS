@@ -3,7 +3,7 @@
 **Data da auditoria:** 2026-10-10  
 **Repositório:** https://github.com/LU9DI/AEGIS  
 **Branch examinada:** `main`  
-**Commit examinado:** `7264fc590e63aed32050c79c32854f2b54da443f`
+**Commit examinado:** `f1e71ae4fe08cd747fe4b8bf44e77c383885fe5d`
 
 ## Resumo executivo
 
@@ -52,7 +52,7 @@ Esta auditoria verifica a presença e integridade dos artefatos, a consistência
 
 ## Correção operacional adicionada após a auditoria inicial
 
-- Adicionado `.github/workflows/recovery-validation.yml` para verificar o SHA-256 do ZIP consolidado, testar os oito ZIPs de pesquisa internos, extrair o snapshot v0.27.4, compilar o código e executar a suíte de testes.
+- Adicionado `.github/workflows/recovery-validation.yml` para verificar o SHA-256 do ZIP consolidado, testar os oito ZIPs de pesquisa internos, extrair o snapshot v0.27.4, compilar o código, instalar o pacote com o extra `onion-lab`, verificar dependências e entry points de console e executar a suíte de testes. O workflow foi ajustado para executar em todo push para `main`, em pull requests e por disparo manual.
 - O checksum do ZIP consolidado foi recalculado a partir do backup de histórico completo e confirma **6.177.944 bytes** e SHA-256 `ae59e83cf68caebdebeb7522dd36c0bc16f9bbe288bbff1ce99bd7880c659be3`.
 - Reexecução local independente da suíte dentro do snapshot v0.27.4: **227 testes e 76 subtestes aprovados em 32,86 segundos**, com saída normal de código 0.
 - O workflow foi publicado no GitHub, mas ainda não foi possível confirmar um resultado de execução do GitHub Actions nesta auditoria. Portanto, o resultado local não deve ser confundido com um CI remoto verde.
@@ -67,4 +67,4 @@ Esta auditoria verifica a presença e integridade dos artefatos, a consistência
 
 ## Ações ainda pendentes
 
-A árvore Git segue parcial. A publicação dos 27 módulos Python e 22 arquivos de teste restantes como arquivos individuais não foi concluída nesta rodada. O arquivo de recuperação completo de 29 MB também continua distinto do ZIP consolidado já publicado. A falha conhecida de PIR verificável permanece um bloqueador de segurança, não corrigido por esta auditoria nem pelo workflow.
+A árvore Git segue parcial. A publicação dos 27 módulos Python e 22 arquivos de teste restantes como arquivos individuais não foi concluída nesta rodada. O [Issue #1](https://github.com/LU9DI/AEGIS/issues/1) acompanha a publicação, comparação do snapshot e validação de instalação. O arquivo de recuperação completo de 29 MB também continua distinto do ZIP consolidado já publicado. A falha conhecida de PIR verificável permanece um bloqueador de segurança, não corrigido por esta auditoria nem pelo workflow; o [Issue #2](https://github.com/LU9DI/AEGIS/issues/2) registra o trabalho técnico e os critérios de aceitação.
