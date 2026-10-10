@@ -61,3 +61,8 @@ Este resultado substitui as notas anteriores que diziam que o CI estava pendente
 A abertura SQLite ainda valida o diretório pai por caminho e depois abre o banco por caminho. A proteção de diretório privado reduz a possibilidade de troca por outro usuário local, mas não é uma garantia geral contra manipulação de ancestrais de caminho, processos sob o mesmo UID ou comprometimento do host. Uma defesa mais forte pode usar abertura relativa a descritores de diretório (openat/dir_fd) e validar a cadeia de diretórios; deve ser implementada de forma portátil e coberta por testes antes de alegar proteção contra um adversário local forte.
 
 Permanecem bloqueadores de arquitetura: rollback por restauração de uma cópia antiga do SQLite sem âncora monotônica externa, protocolo transacional conjunto para emissão e revogação, e verificabilidade criptográfica da correção de respostas PIR. A PR permanece draft e não deve ser descrita como pronta para produção ou como auditoria de segurança concluída.
+
+
+## Acompanhamento de hardening de caminhos
+
+O risco residual de manipulação de diretórios ancestrais e corridas sob o mesmo UID foi registrado para trabalho separado na [issue #10](https://github.com/LU9DI/AEGIS/issues/10). A issue exige modelo de ameaça explícito, abertura relativa a descritores de diretório quando suportada, testes adversariais de troca de caminho e validação completa no CI. Até esse trabalho ser implementado e revisado, a proteção atual deve ser descrita como mitigação limitada, não como abertura totalmente livre de corridas.
