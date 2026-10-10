@@ -78,128 +78,16 @@ jobs:
           modules = list((root / "src" / "anonlab").glob("*.py"))
           tests = list((root / "tests").glob("test_*.py"))
           if len(modules) != 42 or len(tests) != 25:
-              raise SystemExit(f"Unexpected source inventory: {len(modules)} modules, {len(tests)} test files")
-          print(f"Recovered {len(modules)} modules and {len(tests)} test files from {root}")
-
-          # Security hardening overlay: do not silently permit unverified PIR over remote hosts.
-          pir_path = root / "src" / "anonlab" / "pir_rpc.py"
-          source = pir_path.read_text(encoding="utf-8")
-          old_sig = """    timeout_seconds: float = 5.0,
-    expected_snapshot_sha256: str | None = None,
-) -> PirRpcTransfer:
-    \"\"\"Retrieve one record from two distinct authenticated RPC endpoints.
-
-    The selected index is used only to form client-side query masks and is never
-    present in an RPC request. Use TLS endpoints for remote hosts; HMAC-only mode
-    is retained only for local research compatibility.
-    \"\"\""""
-          new_sig = """    timeout_seconds: float = 5.0,
-    expected_snapshot_sha256: str | None = None,
-    allow_unverified_remote: bool = False,
-) -> PirRpcTransfer:
-    \"\"\"Retrieve one record from two distinct authenticated RPC endpoints.
-
-    The selected index is used only to form client-side query masks and is never
-    present in an RPC request. TLS authenticates the server and protects transport;
-    it does not prove correct PIR computation. Remote retrieval is fail-closed
-    unless a caller explicitly opts into this unverified research mode. Opting in
-    does not make the protocol secure.
-    \"\"\""""
-          if old_sig not in source:
-              raise SystemExit("PIR hardening patch could not find the expected two-server signature")
-          source = source.replace(old_sig, new_sig, 1)
-          old_validation = """    if not isinstance(item_count, int) or isinstance(item_count, bool) or not 1 <= item_count <= MAX_RECORDS:
-        raise ValueError(f"item_count must be within 1..{MAX_RECORDS}")"""
-          new_validation = """    if not isinstance(allow_unverified_remote, bool):
-        raise ValueError("allow_unverified_remote must be a bool")
-    if not isinstance(item_count, int) or isinstance(item_count, bool) or not 1 <= item_count <= MAX_RECORDS:
-        raise ValueError(f"item_count must be within 1..{MAX_RECORDS}")"""
-          if old_validation not in source:
-              raise SystemExit("PIR hardening patch could not find item_count validation")
-          source = source.replace(old_validation, new_validation, 1)
-          old_endpoints = """    a, b = endpoints
-    if a.server_id == b.server_id:"""
-          new_endpoints = """    a, b = endpoints
-    if any(not ipaddress.ip_address(endpoint.host).is_loopback for endpoint in endpoints) and not allow_unverified_remote:
-        raise PirRpcProtocolError(
-            "remote PIR computation is not cryptographically verifiable; "
-            "remote research mode requires allow_unverified_remote=True and must not be used for sensitive data"
-        )
-    if a.server_id == b.server_id:"""
-          if old_endpoints not in source:
-              raise SystemExit("PIR hardening patch could not find endpoint validation")
-          source = source.replace(old_endpoints, new_endpoints, 1)
-          old_four_sig = """    timeout_seconds: float = 5.0,
-    expected_snapshot_sha256: str | None = None,
-) -> RedundantPirRpcTransfer:"""
-          new_four_sig = """    timeout_seconds: float = 5.0,
-    expected_snapshot_sha256: str | None = None,
-    allow_unverified_remote: bool = False,
-) -> RedundantPirRpcTransfer:"""
-          if old_four_sig not in source:
-              raise SystemExit("PIR hardening patch could not find the four-server signature")
-          source = source.replace(old_four_sig, new_four_sig, 1)
-          old_first_call = """            expected_snapshot_sha256=expected_snapshot_sha256,
-        ),
-        retrieve_two_server_pir_rpc("""
-          new_first_call = """            expected_snapshot_sha256=expected_snapshot_sha256,
-            allow_unverified_remote=allow_unverified_remote,
-        ),
-        retrieve_two_server_pir_rpc("""
-          if old_first_call not in source:
-              raise SystemExit("PIR hardening patch could not find first four-server call")
-          source = source.replace(old_first_call, new_first_call, 1)
-          old_second_call = """            expected_snapshot_sha256=expected_snapshot_sha256,
-        ),
-    )
-    if not hmac.compare_digest(first.snapshot_sha256, second.snapshot_sha256):"""
-          new_second_call = """            expected_snapshot_sha256=expected_snapshot_sha256,
-            allow_unverified_remote=allow_unverified_remote,
-        ),
-    )
-    if not hmac.compare_digest(first.snapshot_sha256, second.snapshot_sha256):"""
-          if old_second_call not in source:
-              raise SystemExit("PIR hardening patch could not find second four-server call")
-          source = source.replace(old_second_call, new_second_call, 1)
-          pir_path.write_text(source, encoding="utf-8")
-
-          # Regression tests use documentation-only IP ranges; they fail before network I/O.
-          guard_test = root / "tests" / "test_pir_remote_fail_closed.py"
-          guard_test.write_text('''from __future__ import annotations
-
-import ssl
-import unittest
-
-from anonlab.pir_rpc import PirRpcEndpoint, PirRpcProtocolError, retrieve_two_server_pir_rpc, retrieve_four_server_pir_rpc_checked
-
-
-class RemotePirFailClosedTests(unittest.IsolatedAsyncioTestCase):
-    def setUp(self):
-        context = ssl.create_default_context()
-        context.minimum_version = ssl.TLSVersion.TLSv1_2
-        self.endpoints = tuple(
-            PirRpcEndpoint(f"remote-{i}", host, 443, ssl_context=context, server_hostname="pir.example.invalid")
-            for i, host in enumerate(("192.0.2.1", "192.0.2.2", "192.0.2.3", "192.0.2.4"))
-        )
-
-    async def test_two_server_remote_pir_is_rejected_by_default_before_network_io(self):
-        with self.assertRaisesRegex(PirRpcProtocolError, "not cryptographically verifiable"):
-            await retrieve_two_server_pir_rpc(self.endpoints[:2], 8, 3, record_bytes=16)
-
-    async def test_four_server_remote_pir_is_rejected_by_default_before_network_io(self):
-        with self.assertRaisesRegex(PirRpcProtocolError, "not cryptographically verifiable"):
-            await retrieve_four_server_pir_rpc_checked(self.endpoints, 8, 3, record_bytes=16)
-
-    async def test_remote_research_mode_must_be_explicitly_boolean(self):
-        with self.assertRaisesRegex(ValueError, "must be a bool"):
-            await retrieve_two_server_pir_rpc(self.endpoints[:2], 8, 3, record_bytes=16, allow_unverified_remote=1)
-
-
-if __name__ == "__main__":
-    unittest.main()
-''', encoding="utf-8")
+              raise SystemExit(f"Unexpected archived source inventory: {len(modules)} modules, {len(tests)} test files")
+          print(f"Recovered {len(modules)} modules and {len(tests)} archived test files from {root}")
           Path("recovered-source-root.txt").write_text(str(root), encoding="utf-8")
           PY
+
+      - name: Apply remote PIR fail-closed safety overlay
+        shell: bash
+        run: |
+          set -euo pipefail
+          python recovery/apply_remote_pir_guard.py "$(cat recovered-source-root.txt)"
 
       - name: Compile recovered source and tests
         shell: bash
