@@ -6,6 +6,7 @@ import json
 import secrets
 import time
 import unittest
+from unittest.mock import patch
 
 from anonlab.pir_rpc import (
     AuthenticatedPirRpcServer,
@@ -160,6 +161,19 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(acquire_calls, 1)  # replay rejection happens before admission control
         response = _verify_envelope(first[4:], self.key_a, _RESPONSE_DOMAIN)
         self.assertEqual(response["nonce"], nonce)
+
+    async def test_future_dated_nonce_remains_cached_for_full_freshness_window(self):
+        nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+        now = 1_800_000_000.0
+        self.server_a._seen_nonces.clear()
+        with patch("anonlab.pir_rpc.time.time", return_value=now):
+            self.server_a._remember_nonce(nonce)
+        # The request was accepted with issued_at at the future edge of the
+        # permitted skew. 61 seconds later it is still timestamp-valid, so its
+        # nonce must not have expired from the replay cache.
+        with patch("anonlab.pir_rpc.time.time", return_value=now + 61):
+            with self.assertRaisesRegex(PirRpcProtocolError, "replay detected"):
+                self.server_a._validate_nonce(nonce, int(now + 60))
 
     async def test_saturated_replay_cache_preserves_live_nonces_and_fails_closed(self):
         # A full bounded cache must not evict a still-fresh nonce, otherwise a
