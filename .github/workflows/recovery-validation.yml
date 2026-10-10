@@ -7,7 +7,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
 
 jobs:
   recovered-source:
@@ -132,3 +133,66 @@ jobs:
           ROOT="$(cat recovered-source-root.txt)"
           cd "$ROOT"
           python -m pytest -q
+
+      - name: Validate the checked-out Git source tree on source-sync PRs
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find src/anonlab -maxdepth 1 -name '*.py' -type f | wc -l)" -eq 42
+          test "$(find tests -maxdepth 1 -name 'test_*.py' -type f | wc -l)" -eq 25
+          python -m pip install -e ".[onion-lab]" pytest
+          python -m pip check
+          python -m compileall -q src tests
+          python -m pytest -q
+
+      - name: Prepare missing recovered source and test files
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$(cat recovered-source-root.txt)"
+          python - "$ROOT" <<'PY'
+          from pathlib import Path
+          import shutil
+          import sys
+          root = Path(sys.argv[1])
+          workspace = Path.cwd()
+          copied = []
+          for source_base, target_base, pattern in (
+              (root / "src" / "anonlab", workspace / "src" / "anonlab", "*.py"),
+              (root / "tests", workspace / "tests", "test_*.py"),
+          ):
+              for source in sorted(source_base.glob(pattern)):
+                  target = target_base / source.name
+                  if not target.exists():
+                      target.parent.mkdir(parents=True, exist_ok=True)
+                      shutil.copy2(source, target)
+                      copied.append(target.relative_to(workspace).as_posix())
+          print(f"Prepared {len(copied)} missing files for review")
+          for path in copied:
+              print(path)
+          if not copied:
+              print("Git source tree already contains all recovered Python modules and tests.")
+          PY
+
+      - name: Open PR for missing recovered source files
+        if: github.event_name != 'pull_request'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/recovered-source-completion
+          delete-branch: true
+          commit-message: "recovery: publish missing source modules and tests"
+          title: "Recovery: publish all recovered source modules and tests"
+          body: |
+            This PR adds recovered Python modules and tests that were present in the verified v0.27.4 source snapshot but missing as individual Git files.
+
+            - Adds only files absent from the current tree; existing files are not overwritten.
+            - The archive validation workflow verified the embedded snapshot checksum and ZIP integrity.
+            - The PR workflow must install the checkout itself, validate console entry points, compile the source, and pass the full test suite before merge.
+            - This does not resolve the separately tracked cryptographic PIR-verifiability research blocker.
+          labels: recovery, automated
+          add-paths: |
+            src/anonlab/*.py
+            tests/test_*.py
