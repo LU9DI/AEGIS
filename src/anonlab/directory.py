@@ -267,6 +267,7 @@ class DirectoryAuthority:
             connection.execute("CREATE TABLE IF NOT EXISTS authority_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
             connection.execute("CREATE TABLE IF NOT EXISTS issued_descriptors (relay_id TEXT PRIMARY KEY, sequence INTEGER NOT NULL, descriptor_digest TEXT NOT NULL, serial TEXT NOT NULL UNIQUE)")
             connection.execute("CREATE TABLE IF NOT EXISTS issued_serials (serial TEXT PRIMARY KEY, relay_id TEXT NOT NULL, sequence INTEGER NOT NULL, descriptor_digest TEXT NOT NULL)")
+            connection.execute("CREATE TABLE IF NOT EXISTS issued_revocation_snapshots (epoch INTEGER PRIMARY KEY, revoked_ids_json TEXT NOT NULL, snapshot_json TEXT NOT NULL, digest TEXT NOT NULL)")
             fingerprint = hashlib.sha256(self.public_key_bytes).hexdigest()
             row = connection.execute("SELECT value FROM authority_meta WHERE key='authority_key_fingerprint'").fetchone()
             if row is None:
@@ -364,15 +365,73 @@ class DirectoryAuthority:
         if any(not isinstance(relay_id, str) or not _HEX_40.fullmatch(relay_id) for relay_id in values):
             raise ValueError("revoked relay IDs must be 40 lowercase hexadecimal characters")
         ids = sorted(set(values))
-        body = {
-            "schema_version": SCHEMA_VERSION,
-            "epoch": epoch,
-            "issued_at": current,
-            "expires_at": current + valid_for_seconds,
-            "revoked_relay_ids": ids,
-        }
-        signature = self.private_key.sign(_REVOCATION_DOMAIN + _canonical(body)).hex()
-        return {**body, "authority_signature": signature}
+
+        # Stateless mode remains for compatibility-only local demos.
+        if self.state_path is None:
+            body = {
+                "schema_version": SCHEMA_VERSION,
+                "epoch": epoch,
+                "issued_at": current,
+                "expires_at": current + valid_for_seconds,
+                "revoked_relay_ids": ids,
+            }
+            signature = self.private_key.sign(_REVOCATION_DOMAIN + _canonical(body)).hex()
+            return {**body, "authority_signature": signature}
+
+        # The durable authority keeps one immutable signed snapshot per epoch.
+        # Re-publishing an epoch returns the original bytes; a changed list must
+        # use a higher epoch and include every previously revoked relay.
+        with self._lock:
+            connection = self._connect_state()
+            try:
+                connection.execute("BEGIN IMMEDIATE")
+                row = connection.execute(
+                    "SELECT epoch, revoked_ids_json, snapshot_json FROM issued_revocation_snapshots "
+                    "ORDER BY epoch DESC LIMIT 1"
+                ).fetchone()
+                if row is not None:
+                    latest_epoch = int(row[0])
+                    latest_ids = json.loads(str(row[1]))
+                    if epoch < latest_epoch:
+                        raise ValueError("authority revocation epoch rollback rejected")
+                    if epoch == latest_epoch:
+                        if ids != latest_ids:
+                            raise ValueError("authority conflicting revocation snapshots share the same epoch")
+                        snapshot = json.loads(str(row[2]))
+                        connection.execute("COMMIT")
+                        return snapshot
+                    if not set(latest_ids).issubset(set(ids)):
+                        raise ValueError("authority revocations must be cumulative; relays cannot be un-revoked")
+
+                body = {
+                    "schema_version": SCHEMA_VERSION,
+                    "epoch": epoch,
+                    "issued_at": current,
+                    "expires_at": current + valid_for_seconds,
+                    "revoked_relay_ids": ids,
+                }
+                signature = self.private_key.sign(_REVOCATION_DOMAIN + _canonical(body)).hex()
+                snapshot = {**body, "authority_signature": signature}
+                encoded_ids = json.dumps(ids, sort_keys=True, separators=(",", ":"))
+                encoded_snapshot = _canonical(snapshot).decode("ascii")
+                digest = hashlib.sha256(_REVOCATION_DOMAIN + _canonical(body) + bytes.fromhex(signature)).hexdigest()
+                connection.execute(
+                    "INSERT INTO issued_revocation_snapshots(epoch, revoked_ids_json, snapshot_json, digest) "
+                    "VALUES(?, ?, ?, ?)",
+                    (epoch, encoded_ids, encoded_snapshot, digest),
+                )
+                connection.execute("COMMIT")
+                return snapshot
+            except sqlite3.IntegrityError as exc:
+                if connection.in_transaction:
+                    connection.execute("ROLLBACK")
+                raise ValueError("authority state rejected a duplicate revocation epoch") from exc
+            except Exception:
+                if connection.in_transaction:
+                    connection.execute("ROLLBACK")
+                raise
+            finally:
+                connection.close()
 
 
 @dataclass(frozen=True, slots=True)
