@@ -3,7 +3,7 @@
 **Data da auditoria:** 2026-10-10  
 **Repositório:** https://github.com/LU9DI/AEGIS  
 **Branch examinada:** `main`  
-**Commit examinado:** `aee4349b675170a228cf06fb2202066e8f56526e`
+**Commit examinado:** `48dea598ba0ca66a329b14a3137dd8ac477abd6d`
 
 ## Resumo executivo
 
@@ -11,7 +11,7 @@ O ZIP consolidado publicado está presente e íntegro. O repositório Git, poré
 
 ## O que foi verificado
 
-- A árvore remota de `main` foi consultada pela API do GitHub: **50 arquivos**, `truncated=false`.
+- A árvore remota de `main` foi consultada pela API do GitHub: **59 entradas**, `truncated=false`.
 - O commit de upload `aee4349` registra `AEGIS-consolidated-recovery-2026-10-09.zip`, com **6.177.944 bytes**.
 - O Git blob SHA remoto do ZIP é `38c5c008e66466af01ad790f329b34e9b464eadd`. O mesmo SHA de objeto Git foi calculado localmente para o arquivo disponível, confirmando correspondência byte a byte com o objeto publicado.
 - SHA-256 local do ZIP consolidado: `ae59e83cf68caebdebeb7522dd36c0bc16f9bbe288bbff1ce99bd7880c659be3`.
@@ -56,6 +56,14 @@ Esta auditoria verifica a presença e integridade dos artefatos, a consistência
 - O checksum do ZIP consolidado foi recalculado a partir do backup de histórico completo e confirma **6.177.944 bytes** e SHA-256 `ae59e83cf68caebdebeb7522dd36c0bc16f9bbe288bbff1ce99bd7880c659be3`.
 - Reexecução local independente da suíte dentro do snapshot v0.27.4: **227 testes e 76 subtestes aprovados em 32,86 segundos**, com saída normal de código 0.
 - O workflow foi publicado no GitHub, mas ainda não foi possível confirmar um resultado de execução do GitHub Actions nesta auditoria. Portanto, o resultado local não deve ser confundido com um CI remoto verde.
+
+## Acompanhamento operacional no GitHub
+
+- Estado da branch auditada: `main` em `48dea598ba0ca66a329b14a3137dd8ac477abd6d`.
+- A API de status do commit retornou `pending` sem checks registrados; **não há confirmação de CI remoto verde**.
+- Ações foram registradas para evitar que as lacunas fiquem apenas no texto da auditoria:
+  - [Issue #1 — publicar o snapshot-fonte como arquivos Git e validar instalação](https://github.com/LU9DI/AEGIS/issues/1).
+  - [Issue #2 — corrigir a integridade PIR contra respostas falsas](https://github.com/LU9DI/AEGIS/issues/2).
 
 ## Ações ainda pendentes
 
