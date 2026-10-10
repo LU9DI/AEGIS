@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import base64
 import json
 import secrets
@@ -15,6 +16,9 @@ from anonlab.pir_rpc import (
     _REQUEST_DOMAIN,
     _RESPONSE_DOMAIN,
     _query_endpoint,
+    _mac,
+    _strict_json_loads,
+    _verify_transport_envelope,
     _signed_envelope,
     _verify_envelope,
     recover_colluded_index,
@@ -389,6 +393,36 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
             finally:
                 server.close()
                 await server.wait_closed()
+
+
+class StrictJsonEnvelopeTests(unittest.TestCase):
+    def test_duplicate_json_keys_are_rejected(self):
+        with self.assertRaisesRegex(PirRpcProtocolError, "duplicate key"):
+            _strict_json_loads(b'{"payload":{"server_id":"good","server_id":"evil"}}')
+
+    def test_nonstandard_json_numeric_constants_are_rejected(self):
+        for constant in (b"NaN", b"Infinity", b"-Infinity"):
+            with self.subTest(constant=constant):
+                with self.assertRaisesRegex(PirRpcProtocolError, "non-standard numeric constant"):
+                    _strict_json_loads(b'{"value":' + constant + b"}")
+
+    def test_duplicate_envelope_key_is_rejected_even_if_mac_matches_parsed_payload(self):
+        key = secrets.token_bytes(32)
+        payload = {"protocol": "AEGIS-PIR-RPC-v1"}
+        mac = _mac(payload, key, _REQUEST_DOMAIN)
+        payload_json = json.dumps(payload, separators=(",", ":"))
+        raw = (
+            '{"payload":' + payload_json
+            + ',"payload":' + payload_json
+            + ',"mac":' + json.dumps(mac) + '}'
+        ).encode("ascii")
+        with self.assertRaisesRegex(PirRpcProtocolError, "duplicate key"):
+            _verify_envelope(raw, key, _REQUEST_DOMAIN)
+
+    def test_tls_envelope_rejects_duplicate_nested_payload_key(self):
+        raw = b'{"payload":{"protocol":"AEGIS-PIR-RPC-v1","protocol":"evil"}}'
+        with self.assertRaisesRegex(PirRpcProtocolError, "duplicate key"):
+            _verify_transport_envelope(raw, None, _RESPONSE_DOMAIN)
 
 
 if __name__ == "__main__":
