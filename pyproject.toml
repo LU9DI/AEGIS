@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aegis-anon-lab"
+version = "0.26.0"
+description = "AEGIS: Anonymous Encrypted Garlic-routed Internet Shield — experimental anonymous-network research lab"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "REA Research" }]
+dependencies = []
+
+[project.optional-dependencies]
+onion-lab = ["cryptography>=42.0"]
+
+[project.scripts]
+rea-anon-lab = "anonlab.cli:main"
+aegis = "anonlab.cli:main"
+aegis-anon-lab = "anonlab.cli:main"
+rea-anon-relay-bench = "anonlab.local_benchmark:main"
+aegis-relay-bench = "anonlab.local_benchmark:main"
+rea-anon-onion-bench = "anonlab.onion_benchmark:main"
+aegis-onion-bench = "anonlab.onion_benchmark:main"
+rea-anon-ntor-bench = "anonlab.ntor_benchmark:main"
+aegis-ntor-bench = "anonlab.ntor_benchmark:main"
+rea-anon-telescope-bench = "anonlab.telescoping_benchmark:main"
+aegis-telescope-bench = "anonlab.telescoping_benchmark:main"
+rea-anon-concurrency-bench = "anonlab.concurrency_benchmark:main"
+aegis-concurrency-bench = "anonlab.concurrency_benchmark:main"
+rea-anon-directory-demo = "anonlab.directory_demo:main"
+aegis-directory-demo = "anonlab.directory_demo:main"
+rea-anon-stream-bench = "anonlab.multiplex_benchmark:main"
+aegis-stream-bench = "anonlab.multiplex_benchmark:main"
+rea-anon-duplex-bench = "anonlab.duplex_benchmark:main"
+aegis-duplex-bench = "anonlab.duplex_benchmark:main"
+rea-anon-write-batch-bench = "anonlab.write_batch_benchmark:main"
+aegis-write-batch-bench = "anonlab.write_batch_benchmark:main"
+rea-anon-pipeline-bench = "anonlab.pipeline_benchmark:main"
+aegis-pipeline-bench = "anonlab.pipeline_benchmark:main"
+rea-anon-profile-hotpath = "anonlab.profile_hot_path:main"
+aegis-profile-hotpath = "anonlab.profile_hot_path:main"
+rea-anon-network-impairment-bench = "anonlab.network_impairment_benchmark:main"
+aegis-network-impairment-bench = "anonlab.network_impairment_benchmark:main"
+rea-anon-fairness-bench = "anonlab.fairness_benchmark:main"
+aegis-fairness-bench = "anonlab.fairness_benchmark:main"
+rea-anon-scheduler-bench = "anonlab.scheduler_benchmark:main"
+aegis-scheduler-bench = "anonlab.scheduler_benchmark:main"
+rea-anon-mixed-workload-bench = "anonlab.mixed_workload_benchmark:main"
+aegis-mixed-workload-bench = "anonlab.mixed_workload_benchmark:main"
+rea-anon-mixed-workload-matrix = "anonlab.mixed_workload_matrix:main"
+aegis-mixed-workload-matrix = "anonlab.mixed_workload_matrix:main"
+rea-anon-window-update-bench = "anonlab.window_update_benchmark:main"
+aegis-window-update-bench = "anonlab.window_update_benchmark:main"
+rea-anon-window-update-timer-bench = "anonlab.window_update_timer_benchmark:main"
+aegis-window-update-timer-bench = "anonlab.window_update_timer_benchmark:main"
+aegis-route-select = "anonlab.route_selection:main"
+aegis-pir-demo = "anonlab.pir:main"
+aegis-pir-rpc-demo = "anonlab.pir_rpc_demo:main"
+aegis-pir-rpc-tls-demo = "anonlab.pir_rpc_tls_demo:main"
+aegis-share-demo = "anonlab.secret_sharing:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
