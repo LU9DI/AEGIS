@@ -445,18 +445,66 @@ class DirectoryAuthority:
             try:
                 connection.execute("BEGIN IMMEDIATE")
                 row = connection.execute(
-                    "SELECT epoch, revoked_ids_json, snapshot_json FROM issued_revocation_snapshots "
+                    "SELECT epoch, revoked_ids_json, snapshot_json, digest FROM issued_revocation_snapshots "
                     "ORDER BY epoch DESC LIMIT 1"
                 ).fetchone()
                 if row is not None:
-                    latest_epoch = int(row[0])
-                    latest_ids = json.loads(str(row[1]))
+                    latest_epoch = row[0]
+                    if not isinstance(latest_epoch, int) or isinstance(latest_epoch, bool) or latest_epoch < 1:
+                        raise ValueError("authority stored revocation epoch is invalid")
+                    try:
+                        latest_ids = json.loads(str(row[1]))
+                        snapshot = json.loads(str(row[2]))
+                    except (TypeError, json.JSONDecodeError) as exc:
+                        raise ValueError("authority stored revocation snapshot is malformed") from exc
+                    if (
+                        not isinstance(latest_ids, list)
+                        or any(not isinstance(relay_id, str) or not _HEX_40.fullmatch(relay_id) for relay_id in latest_ids)
+                        or latest_ids != sorted(set(latest_ids))
+                    ):
+                        raise ValueError("authority stored revocation IDs are invalid")
+                    if not isinstance(snapshot, dict) or set(snapshot) != _REVOCATION_KEYS:
+                        raise ValueError("authority stored revocation snapshot has invalid fields")
+                    stored_body = {key: snapshot[key] for key in _REVOCATION_BODY_KEYS}
+                    stored_signature = snapshot["authority_signature"]
+                    if (
+                        not isinstance(stored_body["schema_version"], int)
+                        or isinstance(stored_body["schema_version"], bool)
+                        or stored_body["schema_version"] != SCHEMA_VERSION
+                        or not isinstance(stored_body["epoch"], int)
+                        or isinstance(stored_body["epoch"], bool)
+                        or stored_body["epoch"] != latest_epoch
+                        or not isinstance(stored_body["issued_at"], int)
+                        or isinstance(stored_body["issued_at"], bool)
+                        or stored_body["issued_at"] < 0
+                        or not isinstance(stored_body["expires_at"], int)
+                        or isinstance(stored_body["expires_at"], bool)
+                        or stored_body["expires_at"] <= stored_body["issued_at"]
+                        or stored_body["expires_at"] - stored_body["issued_at"] > MAX_REVOCATION_LIFETIME_SECONDS
+                        or stored_body["revoked_relay_ids"] != latest_ids
+                    ):
+                        raise ValueError("authority stored revocation snapshot is inconsistent")
+                    try:
+                        signature_bytes = _hex_field(stored_signature, "authority signature", _HEX_64)
+                        computed_digest = hashlib.sha256(
+                            _REVOCATION_DOMAIN + _canonical(stored_body) + signature_bytes
+                        ).hexdigest()
+                        Ed25519PublicKey.from_public_bytes(self.public_key_bytes).verify(
+                            signature_bytes, _REVOCATION_DOMAIN + _canonical(stored_body)
+                        )
+                    except (ValueError, InvalidSignature) as exc:
+                        raise ValueError("authority stored revocation snapshot signature is invalid") from exc
+                    if (
+                        not isinstance(row[3], str)
+                        or not _HEX_32.fullmatch(row[3])
+                        or not hmac.compare_digest(computed_digest, row[3])
+                    ):
+                        raise ValueError("authority stored revocation snapshot digest is invalid")
                     if epoch < latest_epoch:
                         raise ValueError("authority revocation epoch rollback rejected")
                     if epoch == latest_epoch:
                         if ids != latest_ids:
                             raise ValueError("authority conflicting revocation snapshots share the same epoch")
-                        snapshot = json.loads(str(row[2]))
                         connection.execute("COMMIT")
                         return snapshot
                     if not set(latest_ids).issubset(set(ids)):
