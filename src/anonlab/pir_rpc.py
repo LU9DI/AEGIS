@@ -57,6 +57,29 @@ def _canonical_json(value: object) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")
 
 
+def _reject_duplicate_json_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Reject ambiguous JSON objects instead of silently accepting the last duplicate."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise PirRpcProtocolError("JSON object contains a duplicate key")
+        result[key] = value
+    return result
+
+
+def _reject_nonfinite_json_constant(value: str) -> object:
+    """Python's JSON decoder accepts NaN/Infinity extensions; this protocol does not."""
+    raise PirRpcProtocolError(f"JSON contains a non-standard numeric constant: {value}")
+
+
+def _strict_json_loads(raw: bytes) -> object:
+    return json.loads(
+        raw,
+        object_pairs_hook=_reject_duplicate_json_keys,
+        parse_constant=_reject_nonfinite_json_constant,
+    )
+
+
 def _mac(payload: dict[str, object], key: bytes, domain: bytes) -> str:
     return hmac.new(key, domain + _canonical_json(payload), hashlib.sha256).hexdigest()
 
@@ -71,7 +94,7 @@ def _signed_envelope(payload: dict[str, object], key: bytes, domain: bytes) -> b
 
 def _verify_envelope(raw: bytes, key: bytes, domain: bytes) -> dict[str, object]:
     try:
-        envelope = json.loads(raw)
+        envelope = _strict_json_loads(raw)
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise PirRpcProtocolError("message is not valid JSON") from exc
     if not isinstance(envelope, dict) or set(envelope) != {"payload", "mac"}:
