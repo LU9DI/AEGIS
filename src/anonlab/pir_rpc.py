@@ -122,7 +122,7 @@ def _verify_transport_envelope(raw: bytes, key: bytes | None, domain: bytes) -> 
     if key is not None:
         return _verify_envelope(raw, key, domain)
     try:
-        envelope = json.loads(raw)
+        envelope = _strict_json_loads(raw)
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise PirRpcProtocolError("message is not valid JSON") from exc
     # This unsigned form is accepted only on a stream already protected by TLS.
