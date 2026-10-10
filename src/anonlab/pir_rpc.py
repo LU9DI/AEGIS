@@ -565,6 +565,14 @@ async def _query_endpoint(
     return answer, snapshot_sha256
 
 
+def _is_loopback_host(host: str) -> bool:
+    """Return False for DNS names and malformed literals; never trust them as loopback."""
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
+
+
 async def retrieve_two_server_pir_rpc(
     endpoints: Sequence[PirRpcEndpoint],
     item_count: int,
@@ -580,8 +588,10 @@ async def retrieve_two_server_pir_rpc(
     The selected index is used only to form client-side query masks and is never
     present in an RPC request. Use TLS endpoints for remote hosts; HMAC-only mode
     is retained only for local research compatibility. TLS does not prove correct
-    PIR computation. Remote retrieval is fail-closed unless a caller explicitly
-    opts into unverified research mode; opting in does not make it secure.
+    PIR computation. All non-loopback retrieval is disabled until a real
+    privacy-preserving proof of computation is integrated. The legacy
+    allow_unverified_remote parameter is retained for API compatibility only and
+    cannot bypass this safety boundary.
     """
     if not isinstance(allow_unverified_remote, bool):
         raise ValueError("allow_unverified_remote must be a bool")
@@ -604,10 +614,10 @@ async def retrieve_two_server_pir_rpc(
     if not isinstance(endpoints, (tuple, list)) or len(endpoints) != 2 or not all(isinstance(e, PirRpcEndpoint) for e in endpoints):
         raise ValueError("exactly two PirRpcEndpoint entries are required")
     a, b = endpoints
-    if any(not ipaddress.ip_address(endpoint.host).is_loopback for endpoint in endpoints) and not allow_unverified_remote:
+    if any(not _is_loopback_host(endpoint.host) for endpoint in endpoints):
         raise PirRpcProtocolError(
-            "remote PIR computation is not cryptographically verifiable; "
-            "remote research mode requires allow_unverified_remote=True and must not be used for sensitive data"
+            "remote PIR computation is disabled: TLS and snapshot fingerprints do not prove correct computation; "
+            "no unverified-remote override is permitted"
         )
     if a.server_id == b.server_id:
         raise ValueError("PIR endpoints must have distinct server IDs")
