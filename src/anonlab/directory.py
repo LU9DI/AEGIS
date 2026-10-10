@@ -8,7 +8,7 @@ caller persists it.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import hmac
 import ipaddress
@@ -17,6 +17,7 @@ import os
 from pathlib import Path
 import re
 import secrets
+import sqlite3
 import stat
 import tempfile
 import threading
@@ -225,67 +226,103 @@ def create_relay_descriptor(
 
 @dataclass(slots=True)
 class DirectoryAuthority:
-    """In-memory signer for the local lab's relay directory and revocation feed."""
+    """Signer for the local directory lab.
+
+    Without state_path this is a compatibility-only stateless signer and MUST
+    NOT be used as an authoritative directory. With state_path, SQLite
+    serializes writers across processes and durably reserves each relay sequence
+    and serial before a descriptor is returned. Local storage cannot prevent
+    rollback if an attacker restores an older database backup.
+    """
 
     private_key: Ed25519PrivateKey
+    state_path: str | os.PathLike[str] | None = None
+    _lock: threading.RLock = field(default_factory=threading.RLock, init=False, repr=False)
 
     @classmethod
-    def generate(cls) -> "DirectoryAuthority":
-        return cls(Ed25519PrivateKey.generate())
+    def generate(cls, *, state_path: str | os.PathLike[str] | None = None) -> "DirectoryAuthority":
+        return cls(Ed25519PrivateKey.generate(), state_path=state_path)
 
     @property
     def public_key_bytes(self) -> bytes:
         return _public_bytes(self.private_key.public_key())
+
+    def _connect_state(self) -> sqlite3.Connection:
+        if self.state_path is None:
+            raise ValueError("durable authority state is not configured")
+        path = Path(self.state_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if path.is_symlink():
+            raise ValueError("authority state path must not be a symbolic link")
+        connection = sqlite3.connect(path, timeout=10.0, isolation_level=None)
+        try:
+            if os.name == "posix":
+                os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+            connection.execute("PRAGMA busy_timeout = 10000")
+            connection.execute("PRAGMA synchronous = FULL")
+            connection.execute("PRAGMA journal_mode = DELETE")
+            connection.execute("CREATE TABLE IF NOT EXISTS authority_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+            connection.execute("CREATE TABLE IF NOT EXISTS issued_descriptors (relay_id TEXT PRIMARY KEY, sequence INTEGER NOT NULL, descriptor_digest TEXT NOT NULL, serial TEXT NOT NULL UNIQUE)")
+            fingerprint = hashlib.sha256(self.public_key_bytes).hexdigest()
+            row = connection.execute("SELECT value FROM authority_meta WHERE key='authority_key_fingerprint'").fetchone()
+            if row is None:
+                connection.execute("INSERT INTO authority_meta(key, value) VALUES(?, ?)", ("authority_key_fingerprint", fingerprint))
+            elif not hmac.compare_digest(str(row[0]), fingerprint):
+                raise ValueError("authority state belongs to a different authority key")
+            return connection
+        except Exception:
+            connection.close()
+            raise
 
     def certify(self, relay_signed_descriptor: Mapping[str, Any], *, now: int | None = None) -> dict[str, Any]:
         if set(relay_signed_descriptor) != _UNSIGNED_DESCRIPTOR_KEYS:
             raise ValueError("expected a relay-signed descriptor without authority_signature")
         body = _descriptor_body(relay_signed_descriptor)
         current = _now_seconds(now)
-        _validate_times(
-            body["not_before"], body["expires_at"], current,
-            max_lifetime=MAX_DESCRIPTOR_LIFETIME_SECONDS,
-        )
+        _validate_times(body["not_before"], body["expires_at"], current, max_lifetime=MAX_DESCRIPTOR_LIFETIME_SECONDS)
         identity_public = bytes.fromhex(body["identity_public_key"])
-        _verify_signature(identity_public, relay_signed_descriptor["relay_signature"],
-                          _RELAY_DOMAIN + _canonical(body), "relay")
+        _verify_signature(identity_public, relay_signed_descriptor["relay_signature"], _RELAY_DOMAIN + _canonical(body), "relay")
         to_sign = {**body, "relay_signature": relay_signed_descriptor["relay_signature"]}
-        authority_signature = self.private_key.sign(
-            _AUTHORITY_DOMAIN + _canonical(to_sign)
-        ).hex()
-        return {**to_sign, "authority_signature": authority_signature}
+        authority_signature = self.private_key.sign(_AUTHORITY_DOMAIN + _canonical(to_sign)).hex()
+        certified = {**to_sign, "authority_signature": authority_signature}
+        if self.state_path is None:
+            return certified
 
-    def sign_revocations(
-        self,
-        revoked_relay_ids: list[str] | tuple[str, ...] | set[str],
-        *,
-        epoch: int,
-        now: int | None = None,
-        valid_for_seconds: int = 3600,
-    ) -> dict[str, Any]:
-        current = _now_seconds(now)
-        if not isinstance(epoch, int) or isinstance(epoch, bool) or epoch < 1:
-            raise ValueError("revocation epoch must be a positive integer")
-        if not isinstance(valid_for_seconds, int) or isinstance(valid_for_seconds, bool):
-            raise ValueError("valid_for_seconds must be an integer")
-        if not 1 <= valid_for_seconds <= MAX_REVOCATION_LIFETIME_SECONDS:
-            raise ValueError("revocation snapshot validity must be between 1 second and 6 hours")
-        if not isinstance(revoked_relay_ids, (list, tuple, set)):
-            raise ValueError("revoked relay IDs must be a list, tuple, or set")
-        values = list(revoked_relay_ids)
-        if any(not isinstance(relay_id, str) or not _HEX_40.fullmatch(relay_id) for relay_id in values):
-            raise ValueError("revoked relay IDs must be 40 lowercase hexadecimal characters")
-        ids = sorted(set(values))
-        body = {
-            "schema_version": SCHEMA_VERSION,
-            "epoch": epoch,
-            "issued_at": current,
-            "expires_at": current + valid_for_seconds,
-            "revoked_relay_ids": ids,
-        }
-        signature = self.private_key.sign(_REVOCATION_DOMAIN + _canonical(body)).hex()
-        return {**body, "authority_signature": signature}
-
+        digest = hashlib.sha256(_AUTHORITY_DOMAIN + _canonical(to_sign) + bytes.fromhex(authority_signature)).hexdigest()
+        # BEGIN IMMEDIATE serializes writers across processes. Commit reservation
+        # before returning the certificate; any error rolls back the transaction.
+        with self._lock:
+            connection = self._connect_state()
+            try:
+                connection.execute("BEGIN IMMEDIATE")
+                row = connection.execute(
+                    "SELECT sequence, descriptor_digest, serial FROM issued_descriptors WHERE relay_id=?",
+                    (body["relay_id"],),
+                ).fetchone()
+                if row is not None:
+                    latest_sequence, latest_digest, latest_serial = int(row[0]), str(row[1]), str(row[2])
+                    if body["sequence"] < latest_sequence:
+                        raise ValueError("authority descriptor sequence rollback rejected")
+                    if body["sequence"] == latest_sequence:
+                        if not hmac.compare_digest(digest, latest_digest):
+                            raise ValueError("authority conflicting descriptors share the same sequence")
+                        if body["serial"] != latest_serial:
+                            raise ValueError("authority same-sequence descriptor serial conflict")
+                        connection.execute("COMMIT")
+                        return certified
+                connection.execute(
+                    "INSERT INTO issued_descriptors(relay_id, sequence, descriptor_digest, serial) VALUES(?, ?, ?, ?) "
+                    "ON CONFLICT(relay_id) DO UPDATE SET sequence=excluded.sequence, descriptor_digest=excluded.descriptor_digest, serial=excluded.serial",
+                    (body["relay_id"], body["sequence"], digest, body["serial"]),
+                )
+                connection.execute("COMMIT")
+            except Exception:
+                if connection.in_transaction:
+                    connection.execute("ROLLBACK")
+                raise
+            finally:
+                connection.close()
+        return certified
 
 @dataclass(frozen=True, slots=True)
 class VerifiedRelayDescriptor:
