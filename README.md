@@ -2,25 +2,25 @@
 
 **AEGIS** stands for **Anonymous Encrypted Garlic-routed Internet Shield**. This repository contains recovered research code and is not a production anonymity network.
 
-This repository is being populated incrementally from recovered project files. **The Git tree is not yet a complete mirror of the recovered source tree.** Do not treat the current tree as a complete source release.
+The v0.27.4 recovered Python source, tests, design documents, examples, experiment results, and reports are now published as normal Git files. The repository also retains the consolidated recovery ZIP. Eight pre-existing files intentionally differ from the snapshot and were preserved rather than overwritten; their reconciliation is tracked in [Issue #1](https://github.com/LU9DI/AEGIS/issues/1). The original historical Git commit graph has not been reconstructed.
 
 ## Current upload status
 
 Published and verified:
 - package metadata (`pyproject.toml`), ignore rules, validation notes and recovery reports;
-- a subset of simulator, routing, onion-envelope, PIR and XOR secret-sharing modules with selected tests;
-- architecture, threat model, roadmap, protocol, onion, PIR and sharing design notes;
+- all 42 Python modules and 26 Python test files from the recovered source snapshot, including the remote PIR fail-closed guard and its regression tests;
+- architecture, threat model, roadmap, protocol, onion, PIR and sharing design notes, plus the recovered changelog, examples, experiment outputs, checksum manifests and validation reports;
 - `AEGIS-consolidated-recovery-2026-10-09.zip`, which contains selected research ZIPs, a recoverable Git baseline bundle and status/checksum files;
 - GitHub Actions workflow at `.github/workflows/recovery-validation.yml`, which verifies the archive checksum and nested ZIPs, extracts the v0.27.4 source snapshot, compiles the source/tests, and runs pytest.
 
 **The consolidated ZIP is not the full-history recovery archive.** It contains the v0.27.4 research snapshot, which was verified to match the recovered 246-file source tree exactly. It also contains selected older/research snapshots, not every historical artifact.
 
-Still missing as ordinary files from the Git tree:
-- 27 source modules and 22 test files from the recovered snapshot;
-- many experiment outputs, docs, changelog and reports;
-- historical ZIPs/wheels and the expanded full-history recovery ZIP.
+Still unresolved:
+- eight existing files have content differences from the recovered snapshot and require a deliberate diff review; they were not overwritten automatically;
+- the separate full-history recovery archive (29 MB) has not been uploaded as an independent GitHub release asset;
+- the historical original Git commit graph was not reconstructed.
 
-Because the Git tree is partial, some console entry points declared in `pyproject.toml` refer to modules that are not present as individual files in `main`. Extract the full v0.27.4 source snapshot from the consolidated ZIP if you need the complete recovered source tree, or wait until the remaining files are published into Git. The new CI workflow validates the source snapshot embedded in the archive; it does **not** claim the partial Git checkout itself is complete.
+The Python source/test checkout is complete enough to install and test. The recovery workflow validates both the archived snapshot and the checked-out Git source, including package installation, console entry points, compilation, and pytest.
 
 ## Recovery archive details
 
@@ -44,11 +44,11 @@ The remaining blockers are tracked explicitly:
 - [Issue #1 — publish the full recovered source tree and validate package installation](https://github.com/LU9DI/AEGIS/issues/1).
 - [Issue #2 — make PIR responses verifiable against malicious replicas](https://github.com/LU9DI/AEGIS/issues/2).
 
-The CI workflow now runs on every push to `main`, pull requests, and manual dispatch. It validates archive checksums, extracts the recovered snapshot, installs the package with its onion-lab extra, checks dependencies and required console scripts, and runs pytest. **A workflow definition is not evidence of a passing run**; the latest remote Actions result must be checked separately.
+The CI workflow runs on every push to `main`, pull requests, and manual dispatch. It validates archive checksums, extracts the recovered snapshot, applies the explicit remote-PIR safety overlay, installs the package, checks dependencies and console scripts, compiles code, and runs the complete test suite against both the recovered snapshot and the checked-out source. Check the latest [GitHub Actions runs](https://github.com/LU9DI/AEGIS/actions) for the current result.
 
 ## Security caveats
 
-AEGIS is a research prototype, not a production-ready or independently audited anonymity system. Garlic-clove delivery/batching semantics are not implemented. The two-server XOR PIR prototype assumes non-colluding replicas; colluding replicas can recover the requested index. The four-server consistency check is not a cryptographic proof of correct PIR computation and cannot prevent collusion or common-mode failures. A TLS-authenticated replica can still return a false PIR answer while claiming the expected snapshot hash. The relay testbed and RPC/TLS demos do not establish security on a live multi-operator network.
+AEGIS is a research prototype, not a production-ready or independently audited anonymity system. Remote PIR retrieval is refused by default because TLS does not prove correct PIR computation; callers can explicitly opt into unverified research mode, which remains unsafe for sensitive data. The two-server XOR PIR prototype assumes non-colluding replicas; colluding replicas can recover the requested index. The four-server consistency check is not a cryptographic proof of correct computation and cannot prevent collusion or common-mode failures. Garlic-clove delivery/batching semantics are not implemented. The relay testbed and RPC/TLS demos do not establish security on a live multi-operator network. The cryptographic verifiable-PIR blocker remains tracked in [Issue #2](https://github.com/LU9DI/AEGIS/issues/2).
 
 Simulator outputs and route-selection examples are hypothetical or synthetic, not measurements of Tor or a live network. **Do not use this prototype for sensitive or production communications.**
 
