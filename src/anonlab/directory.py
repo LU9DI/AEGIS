@@ -271,6 +271,19 @@ class DirectoryAuthority:
             fingerprint = hashlib.sha256(self.public_key_bytes).hexdigest()
             row = connection.execute("SELECT value FROM authority_meta WHERE key='authority_key_fingerprint'").fetchone()
             if row is None:
+                # Never silently re-bind a populated database to a new key if
+                # metadata was deleted or partially lost. That would let an
+                # attacker with file access reset the authority's trust identity.
+                existing_state = sum(
+                    int(connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
+                    for table in (
+                        "issued_descriptors",
+                        "issued_serials",
+                        "issued_revocation_snapshots",
+                    )
+                )
+                if existing_state:
+                    raise ValueError("authority state is missing its key fingerprint")
                 connection.execute("INSERT INTO authority_meta(key, value) VALUES(?, ?)", ("authority_key_fingerprint", fingerprint))
             elif not hmac.compare_digest(str(row[0]), fingerprint):
                 raise ValueError("authority state belongs to a different authority key")
