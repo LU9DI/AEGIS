@@ -406,7 +406,10 @@ class AuthenticatedPirRpcServer:
             raise PirRpcProtocolError("request timestamp is outside accepted window")
         # Expire old entries before checking. Cache is bounded; removing expired
         # entries is safe even when the current request is subsequently rate-limited.
-        cutoff = now - MAX_CLOCK_SKEW_SECONDS
+        # A request timestamp may be up to one skew window in the future.
+        # Keep its nonce for two skew windows from first-seen time so it cannot
+        # be replayed after cache expiry while its issued_at is still acceptable.
+        cutoff = now - (2 * MAX_CLOCK_SKEW_SECONDS)
         while self._seen_nonces:
             oldest_nonce, oldest_seen = next(iter(self._seen_nonces.items()))
             if oldest_seen >= cutoff:
