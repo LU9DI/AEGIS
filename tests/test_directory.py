@@ -440,6 +440,18 @@ class SignedDirectoryTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "permissions are too broad"):
                     DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
 
+    @unittest.skipUnless(os.name == "posix", "POSIX filesystem ownership is required")
+    def test_verifier_state_rejects_hard_linked_file(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state_path = root / "state.json"
+            alias_path = root / "alias.json"
+            verifier = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+            verifier.apply_revocations(self.empty_revocations, now=self.now)
+            os.link(state_path, alias_path)
+            with self.assertRaisesRegex(ValueError, "hard links"):
+                DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+
     def test_persisted_revocation_snapshot_cannot_be_edited_without_signature(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             state_path = Path(directory) / "state.json"
