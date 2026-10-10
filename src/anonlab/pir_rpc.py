@@ -554,7 +554,15 @@ async def _query_endpoint(
         raise PirRpcProtocolError("response identity or protocol mismatch")
     if response["nonce"] != nonce_text:
         raise PirRpcProtocolError("response nonce does not match the request")
-    if response["item_count"] != expected_item_count or response["record_bytes"] != expected_record_bytes:
+    # bool is a subclass of int in Python (True == 1), but it is not a
+    # valid wire-format integer for protocol dimensions. Require exact JSON integer
+    # types before comparing values so malformed authenticated peers fail closed.
+    if (
+        type(response["item_count"]) is not int
+        or type(response["record_bytes"]) is not int
+        or response["item_count"] != expected_item_count
+        or response["record_bytes"] != expected_record_bytes
+    ):
         raise PirRpcProtocolError("replica database dimensions do not match the client manifest")
     snapshot_sha256 = response["snapshot_sha256"]
     if not isinstance(snapshot_sha256, str) or len(snapshot_sha256) != 64 or any(ch not in "0123456789abcdef" for ch in snapshot_sha256):
