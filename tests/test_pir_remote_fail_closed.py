@@ -29,15 +29,20 @@ class RemotePirFailClosedTests(unittest.IsolatedAsyncioTestCase):
                 self.endpoints[:2], 8, 3, record_bytes=16, allow_unverified_remote=True
             )
 
-    async def test_dns_hostname_is_treated_as_remote_and_rejected_before_io(self):
-        hostname_endpoints = (
-            PirRpcEndpoint("dns-a", "pir-a.example.invalid", 443, ssl_context=self.endpoints[0].ssl_context,
-                           server_hostname="pir-a.example.invalid"),
-            PirRpcEndpoint("dns-b", "pir-b.example.invalid", 443, ssl_context=self.endpoints[1].ssl_context,
-                           server_hostname="pir-b.example.invalid"),
-        )
-        with self.assertRaisesRegex(PirRpcProtocolError, "remote PIR computation is disabled"):
-            await retrieve_two_server_pir_rpc(hostname_endpoints, 8, 3, record_bytes=16)
+    async def test_dns_hostname_is_never_classified_as_loopback(self):
+        from anonlab.pir_rpc import _is_loopback_host
+
+        self.assertFalse(_is_loopback_host("pir.example.invalid"))
+        self.assertFalse(_is_loopback_host("localhost"))
+        self.assertTrue(_is_loopback_host("127.0.0.1"))
+
+    async def test_endpoint_rejects_dns_hostname_before_network_io(self):
+        with self.assertRaisesRegex(ValueError, "numeric IP address"):
+            PirRpcEndpoint(
+                "dns-a", "pir-a.example.invalid", 443,
+                ssl_context=self.endpoints[0].ssl_context,
+                server_hostname="pir-a.example.invalid",
+            )
 
     async def test_remote_research_mode_must_be_explicitly_boolean(self):
         with self.assertRaisesRegex(ValueError, "must be a bool"):
