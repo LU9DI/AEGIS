@@ -71,3 +71,8 @@ A issue #2 permanece um bloqueador. Para encerrá-la, é necessário selecionar 
 5. Não anunciar anonimato, resistência a observador global ou PIR verificável sem evidências e revisão independente.
 
 **Conclusão:** a recuperação do código e a validação de CI avançaram, mas ainda existem pendências de reconciliação e segurança criptográfica. Esta auditoria não equivale a uma auditoria criptográfica independente.
+
+
+## Atualização pós-PR #6 (2026-10-10)
+
+O PR #6 foi integrado no commit `a1ed52e7dc9bd3b931fa7b92b1cc853c1062f92e`. A API RPC agora rejeita toda recuperação PIR não-loopback, mesmo se o parâmetro legado de pesquisa for definido, até existir prova criptográfica real de computação. Foram adicionados testes para bypass, host e hostname. A validação do PR passou em https://github.com/LU9DI/AEGIS/actions/runs/38067810483: 233 testes e 76 subtestes no checkout e 230 testes e 76 subtestes no snapshot recuperado. A issue #2 permanece aberta: esta mudança é mitigação, não prova verificável de PIR. As oito diferenças de arquivos preservadas continuam pendentes de reconciliação manual.
