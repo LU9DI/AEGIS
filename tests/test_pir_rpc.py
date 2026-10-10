@@ -136,14 +136,23 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
                 writer.close()
                 await writer.wait_closed()
 
-        tokens_before = self.server_a._rate_limiter.tokens
-        first = await submit()
-        tokens_after_first = self.server_a._rate_limiter.tokens
-        second = await submit()
+        original_acquire = self.server_a._rate_limiter.acquire
+        acquire_calls = 0
+
+        def count_acquire():
+            nonlocal acquire_calls
+            acquire_calls += 1
+            return original_acquire()
+
+        self.server_a._rate_limiter.acquire = count_acquire
+        try:
+            first = await submit()
+            second = await submit()
+        finally:
+            self.server_a._rate_limiter.acquire = original_acquire
         self.assertTrue(first)  # accepted query receives an authenticated response
         self.assertEqual(second, b"")  # same nonce is rejected without protocol detail
-        self.assertLess(tokens_after_first, tokens_before)
-        self.assertEqual(self.server_a._rate_limiter.tokens, tokens_after_first)
+        self.assertEqual(acquire_calls, 1)  # replay rejection happens before admission control
         response = _verify_envelope(first[4:], self.key_a, _RESPONSE_DOMAIN)
         self.assertEqual(response["nonce"], nonce)
 
