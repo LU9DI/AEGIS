@@ -59,7 +59,7 @@ jobs:
           import io
           outer = Path("AEGIS-consolidated-recovery-2026-10-09.zip")
           destination = Path("recovered-source")
-          destination.mkdir()
+          destination.mkdir(exist_ok=True)
           target_name = "AEGIS-v0.27.4-four-server-fault-detection-research.zip"
           with ZipFile(outer) as archive:
               matches = [n for n in archive.namelist() if n.endswith(target_name)]
@@ -219,9 +219,9 @@ jobs:
             - The PR workflow must install the checkout itself, validate console entry points, compile the source, and pass the full test suite before merge.
             - This does not resolve the separately tracked cryptographic PIR-verifiability research blocker.
           add-paths: |
-            src/**
-            tests/**
-            docs/**
-            experiments/**
-            examples/**
-            *.md
+            :(top,glob)src/**
+            :(top,glob)tests/**
+            :(top,glob)docs/**
+            :(top,glob)experiments/**
+            :(top,glob)examples/**
+            :(top,glob)*.md
