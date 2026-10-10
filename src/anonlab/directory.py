@@ -272,6 +272,8 @@ class DirectoryAuthority:
                 state_info = os.fstat(state_fd)
                 if not stat.S_ISREG(state_info.st_mode):
                     raise ValueError("authority state path must be a regular file")
+                if state_info.st_nlink != 1:
+                    raise ValueError("authority state file must not have multiple hard links")
                 os.fchmod(state_fd, stat.S_IRUSR | stat.S_IWUSR)
             finally:
                 os.close(state_fd)
