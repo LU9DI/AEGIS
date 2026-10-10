@@ -3,9 +3,6 @@ name: Recovery archive validation
 on:
   push:
     branches: [main]
-    paths:
-      - "AEGIS-consolidated-recovery-2026-10-09.zip"
-      - ".github/workflows/recovery-validation.yml"
   pull_request:
   workflow_dispatch:
 
