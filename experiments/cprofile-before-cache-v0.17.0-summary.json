@@ -1,0 +1,124 @@
+{
+  "run": {
+    "integrity_verified": true,
+    "circuit_build_ms": 4.988675,
+    "stream_open_batch_ms": 16.681511,
+    "duplex_wall_ms": 170.388396,
+    "duplex_goodput_mbps": 98.4645456724647,
+    "duplex_stream_latency_p50_ms": 156.709785,
+    "duplex_stream_latency_p95_ms": 157.312214,
+    "direct_wall_ms": 9.245816,
+    "direct_goodput_mbps": 1814.5738569748737,
+    "direct_stream_latency_p50_ms": 8.543331,
+    "direct_stream_latency_p95_ms": 8.710999,
+    "destination_connections": 16,
+    "active_streams_after_completion": 0,
+    "active_connections_after_close": [
+      0,
+      0,
+      0
+    ],
+    "relay_observability_check": true
+  },
+  "functions": [
+    {
+      "file": "/mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/ntor_experiment.py",
+      "line": 85,
+      "function": "__post_init__",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_seconds": 4.8370000000000004e-06,
+      "cumulative_seconds": 7.562000000000001e-06
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py",
+      "line": 192,
+      "function": "__post_init__",
+      "primitive_calls": 1429,
+      "calls": 1429,
+      "self_seconds": 0.0020975200000000003,
+      "cumulative_seconds": 0.019250707000000002
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py",
+      "line": 374,
+      "function": "__post_init__",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_seconds": 6.341000000000001e-06,
+      "cumulative_seconds": 1.999e-05
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py",
+      "line": 106,
+      "function": "_ensure_loopback",
+      "primitive_calls": 1458,
+      "calls": 1458,
+      "self_seconds": 0.00114715,
+      "cumulative_seconds": 0.015627824000000002
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py",
+      "line": 407,
+      "function": "descriptor",
+      "primitive_calls": 1425,
+      "calls": 1425,
+      "self_seconds": 0.0021926180000000003,
+      "cumulative_seconds": 0.029540882
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py",
+      "line": 748,
+      "function": "downstream_response_dispatcher",
+      "primitive_calls": 338,
+      "calls": 338,
+      "self_seconds": 0.0014815840000000002,
+      "cumulative_seconds": 0.023490780000000003
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py",
+      "line": 820,
+      "function": "forward_duplex_command",
+      "primitive_calls": 640,
+      "calls": 640,
+      "self_seconds": 0.000771176,
+      "cumulative_seconds": 0.024342613000000003
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py",
+      "line": 526,
+      "function": "handle",
+      "primitive_calls": 740,
+      "calls": 740,
+      "self_seconds": 0.004127345,
+      "cumulative_seconds": 0.071588818
+    },
+    {
+      "file": "/usr/lib/python3.13/ipaddress.py",
+      "line": 28,
+      "function": "ip_address",
+      "primitive_calls": 1458,
+      "calls": 1458,
+      "self_seconds": 0.000684474,
+      "cumulative_seconds": 0.012809786
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/onion_protocol.py",
+      "line": 84,
+      "function": "open_sealed",
+      "primitive_calls": 1422,
+      "calls": 1422,
+      "self_seconds": 0.0037439350000000003,
+      "cumulative_seconds": 0.012712345000000002
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/onion_protocol.py",
+      "line": 77,
+      "function": "seal",
+      "primitive_calls": 1422,
+      "calls": 1422,
+      "self_seconds": 0.005688854,
+      "cumulative_seconds": 0.014233515
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "description": "Two separate five-trial blocks on the same host; v0.17 baseline then v0.18 descriptor-cache build. Not interleaved, so environment drift remains possible.",
+  "config": {
+    "streams": 8,
+    "payload_bytes_per_stream": 1048576,
+    "chunk_bytes": 65536,
+    "pipeline_depths": [
+      1,
+      2,
+      4
+    ],
+    "trials_per_depth": 5,
+    "seed": 20261018,
+    "hops": 3,
+    "loopback_only": true
+  },
+  "baseline_metadata": {
+    "project": "MALEBOLGE Anonymous Network Research Lab",
+    "version": "0.17.0",
+    "experiment": "bounded WRITE pipeline-depth comparison on three-hop IPv4 loopback circuit",
+    "trials_per_depth": 5,
+    "python": "3.13.5",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "is_loopback_only": true,
+    "is_production_security_test": false,
+    "warning": "Single-host loopback microbenchmark only. Results do not predict WAN performance, prove anonymity, or compare securely with Tor. Re-run on different hosts and workloads."
+  },
+  "after_metadata": {
+    "project": "MALEBOLGE Anonymous Network Research Lab",
+    "version": "0.18.0",
+    "experiment": "bounded WRITE pipeline-depth comparison on three-hop IPv4 loopback circuit",
+    "trials_per_depth": 5,
+    "python": "3.13.5",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "is_loopback_only": true,
+    "is_production_security_test": false,
+    "warning": "Single-host loopback microbenchmark only. Results do not predict WAN performance, prove anonymity, or compare securely with Tor. Re-run on different hosts and workloads."
+  },
+  "by_depth": {
+    "1": {
+      "depth": 1,
+      "trials_before": 5,
+      "trials_after": 5,
+      "throughput_median_before_mbps": 253.7514167223759,
+      "throughput_median_after_mbps": 289.955854240825,
+      "throughput_change_percent": 14.26767896947727,
+      "latency_p50_before_ms": 260.496333,
+      "latency_p50_after_ms": 227.65601700000002,
+      "latency_p50_change_percent": -12.606824680330519,
+      "direct_throughput_before_mbps": 4415.932475031563,
+      "direct_throughput_after_mbps": 4205.38729822447,
+      "integrity_both": true,
+      "observability_both": true,
+      "cleanup_both": true
+    },
+    "2": {
+      "depth": 2,
+      "trials_before": 5,
+      "trials_after": 5,
+      "throughput_median_before_mbps": 252.2465811871939,
+      "throughput_median_after_mbps": 295.69961064016684,
+      "throughput_change_percent": 17.22640966964233,
+      "latency_p50_before_ms": 261.599219,
+      "latency_p50_after_ms": 222.76169800000002,
+      "latency_p50_change_percent": -14.846191494172611,
+      "direct_throughput_before_mbps": 4279.840900232038,
+      "direct_throughput_after_mbps": 4286.123206508733,
+      "integrity_both": true,
+      "observability_both": true,
+      "cleanup_both": true
+    },
+    "4": {
+      "depth": 4,
+      "trials_before": 5,
+      "trials_after": 5,
+      "throughput_median_before_mbps": 247.35493538377816,
+      "throughput_median_after_mbps": 279.08652299432407,
+      "throughput_change_percent": 12.828362434456174,
+      "latency_p50_before_ms": 265.839813,
+      "latency_p50_after_ms": 233.3976835,
+      "latency_p50_change_percent": -12.203638399339379,
+      "direct_throughput_before_mbps": 4392.378586899914,
+      "direct_throughput_after_mbps": 4139.848178321843,
+      "integrity_both": true,
+      "observability_both": true,
+      "cleanup_both": true
+    }
+  },
+  "all_integrity_checks_passed": true,
+  "all_observability_checks_passed": true,
+  "all_cleanup_checks_passed": true
+}

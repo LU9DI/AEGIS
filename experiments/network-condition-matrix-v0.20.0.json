@@ -1,0 +1,986 @@
+{
+  "schema_version": 1,
+  "title": "MALEBOLGE v0.20.0 network-condition matrix",
+  "trials": [
+    {
+      "profile": "loopback",
+      "trial": 1,
+      "result": {
+        "schema_version": 1,
+        "metadata": {
+          "project": "MALEBOLGE Anonymous Network Research Lab",
+          "version": "0.20.0",
+          "experiment": "loopback circuit benchmark with deterministic user-space latency/jitter/bandwidth shaping",
+          "is_loopback_only": true,
+          "is_real_wan_measurement": false,
+          "is_packet_loss_simulation": false,
+          "is_production_security_test": false,
+          "python": "3.13.5",
+          "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+          "seed": 20261021,
+          "warning": "Shaper profiles approximate byte-stream timing and rate only. TCP remains reliable. Results are not WAN measurements and do not prove anonymity."
+        },
+        "profile": {
+          "name": "loopback",
+          "one_way_latency_ms": 0.0,
+          "jitter_uniform_plus_minus_ms": 0.0,
+          "bandwidth_mbps_per_direction": null,
+          "shaper_chunk_bytes": 16384,
+          "queue_chunks_per_direction": 16
+        },
+        "config": {
+          "streams": 2,
+          "payload_bytes_per_stream": 8192,
+          "total_useful_bytes": 16384,
+          "hop_count": 3,
+          "sparse_gap_ms": 0.0,
+          "sparse_chunk_bytes": null,
+          "write_chunk_bytes": 262144,
+          "pipeline_depth": 1,
+          "window_update_batch_bytes": 65536,
+          "queue_bound_per_direction_per_connection": 16,
+          "max_proxy_connections_per_shaper": 64
+        },
+        "results": {
+          "integrity_verified": true,
+          "circuit_build_ms": 6.262321,
+          "stream_open_batch_ms": 2.576615,
+          "circuit_wall_ms": 3.484103,
+          "circuit_goodput_mbps": 37.62001295598896,
+          "circuit_stream_latency_p50_ms": 2.6706715,
+          "circuit_stream_latency_p95_ms": 2.919962,
+          "direct_wall_ms": 0.943212,
+          "direct_goodput_mbps": 138.96345678384074,
+          "direct_stream_latency_p50_ms": 0.8192699999999999,
+          "direct_stream_latency_p95_ms": 0.863202,
+          "relay_observability_check": true,
+          "all_relay_connections_closed": true,
+          "active_proxy_connections_after_close": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "proxy_rejected_connections": 0,
+          "proxy_accepted_connections": [
+            1,
+            1,
+            1,
+            4
+          ],
+          "max_shaper_queue_chunks_observed": 2,
+          "shaper_queue_chunks_configured": 16,
+          "proxy_bytes_client_to_upstream": 86043,
+          "proxy_bytes_upstream_to_client": 87508,
+          "destination_connections": 4
+        },
+        "limitations": [
+          "All real relays, shaping proxies and destination run on one host with IPv4 loopback.",
+          "User-space shaping adds one-way delay, jitter and serialization rates to stream chunks; those chunks are not IP packets.",
+          "No packet loss, TCP retransmission behavior, routing changes, radio interference or real WAN congestion is modeled.",
+          "Direct comparison uses one shaped link; the circuit uses client-to-guard, guard-to-middle, middle-to-exit and exit-to-destination links.",
+          "The protocol remains a custom experimental implementation and has not been independently audited or proven anonymous."
+        ]
+      }
+    },
+    {
+      "profile": "loopback",
+      "trial": 2,
+      "result": {
+        "schema_version": 1,
+        "metadata": {
+          "project": "MALEBOLGE Anonymous Network Research Lab",
+          "version": "0.20.0",
+          "experiment": "loopback circuit benchmark with deterministic user-space latency/jitter/bandwidth shaping",
+          "is_loopback_only": true,
+          "is_real_wan_measurement": false,
+          "is_packet_loss_simulation": false,
+          "is_production_security_test": false,
+          "python": "3.13.5",
+          "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+          "seed": 20261022,
+          "warning": "Shaper profiles approximate byte-stream timing and rate only. TCP remains reliable. Results are not WAN measurements and do not prove anonymity."
+        },
+        "profile": {
+          "name": "loopback",
+          "one_way_latency_ms": 0.0,
+          "jitter_uniform_plus_minus_ms": 0.0,
+          "bandwidth_mbps_per_direction": null,
+          "shaper_chunk_bytes": 16384,
+          "queue_chunks_per_direction": 16
+        },
+        "config": {
+          "streams": 2,
+          "payload_bytes_per_stream": 8192,
+          "total_useful_bytes": 16384,
+          "hop_count": 3,
+          "sparse_gap_ms": 0.0,
+          "sparse_chunk_bytes": null,
+          "write_chunk_bytes": 262144,
+          "pipeline_depth": 1,
+          "window_update_batch_bytes": 65536,
+          "queue_bound_per_direction_per_connection": 16,
+          "max_proxy_connections_per_shaper": 64
+        },
+        "results": {
+          "integrity_verified": true,
+          "circuit_build_ms": 3.253826,
+          "stream_open_batch_ms": 2.402101,
+          "circuit_wall_ms": 4.003205,
+          "circuit_goodput_mbps": 32.74176566026471,
+          "circuit_stream_latency_p50_ms": 2.8609335,
+          "circuit_stream_latency_p95_ms": 3.181958,
+          "direct_wall_ms": 1.1577549999999999,
+          "direct_goodput_mbps": 113.21220810966052,
+          "direct_stream_latency_p50_ms": 0.8876985,
+          "direct_stream_latency_p95_ms": 0.979417,
+          "relay_observability_check": true,
+          "all_relay_connections_closed": true,
+          "active_proxy_connections_after_close": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "proxy_rejected_connections": 0,
+          "proxy_accepted_connections": [
+            1,
+            1,
+            1,
+            4
+          ],
+          "max_shaper_queue_chunks_observed": 2,
+          "shaper_queue_chunks_configured": 16,
+          "proxy_bytes_client_to_upstream": 86043,
+          "proxy_bytes_upstream_to_client": 87508,
+          "destination_connections": 4
+        },
+        "limitations": [
+          "All real relays, shaping proxies and destination run on one host with IPv4 loopback.",
+          "User-space shaping adds one-way delay, jitter and serialization rates to stream chunks; those chunks are not IP packets.",
+          "No packet loss, TCP retransmission behavior, routing changes, radio interference or real WAN congestion is modeled.",
+          "Direct comparison uses one shaped link; the circuit uses client-to-guard, guard-to-middle, middle-to-exit and exit-to-destination links.",
+          "The protocol remains a custom experimental implementation and has not been independently audited or proven anonymous."
+        ]
+      }
+    },
+    {
+      "profile": "lan",
+      "trial": 1,
+      "result": {
+        "schema_version": 1,
+        "metadata": {
+          "project": "MALEBOLGE Anonymous Network Research Lab",
+          "version": "0.20.0",
+          "experiment": "loopback circuit benchmark with deterministic user-space latency/jitter/bandwidth shaping",
+          "is_loopback_only": true,
+          "is_real_wan_measurement": false,
+          "is_packet_loss_simulation": false,
+          "is_production_security_test": false,
+          "python": "3.13.5",
+          "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+          "seed": 20261021,
+          "warning": "Shaper profiles approximate byte-stream timing and rate only. TCP remains reliable. Results are not WAN measurements and do not prove anonymity."
+        },
+        "profile": {
+          "name": "lan",
+          "one_way_latency_ms": 0.5,
+          "jitter_uniform_plus_minus_ms": 0.1,
+          "bandwidth_mbps_per_direction": 1000.0,
+          "shaper_chunk_bytes": 16384,
+          "queue_chunks_per_direction": 16
+        },
+        "config": {
+          "streams": 2,
+          "payload_bytes_per_stream": 8192,
+          "total_useful_bytes": 16384,
+          "hop_count": 3,
+          "sparse_gap_ms": 0.0,
+          "sparse_chunk_bytes": null,
+          "write_chunk_bytes": 262144,
+          "pipeline_depth": 1,
+          "window_update_batch_bytes": 65536,
+          "queue_bound_per_direction_per_connection": 16,
+          "max_proxy_connections_per_shaper": 64
+        },
+        "results": {
+          "integrity_verified": true,
+          "circuit_build_ms": 18.743228,
+          "stream_open_batch_ms": 31.37644,
+          "circuit_wall_ms": 32.499808,
+          "circuit_goodput_mbps": 4.03300844115756,
+          "circuit_stream_latency_p50_ms": 20.282443,
+          "circuit_stream_latency_p95_ms": 23.531847,
+          "direct_wall_ms": 3.53504,
+          "direct_goodput_mbps": 37.07793971213904,
+          "direct_stream_latency_p50_ms": 3.3272114999999998,
+          "direct_stream_latency_p95_ms": 3.435059,
+          "relay_observability_check": true,
+          "all_relay_connections_closed": true,
+          "active_proxy_connections_after_close": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "proxy_rejected_connections": 0,
+          "proxy_accepted_connections": [
+            1,
+            1,
+            1,
+            4
+          ],
+          "max_shaper_queue_chunks_observed": 2,
+          "shaper_queue_chunks_configured": 16,
+          "proxy_bytes_client_to_upstream": 86043,
+          "proxy_bytes_upstream_to_client": 87508,
+          "destination_connections": 4
+        },
+        "limitations": [
+          "All real relays, shaping proxies and destination run on one host with IPv4 loopback.",
+          "User-space shaping adds one-way delay, jitter and serialization rates to stream chunks; those chunks are not IP packets.",
+          "No packet loss, TCP retransmission behavior, routing changes, radio interference or real WAN congestion is modeled.",
+          "Direct comparison uses one shaped link; the circuit uses client-to-guard, guard-to-middle, middle-to-exit and exit-to-destination links.",
+          "The protocol remains a custom experimental implementation and has not been independently audited or proven anonymous."
+        ]
+      }
+    },
+    {
+      "profile": "lan",
+      "trial": 2,
+      "result": {
+        "schema_version": 1,
+        "metadata": {
+          "project": "MALEBOLGE Anonymous Network Research Lab",
+          "version": "0.20.0",
+          "experiment": "loopback circuit benchmark with deterministic user-space latency/jitter/bandwidth shaping",
+          "is_loopback_only": true,
+          "is_real_wan_measurement": false,
+          "is_packet_loss_simulation": false,
+          "is_production_security_test": false,
+          "python": "3.13.5",
+          "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+          "seed": 20261022,
+          "warning": "Shaper profiles approximate byte-stream timing and rate only. TCP remains reliable. Results are not WAN measurements and do not prove anonymity."
+        },
+        "profile": {
+          "name": "lan",
+          "one_way_latency_ms": 0.5,
+          "jitter_uniform_plus_minus_ms": 0.1,
+          "bandwidth_mbps_per_direction": 1000.0,
+          "shaper_chunk_bytes": 16384,
+          "queue_chunks_per_direction": 16
+        },
+        "config": {
+          "streams": 2,
+          "payload_bytes_per_stream": 8192,
+          "total_useful_bytes": 16384,
+          "hop_count": 3,
+          "sparse_gap_ms": 0.0,
+          "sparse_chunk_bytes": null,
+          "write_chunk_bytes": 262144,
+          "pipeline_depth": 1,
+          "window_update_batch_bytes": 65536,
+          "queue_bound_per_direction_per_connection": 16,
+          "max_proxy_connections_per_shaper": 64
+        },
+        "results": {
+          "integrity_verified": true,
+          "circuit_build_ms": 18.166058,
+          "stream_open_batch_ms": 31.602666,
+          "circuit_wall_ms": 31.774083,
+          "circuit_goodput_mbps": 4.125122981519246,
+          "circuit_stream_latency_p50_ms": 19.099494999999997,
+          "circuit_stream_latency_p95_ms": 21.714788,
+          "direct_wall_ms": 3.4975330000000002,
+          "direct_goodput_mbps": 37.47555777172081,
+          "direct_stream_latency_p50_ms": 3.3086735000000003,
+          "direct_stream_latency_p95_ms": 3.388128,
+          "relay_observability_check": true,
+          "all_relay_connections_closed": true,
+          "active_proxy_connections_after_close": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "proxy_rejected_connections": 0,
+          "proxy_accepted_connections": [
+            1,
+            1,
+            1,
+            4
+          ],
+          "max_shaper_queue_chunks_observed": 2,
+          "shaper_queue_chunks_configured": 16,
+          "proxy_bytes_client_to_upstream": 86043,
+          "proxy_bytes_upstream_to_client": 87508,
+          "destination_connections": 4
+        },
+        "limitations": [
+          "All real relays, shaping proxies and destination run on one host with IPv4 loopback.",
+          "User-space shaping adds one-way delay, jitter and serialization rates to stream chunks; those chunks are not IP packets.",
+          "No packet loss, TCP retransmission behavior, routing changes, radio interference or real WAN congestion is modeled.",
+          "Direct comparison uses one shaped link; the circuit uses client-to-guard, guard-to-middle, middle-to-exit and exit-to-destination links.",
+          "The protocol remains a custom experimental implementation and has not been independently audited or proven anonymous."
+        ]
+      }
+    },
+    {
+      "profile": "metro",
+      "trial": 1,
+      "result": {
+        "schema_version": 1,
+        "metadata": {
+          "project": "MALEBOLGE Anonymous Network Research Lab",
+          "version": "0.20.0",
+          "experiment": "loopback circuit benchmark with deterministic user-space latency/jitter/bandwidth shaping",
+          "is_loopback_only": true,
+          "is_real_wan_measurement": false,
+          "is_packet_loss_simulation": false,
+          "is_production_security_test": false,
+          "python": "3.13.5",
+          "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+          "seed": 20261021,
+          "warning": "Shaper profiles approximate byte-stream timing and rate only. TCP remains reliable. Results are not WAN measurements and do not prove anonymity."
+        },
+        "profile": {
+          "name": "metro",
+          "one_way_latency_ms": 5.0,
+          "jitter_uniform_plus_minus_ms": 1.0,
+          "bandwidth_mbps_per_direction": 200.0,
+          "shaper_chunk_bytes": 16384,
+          "queue_chunks_per_direction": 16
+        },
+        "config": {
+          "streams": 2,
+          "payload_bytes_per_stream": 8192,
+          "total_useful_bytes": 16384,
+          "hop_count": 3,
+          "sparse_gap_ms": 0.0,
+          "sparse_chunk_bytes": null,
+          "write_chunk_bytes": 262144,
+          "pipeline_depth": 1,
+          "window_update_batch_bytes": 65536,
+          "queue_bound_per_direction_per_connection": 16,
+          "max_proxy_connections_per_shaper": 64
+        },
+        "results": {
+          "integrity_verified": true,
+          "circuit_build_ms": 77.073053,
+          "stream_open_batch_ms": 142.145219,
+          "circuit_wall_ms": 139.703563,
+          "circuit_goodput_mbps": 0.9382151548990916,
+          "circuit_stream_latency_p50_ms": 81.8691195,
+          "circuit_stream_latency_p95_ms": 93.612775,
+          "direct_wall_ms": 13.161593,
+          "direct_goodput_mbps": 9.958672935715304,
+          "direct_stream_latency_p50_ms": 12.9238645,
+          "direct_stream_latency_p95_ms": 13.014892,
+          "relay_observability_check": true,
+          "all_relay_connections_closed": true,
+          "active_proxy_connections_after_close": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "proxy_rejected_connections": 0,
+          "proxy_accepted_connections": [
+            1,
+            1,
+            1,
+            4
+          ],
+          "max_shaper_queue_chunks_observed": 2,
+          "shaper_queue_chunks_configured": 16,
+          "proxy_bytes_client_to_upstream": 86043,
+          "proxy_bytes_upstream_to_client": 87508,
+          "destination_connections": 4
+        },
+        "limitations": [
+          "All real relays, shaping proxies and destination run on one host with IPv4 loopback.",
+          "User-space shaping adds one-way delay, jitter and serialization rates to stream chunks; those chunks are not IP packets.",
+          "No packet loss, TCP retransmission behavior, routing changes, radio interference or real WAN congestion is modeled.",
+          "Direct comparison uses one shaped link; the circuit uses client-to-guard, guard-to-middle, middle-to-exit and exit-to-destination links.",
+          "The protocol remains a custom experimental implementation and has not been independently audited or proven anonymous."
+        ]
+      }
+    },
+    {
+      "profile": "metro",
+      "trial": 2,
+      "result": {
+        "schema_version": 1,
+        "metadata": {
+          "project": "MALEBOLGE Anonymous Network Research Lab",
+          "version": "0.20.0",
+          "experiment": "loopback circuit benchmark with deterministic user-space latency/jitter/bandwidth shaping",
+          "is_loopback_only": true,
+          "is_real_wan_measurement": false,
+          "is_packet_loss_simulation": false,
+          "is_production_security_test": false,
+          "python": "3.13.5",
+          "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+          "seed": 20261022,
+          "warning": "Shaper profiles approximate byte-stream timing and rate only. TCP remains reliable. Results are not WAN measurements and do not prove anonymity."
+        },
+        "profile": {
+          "name": "metro",
+          "one_way_latency_ms": 5.0,
+          "jitter_uniform_plus_minus_ms": 1.0,
+          "bandwidth_mbps_per_direction": 200.0,
+          "shaper_chunk_bytes": 16384,
+          "queue_chunks_per_direction": 16
+        },
+        "config": {
+          "streams": 2,
+          "payload_bytes_per_stream": 8192,
+          "total_useful_bytes": 16384,
+          "hop_count": 3,
+          "sparse_gap_ms": 0.0,
+          "sparse_chunk_bytes": null,
+          "write_chunk_bytes": 262144,
+          "pipeline_depth": 1,
+          "window_update_batch_bytes": 65536,
+          "queue_bound_per_direction_per_connection": 16,
+          "max_proxy_connections_per_shaper": 64
+        },
+        "results": {
+          "integrity_verified": true,
+          "circuit_build_ms": 75.258732,
+          "stream_open_batch_ms": 140.540005,
+          "circuit_wall_ms": 139.84506199999998,
+          "circuit_goodput_mbps": 0.9372658435376146,
+          "circuit_stream_latency_p50_ms": 82.266739,
+          "circuit_stream_latency_p95_ms": 94.128012,
+          "direct_wall_ms": 12.870124,
+          "direct_goodput_mbps": 10.184206461414046,
+          "direct_stream_latency_p50_ms": 12.666236000000001,
+          "direct_stream_latency_p95_ms": 12.743152,
+          "relay_observability_check": true,
+          "all_relay_connections_closed": true,
+          "active_proxy_connections_after_close": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "proxy_rejected_connections": 0,
+          "proxy_accepted_connections": [
+            1,
+            1,
+            1,
+            4
+          ],
+          "max_shaper_queue_chunks_observed": 2,
+          "shaper_queue_chunks_configured": 16,
+          "proxy_bytes_client_to_upstream": 86043,
+          "proxy_bytes_upstream_to_client": 87508,
+          "destination_connections": 4
+        },
+        "limitations": [
+          "All real relays, shaping proxies and destination run on one host with IPv4 loopback.",
+          "User-space shaping adds one-way delay, jitter and serialization rates to stream chunks; those chunks are not IP packets.",
+          "No packet loss, TCP retransmission behavior, routing changes, radio interference or real WAN congestion is modeled.",
+          "Direct comparison uses one shaped link; the circuit uses client-to-guard, guard-to-middle, middle-to-exit and exit-to-destination links.",
+          "The protocol remains a custom experimental implementation and has not been independently audited or proven anonymous."
+        ]
+      }
+    },
+    {
+      "profile": "intercontinental",
+      "trial": 1,
+      "result": {
+        "schema_version": 1,
+        "metadata": {
+          "project": "MALEBOLGE Anonymous Network Research Lab",
+          "version": "0.20.0",
+          "experiment": "loopback circuit benchmark with deterministic user-space latency/jitter/bandwidth shaping",
+          "is_loopback_only": true,
+          "is_real_wan_measurement": false,
+          "is_packet_loss_simulation": false,
+          "is_production_security_test": false,
+          "python": "3.13.5",
+          "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+          "seed": 20261021,
+          "warning": "Shaper profiles approximate byte-stream timing and rate only. TCP remains reliable. Results are not WAN measurements and do not prove anonymity."
+        },
+        "profile": {
+          "name": "intercontinental",
+          "one_way_latency_ms": 25.0,
+          "jitter_uniform_plus_minus_ms": 5.0,
+          "bandwidth_mbps_per_direction": 50.0,
+          "shaper_chunk_bytes": 16384,
+          "queue_chunks_per_direction": 16
+        },
+        "config": {
+          "streams": 2,
+          "payload_bytes_per_stream": 8192,
+          "total_useful_bytes": 16384,
+          "hop_count": 3,
+          "sparse_gap_ms": 0.0,
+          "sparse_chunk_bytes": null,
+          "write_chunk_bytes": 262144,
+          "pipeline_depth": 1,
+          "window_update_batch_bytes": 65536,
+          "queue_bound_per_direction_per_connection": 16,
+          "max_proxy_connections_per_shaper": 64
+        },
+        "results": {
+          "integrity_verified": true,
+          "circuit_build_ms": 306.103951,
+          "stream_open_batch_ms": 650.777065,
+          "circuit_wall_ms": 633.828102,
+          "circuit_goodput_mbps": 0.2067942389843737,
+          "circuit_stream_latency_p50_ms": 378.398914,
+          "circuit_stream_latency_p95_ms": 430.639197,
+          "direct_wall_ms": 57.593771000000004,
+          "direct_goodput_mbps": 2.27580166612115,
+          "direct_stream_latency_p50_ms": 55.781017,
+          "direct_stream_latency_p95_ms": 57.496784,
+          "relay_observability_check": true,
+          "all_relay_connections_closed": true,
+          "active_proxy_connections_after_close": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "proxy_rejected_connections": 0,
+          "proxy_accepted_connections": [
+            1,
+            1,
+            1,
+            4
+          ],
+          "max_shaper_queue_chunks_observed": 2,
+          "shaper_queue_chunks_configured": 16,
+          "proxy_bytes_client_to_upstream": 86043,
+          "proxy_bytes_upstream_to_client": 87508,
+          "destination_connections": 4
+        },
+        "limitations": [
+          "All real relays, shaping proxies and destination run on one host with IPv4 loopback.",
+          "User-space shaping adds one-way delay, jitter and serialization rates to stream chunks; those chunks are not IP packets.",
+          "No packet loss, TCP retransmission behavior, routing changes, radio interference or real WAN congestion is modeled.",
+          "Direct comparison uses one shaped link; the circuit uses client-to-guard, guard-to-middle, middle-to-exit and exit-to-destination links.",
+          "The protocol remains a custom experimental implementation and has not been independently audited or proven anonymous."
+        ]
+      }
+    },
+    {
+      "profile": "intercontinental",
+      "trial": 2,
+      "result": {
+        "schema_version": 1,
+        "metadata": {
+          "project": "MALEBOLGE Anonymous Network Research Lab",
+          "version": "0.20.0",
+          "experiment": "loopback circuit benchmark with deterministic user-space latency/jitter/bandwidth shaping",
+          "is_loopback_only": true,
+          "is_real_wan_measurement": false,
+          "is_packet_loss_simulation": false,
+          "is_production_security_test": false,
+          "python": "3.13.5",
+          "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+          "seed": 20261022,
+          "warning": "Shaper profiles approximate byte-stream timing and rate only. TCP remains reliable. Results are not WAN measurements and do not prove anonymity."
+        },
+        "profile": {
+          "name": "intercontinental",
+          "one_way_latency_ms": 25.0,
+          "jitter_uniform_plus_minus_ms": 5.0,
+          "bandwidth_mbps_per_direction": 50.0,
+          "shaper_chunk_bytes": 16384,
+          "queue_chunks_per_direction": 16
+        },
+        "config": {
+          "streams": 2,
+          "payload_bytes_per_stream": 8192,
+          "total_useful_bytes": 16384,
+          "hop_count": 3,
+          "sparse_gap_ms": 0.0,
+          "sparse_chunk_bytes": null,
+          "write_chunk_bytes": 262144,
+          "pipeline_depth": 1,
+          "window_update_batch_bytes": 65536,
+          "queue_bound_per_direction_per_connection": 16,
+          "max_proxy_connections_per_shaper": 64
+        },
+        "results": {
+          "integrity_verified": true,
+          "circuit_build_ms": 303.768294,
+          "stream_open_batch_ms": 649.809934,
+          "circuit_wall_ms": 632.22647,
+          "circuit_goodput_mbps": 0.20731811497864047,
+          "circuit_stream_latency_p50_ms": 376.2818115,
+          "circuit_stream_latency_p95_ms": 428.643481,
+          "direct_wall_ms": 57.209711000000006,
+          "direct_goodput_mbps": 2.291079568641764,
+          "direct_stream_latency_p50_ms": 55.8908935,
+          "direct_stream_latency_p95_ms": 57.10883,
+          "relay_observability_check": true,
+          "all_relay_connections_closed": true,
+          "active_proxy_connections_after_close": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "proxy_rejected_connections": 0,
+          "proxy_accepted_connections": [
+            1,
+            1,
+            1,
+            4
+          ],
+          "max_shaper_queue_chunks_observed": 2,
+          "shaper_queue_chunks_configured": 16,
+          "proxy_bytes_client_to_upstream": 86043,
+          "proxy_bytes_upstream_to_client": 87508,
+          "destination_connections": 4
+        },
+        "limitations": [
+          "All real relays, shaping proxies and destination run on one host with IPv4 loopback.",
+          "User-space shaping adds one-way delay, jitter and serialization rates to stream chunks; those chunks are not IP packets.",
+          "No packet loss, TCP retransmission behavior, routing changes, radio interference or real WAN congestion is modeled.",
+          "Direct comparison uses one shaped link; the circuit uses client-to-guard, guard-to-middle, middle-to-exit and exit-to-destination links.",
+          "The protocol remains a custom experimental implementation and has not been independently audited or proven anonymous."
+        ]
+      }
+    },
+    {
+      "profile": "constrained",
+      "trial": 1,
+      "result": {
+        "schema_version": 1,
+        "metadata": {
+          "project": "MALEBOLGE Anonymous Network Research Lab",
+          "version": "0.20.0",
+          "experiment": "loopback circuit benchmark with deterministic user-space latency/jitter/bandwidth shaping",
+          "is_loopback_only": true,
+          "is_real_wan_measurement": false,
+          "is_packet_loss_simulation": false,
+          "is_production_security_test": false,
+          "python": "3.13.5",
+          "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+          "seed": 20261021,
+          "warning": "Shaper profiles approximate byte-stream timing and rate only. TCP remains reliable. Results are not WAN measurements and do not prove anonymity."
+        },
+        "profile": {
+          "name": "constrained",
+          "one_way_latency_ms": 40.0,
+          "jitter_uniform_plus_minus_ms": 8.0,
+          "bandwidth_mbps_per_direction": 10.0,
+          "shaper_chunk_bytes": 16384,
+          "queue_chunks_per_direction": 16
+        },
+        "config": {
+          "streams": 2,
+          "payload_bytes_per_stream": 8192,
+          "total_useful_bytes": 16384,
+          "hop_count": 3,
+          "sparse_gap_ms": 0.0,
+          "sparse_chunk_bytes": null,
+          "write_chunk_bytes": 262144,
+          "pipeline_depth": 1,
+          "window_update_batch_bytes": 65536,
+          "queue_bound_per_direction_per_connection": 16,
+          "max_proxy_connections_per_shaper": 64
+        },
+        "results": {
+          "integrity_verified": true,
+          "circuit_build_ms": 498.178272,
+          "stream_open_batch_ms": 982.208574,
+          "circuit_wall_ms": 1333.85145,
+          "circuit_goodput_mbps": 0.09826581513256218,
+          "circuit_stream_latency_p50_ms": 917.5331465,
+          "circuit_stream_latency_p95_ms": 994.617103,
+          "direct_wall_ms": 111.88344000000001,
+          "direct_goodput_mbps": 1.1715049161877753,
+          "direct_stream_latency_p50_ms": 104.4651415,
+          "direct_stream_latency_p95_ms": 111.612291,
+          "relay_observability_check": true,
+          "all_relay_connections_closed": true,
+          "active_proxy_connections_after_close": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "proxy_rejected_connections": 0,
+          "proxy_accepted_connections": [
+            1,
+            1,
+            1,
+            4
+          ],
+          "max_shaper_queue_chunks_observed": 2,
+          "shaper_queue_chunks_configured": 16,
+          "proxy_bytes_client_to_upstream": 86685,
+          "proxy_bytes_upstream_to_client": 88222,
+          "destination_connections": 4
+        },
+        "limitations": [
+          "All real relays, shaping proxies and destination run on one host with IPv4 loopback.",
+          "User-space shaping adds one-way delay, jitter and serialization rates to stream chunks; those chunks are not IP packets.",
+          "No packet loss, TCP retransmission behavior, routing changes, radio interference or real WAN congestion is modeled.",
+          "Direct comparison uses one shaped link; the circuit uses client-to-guard, guard-to-middle, middle-to-exit and exit-to-destination links.",
+          "The protocol remains a custom experimental implementation and has not been independently audited or proven anonymous."
+        ]
+      }
+    },
+    {
+      "profile": "constrained",
+      "trial": 2,
+      "result": {
+        "schema_version": 1,
+        "metadata": {
+          "project": "MALEBOLGE Anonymous Network Research Lab",
+          "version": "0.20.0",
+          "experiment": "loopback circuit benchmark with deterministic user-space latency/jitter/bandwidth shaping",
+          "is_loopback_only": true,
+          "is_real_wan_measurement": false,
+          "is_packet_loss_simulation": false,
+          "is_production_security_test": false,
+          "python": "3.13.5",
+          "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+          "seed": 20261022,
+          "warning": "Shaper profiles approximate byte-stream timing and rate only. TCP remains reliable. Results are not WAN measurements and do not prove anonymity."
+        },
+        "profile": {
+          "name": "constrained",
+          "one_way_latency_ms": 40.0,
+          "jitter_uniform_plus_minus_ms": 8.0,
+          "bandwidth_mbps_per_direction": 10.0,
+          "shaper_chunk_bytes": 16384,
+          "queue_chunks_per_direction": 16
+        },
+        "config": {
+          "streams": 2,
+          "payload_bytes_per_stream": 8192,
+          "total_useful_bytes": 16384,
+          "hop_count": 3,
+          "sparse_gap_ms": 0.0,
+          "sparse_chunk_bytes": null,
+          "write_chunk_bytes": 262144,
+          "pipeline_depth": 1,
+          "window_update_batch_bytes": 65536,
+          "queue_bound_per_direction_per_connection": 16,
+          "max_proxy_connections_per_shaper": 64
+        },
+        "results": {
+          "integrity_verified": true,
+          "circuit_build_ms": 497.360364,
+          "stream_open_batch_ms": 980.266373,
+          "circuit_wall_ms": 1331.063644,
+          "circuit_goodput_mbps": 0.0984716249976699,
+          "circuit_stream_latency_p50_ms": 915.501716,
+          "circuit_stream_latency_p95_ms": 992.58613,
+          "direct_wall_ms": 111.798497,
+          "direct_goodput_mbps": 1.1723950099257596,
+          "direct_stream_latency_p50_ms": 104.3737615,
+          "direct_stream_latency_p95_ms": 111.534648,
+          "relay_observability_check": true,
+          "all_relay_connections_closed": true,
+          "active_proxy_connections_after_close": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "proxy_rejected_connections": 0,
+          "proxy_accepted_connections": [
+            1,
+            1,
+            1,
+            4
+          ],
+          "max_shaper_queue_chunks_observed": 2,
+          "shaper_queue_chunks_configured": 16,
+          "proxy_bytes_client_to_upstream": 86685,
+          "proxy_bytes_upstream_to_client": 88222,
+          "destination_connections": 4
+        },
+        "limitations": [
+          "All real relays, shaping proxies and destination run on one host with IPv4 loopback.",
+          "User-space shaping adds one-way delay, jitter and serialization rates to stream chunks; those chunks are not IP packets.",
+          "No packet loss, TCP retransmission behavior, routing changes, radio interference or real WAN congestion is modeled.",
+          "Direct comparison uses one shaped link; the circuit uses client-to-guard, guard-to-middle, middle-to-exit and exit-to-destination links.",
+          "The protocol remains a custom experimental implementation and has not been independently audited or proven anonymous."
+        ]
+      }
+    },
+    {
+      "profile": "intercontinental_sparse",
+      "trial": 1,
+      "result": {
+        "schema_version": 1,
+        "metadata": {
+          "project": "MALEBOLGE Anonymous Network Research Lab",
+          "version": "0.20.0",
+          "experiment": "loopback circuit benchmark with deterministic user-space latency/jitter/bandwidth shaping",
+          "is_loopback_only": true,
+          "is_real_wan_measurement": false,
+          "is_packet_loss_simulation": false,
+          "is_production_security_test": false,
+          "python": "3.13.5",
+          "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+          "seed": 20261101,
+          "warning": "Shaper profiles approximate byte-stream timing and rate only. TCP remains reliable. Results are not WAN measurements and do not prove anonymity."
+        },
+        "profile": {
+          "name": "intercontinental",
+          "one_way_latency_ms": 25.0,
+          "jitter_uniform_plus_minus_ms": 5.0,
+          "bandwidth_mbps_per_direction": 50.0,
+          "shaper_chunk_bytes": 16384,
+          "queue_chunks_per_direction": 16
+        },
+        "config": {
+          "streams": 2,
+          "payload_bytes_per_stream": 4096,
+          "total_useful_bytes": 8192,
+          "hop_count": 3,
+          "sparse_gap_ms": 1.0,
+          "sparse_chunk_bytes": 512,
+          "write_chunk_bytes": 262144,
+          "pipeline_depth": 1,
+          "window_update_batch_bytes": 65536,
+          "queue_bound_per_direction_per_connection": 16,
+          "max_proxy_connections_per_shaper": 64
+        },
+        "results": {
+          "integrity_verified": true,
+          "circuit_build_ms": 304.180068,
+          "stream_open_batch_ms": 649.51204,
+          "circuit_wall_ms": 1729.9900420000001,
+          "circuit_goodput_mbps": 0.03788229897799608,
+          "circuit_stream_latency_p50_ms": 1471.5842,
+          "circuit_stream_latency_p95_ms": 1515.199175,
+          "direct_wall_ms": 64.711319,
+          "direct_goodput_mbps": 1.0127439992375984,
+          "direct_stream_latency_p50_ms": 63.3484535,
+          "direct_stream_latency_p95_ms": 64.443705,
+          "relay_observability_check": true,
+          "all_relay_connections_closed": true,
+          "active_proxy_connections_after_close": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "proxy_rejected_connections": 0,
+          "proxy_accepted_connections": [
+            1,
+            1,
+            1,
+            4
+          ],
+          "max_shaper_queue_chunks_observed": 7,
+          "shaper_queue_chunks_configured": 16,
+          "proxy_bytes_client_to_upstream": 49577,
+          "proxy_bytes_upstream_to_client": 56460,
+          "destination_connections": 4
+        },
+        "limitations": [
+          "All real relays, shaping proxies and destination run on one host with IPv4 loopback.",
+          "User-space shaping adds one-way delay, jitter and serialization rates to stream chunks; those chunks are not IP packets.",
+          "No packet loss, TCP retransmission behavior, routing changes, radio interference or real WAN congestion is modeled.",
+          "Direct comparison uses one shaped link; the circuit uses client-to-guard, guard-to-middle, middle-to-exit and exit-to-destination links.",
+          "The protocol remains a custom experimental implementation and has not been independently audited or proven anonymous."
+        ]
+      }
+    },
+    {
+      "profile": "intercontinental_sparse",
+      "trial": 2,
+      "result": {
+        "schema_version": 1,
+        "metadata": {
+          "project": "MALEBOLGE Anonymous Network Research Lab",
+          "version": "0.20.0",
+          "experiment": "loopback circuit benchmark with deterministic user-space latency/jitter/bandwidth shaping",
+          "is_loopback_only": true,
+          "is_real_wan_measurement": false,
+          "is_packet_loss_simulation": false,
+          "is_production_security_test": false,
+          "python": "3.13.5",
+          "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+          "seed": 20261102,
+          "warning": "Shaper profiles approximate byte-stream timing and rate only. TCP remains reliable. Results are not WAN measurements and do not prove anonymity."
+        },
+        "profile": {
+          "name": "intercontinental",
+          "one_way_latency_ms": 25.0,
+          "jitter_uniform_plus_minus_ms": 5.0,
+          "bandwidth_mbps_per_direction": 50.0,
+          "shaper_chunk_bytes": 16384,
+          "queue_chunks_per_direction": 16
+        },
+        "config": {
+          "streams": 2,
+          "payload_bytes_per_stream": 4096,
+          "total_useful_bytes": 8192,
+          "hop_count": 3,
+          "sparse_gap_ms": 1.0,
+          "sparse_chunk_bytes": 512,
+          "write_chunk_bytes": 262144,
+          "pipeline_depth": 1,
+          "window_update_batch_bytes": 65536,
+          "queue_bound_per_direction_per_connection": 16,
+          "max_proxy_connections_per_shaper": 64
+        },
+        "results": {
+          "integrity_verified": true,
+          "circuit_build_ms": 303.689918,
+          "stream_open_batch_ms": 650.581021,
+          "circuit_wall_ms": 1732.6480390000002,
+          "circuit_goodput_mbps": 0.03782418501903259,
+          "circuit_stream_latency_p50_ms": 1473.439279,
+          "circuit_stream_latency_p95_ms": 1517.031605,
+          "direct_wall_ms": 64.792894,
+          "direct_goodput_mbps": 1.0114689428751245,
+          "direct_stream_latency_p50_ms": 63.410756000000006,
+          "direct_stream_latency_p95_ms": 64.539753,
+          "relay_observability_check": true,
+          "all_relay_connections_closed": true,
+          "active_proxy_connections_after_close": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "proxy_rejected_connections": 0,
+          "proxy_accepted_connections": [
+            1,
+            1,
+            1,
+            4
+          ],
+          "max_shaper_queue_chunks_observed": 7,
+          "shaper_queue_chunks_configured": 16,
+          "proxy_bytes_client_to_upstream": 49577,
+          "proxy_bytes_upstream_to_client": 56460,
+          "destination_connections": 4
+        },
+        "limitations": [
+          "All real relays, shaping proxies and destination run on one host with IPv4 loopback.",
+          "User-space shaping adds one-way delay, jitter and serialization rates to stream chunks; those chunks are not IP packets.",
+          "No packet loss, TCP retransmission behavior, routing changes, radio interference or real WAN congestion is modeled.",
+          "Direct comparison uses one shaped link; the circuit uses client-to-guard, guard-to-middle, middle-to-exit and exit-to-destination links.",
+          "The protocol remains a custom experimental implementation and has not been independently audited or proven anonymous."
+        ]
+      }
+    }
+  ],
+  "limitations": [
+    "All measurements use a single host and IPv4 loopback.",
+    "The proxy shapes a TCP byte stream with one-way delay, bounded jitter, and an aggregate per-proxy/per-direction bandwidth cap shared by connections.",
+    "The shaper operates on application reads from a TCP byte stream, not IP packets. It does not emulate packet loss or TCP retransmission behavior.",
+    "Direct comparison uses one shaped proxy link, while the three-relay circuit uses four shaped proxy links. This models differing path lengths and is not a like-for-like anonymity/performance comparison.",
+    "The workload is small and repeated twice per profile; results are exploratory, not statistically sufficient for general conclusions.",
+    "The experimental protocol is not independently audited and the measurements do not prove anonymity."
+  ]
+}
