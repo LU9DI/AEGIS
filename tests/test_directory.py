@@ -96,6 +96,23 @@ class SignedDirectoryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "already been used"):
                 authority.certify(second, now=self.now)
 
+    def test_durable_authority_concurrent_identical_issuance_is_idempotent(self) -> None:
+        from concurrent.futures import ThreadPoolExecutor
+
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "authority.sqlite3"
+            descriptor = self.issue_descriptor()
+            authorities = [
+                DirectoryAuthority(self.authority.private_key, state_path=state_path)
+                for _ in range(8)
+            ]
+            with ThreadPoolExecutor(max_workers=len(authorities)) as executor:
+                results = list(executor.map(
+                    lambda authority: authority.certify(descriptor, now=self.now),
+                    authorities,
+                ))
+            self.assertTrue(all(result == results[0] for result in results))
+
     def test_durable_authority_state_is_bound_to_authority_key(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             state_path = Path(directory) / "authority.sqlite3"
