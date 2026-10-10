@@ -144,3 +144,39 @@ A comparação com Tor/I2P/BitTorrent deve ser feita por propriedade específica
 | DHT sem autoridade única | Testes de disponibilidade, eclipse, Sybil, envenenamento, enumeração e partição de rede |
 
 **Estado das propostas desta seção:** preservadas como ideias/requisitos de roadmap. Não foram promovidas automaticamente a “implementadas”; isso exige auditoria do código, testes e evidências correspondentes.
+
+
+## 9. Infraestrutura de próxima geração: propostas adicionais (2026-10-10)
+
+Estas propostas são hipóteses de arquitetura e pesquisa. Não tornam a rede “indestrutível”, “invisível” nem garantem anonimato absoluto. Devem ser avaliadas por modelo de ameaça, compatibilidade, segurança operacional e experimentos reproduzíveis.
+
+### 9.1 Redes mesh locais e conectividade resiliente
+- **Ideia:** suportar links locais entre dispositivos próximos via Wi-Fi Direct, Wi-Fi mesh ou Bluetooth, para encaminhar mensagens quando a conectividade IP normal estiver indisponível ou degradada.
+- **Arquitetura proposta:** abstração de transporte no núcleo, com adaptadores específicos por plataforma; descoberta local autenticada, store-and-forward opcional, limites de TTL, filas com quotas e proteção contra loops. O agente REA pode coordenar políticas, mas não é prova de que drivers ou conectividade mesh já existem.
+- **Limites importantes:** mesh de curto alcance não cria por si só uma rota até a Internet. Para alcançar redes externas, algum nó precisa ter um uplink funcional e consentir em encaminhar tráfego. Bluetooth/LoRa têm limites fortes de banda, payload, alcance e latência; LoRa normalmente não serve para tráfego web de alta largura de banda. Bloqueio de rádio, interferência, energia, mobilidade e regulamentação também afetam disponibilidade.
+- **Segurança:** autenticação de peers, proteção contra replay, controle de encaminhamento, mitigação de Sybil, isolamento de tráfego e defesa contra nós que descartam ou alteram pacotes.
+- **Critérios de validação:** testes com Internet indisponível, topologias móveis, perda de links, partições, nós maliciosos, consumo de bateria, taxa útil, latência e recuperação quando um gateway volta a ficar disponível.
+
+### 9.2 Proxy local sem configuração manual via TUN/TAP
+- **Ideia:** oferecer uma experiência de ativação simples que encaminhe tráfego de aplicações por uma interface virtual, reduzindo a necessidade de configurar SOCKS/HTTP em cada aplicativo.
+- **Arquitetura proposta:** serviço local com privilégios mínimos, componente TUN/TAP ou mecanismo de rede suportado pelo sistema operacional, encaminhamento explícito para os circuitos AEGIS e um kill switch configurável para evitar vazamento de tráfego quando o túnel cai. O orquestrador TypeScript/Node.js pode gerir configuração e estado, mas não substitui o driver ou serviço privilegiado de rede.
+- **Precisão técnica:** eBPF é relevante sobretudo no ecossistema Linux e não é uma solução universal para criar uma placa virtual em Windows, macOS e Linux. As APIs e requisitos de assinatura/instalação diferem por sistema; normalmente é necessário um componente nativo/privilegiado específico por plataforma. TUN e TAP também operam em camadas distintas.
+- **Segurança e privacidade:** política clara para DNS, IPv6, UDP, tráfego de rede local, exclusões e split tunneling; prevenção de DNS leaks, bypass de rotas, falhas de fail-open e escalada de privilégio; não prometer que “100% dos aplicativos” serão anonimizados sem testes de compatibilidade e análise de todos os caminhos de rede.
+- **Critérios de validação:** matriz por SO/versão, testes de queda do serviço, reinício, suspensão/retomada, DNS/IPv6, UDP, apps com pinning e permissões, verificação de vazamento e testes de privilégio mínimo.
+
+### 9.3 Camuflagem de tráfego assistida por modelos
+- **Ideia:** pesquisar se modelos locais podem ajudar a escolher padrões de padding, temporização e enquadramento de tráfego que reduzam a classificação por DPI e website fingerprinting.
+- **Abordagem recomendada:** começar com transformações de protocolo determinísticas, auditáveis e limitadas; usar modelos para avaliar ou selecionar parâmetros sob orçamento de latência/banda, não para gerar um protocolo improvisado sem especificação. Transportes plugáveis e protocolos de ofuscação estabelecidos devem ser avaliados primeiro.
+- **Limites essenciais:** simular voz, jogos ou navegação não garante que o tráfego seja indistinguível. O adversário pode classificar metadados de handshake, destinos, cadência, volume, retransmissões e comportamento de fluxo. “Impossível de detectar” e “matematicamente invisível” não são garantias realistas. Criptografia pós-quântica não impede classificação por metadados nem é uma “chave mestra” que resolva DPI.
+- **Riscos adicionais:** modelos podem criar padrões mais estáveis, ser manipulados por entradas adversariais, introduzir overhead imprevisível ou aprender características do usuário. Não permitir que um modelo modifique silenciosamente formatos criptográficos, autenticação ou dados de aplicação.
+- **Critérios de validação:** testes contra DPI passivo e bloqueio ativo em redes variadas; conjuntos de teste independentes; métricas de precisão/recall e falsos positivos; custos de banda, CPU e latência; teste de robustez a mudança de modelo e ataques adaptativos. Documentar explicitamente o que o adversário ainda consegue observar.
+
+### 9.4 Matriz de implementação e evidências
+
+| Proposta | Componentes prováveis | Evidência exigida antes de declarar concluída |
+|---|---|---|
+| Mesh local | Adaptadores nativos, transporte P2P, descoberta e encaminhamento | Comunicação real entre dispositivos, recuperação de partições, testes adversariais e métricas de energia/latência |
+| Proxy sem configuração | Serviço privilegiado mínimo, TUN/TAP por SO, orquestrador e política de rotas | Testes por plataforma, ausência de vazamentos DNS/IPv6/UDP, kill switch e revisão de permissões |
+| Camuflagem assistida por IA | Transporte plugável, perfil de padding/temporização e harness de avaliação | Benchmarks contra DPI/fingerprinting, custo mensurado, especificação auditável e testes de ataques adaptativos |
+
+**Estado desta seção:** requisitos preservados como roadmap; não representam implementação confirmada. “Mesh” não garante acesso à Internet durante um apagão sem gateway externo, TUN/eBPF exige desenho específico por plataforma, e camuflagem por IA não garante invisibilidade.
