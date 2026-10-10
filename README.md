@@ -36,6 +36,14 @@ The full-history archive contains 458 ZIP entries, including 246 current-source 
 
 See [the GitHub/recovery audit](recovery/AEGIS-GITHUB-AUDIT-2026-10-10.md) for the latest verification, test results, gaps and security findings.
 
+## Tracked work and CI status
+
+The remaining blockers are tracked explicitly:
+- [Issue #1 — publish the full recovered source tree and validate package installation](https://github.com/LU9DI/AEGIS/issues/1).
+- [Issue #2 — make PIR responses verifiable against malicious replicas](https://github.com/LU9DI/AEGIS/issues/2).
+
+The CI workflow now runs on every push to `main`, pull requests, and manual dispatch. It validates archive checksums, extracts the recovered snapshot, installs the package with its onion-lab extra, checks dependencies and required console scripts, and runs pytest. **A workflow definition is not evidence of a passing run**; the latest remote Actions result must be checked separately.
+
 ## Security caveats
 
 AEGIS is a research prototype, not a production-ready or independently audited anonymity system. Garlic-clove delivery/batching semantics are not implemented. The two-server XOR PIR prototype assumes non-colluding replicas; colluding replicas can recover the requested index. The four-server consistency check is not a cryptographic proof of correct PIR computation and cannot prevent collusion or common-mode failures. A TLS-authenticated replica can still return a false PIR answer while claiming the expected snapshot hash. The relay testbed and RPC/TLS demos do not establish security on a live multi-operator network.
