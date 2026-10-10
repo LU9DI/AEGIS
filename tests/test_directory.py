@@ -165,6 +165,27 @@ class SignedDirectoryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "symbolic link"):
                 authority.certify(descriptor, now=self.now)
 
+    @unittest.skipUnless(hasattr(os, "symlink"), "symbolic links are unavailable")
+    def test_durable_authority_rejects_symlinked_parent_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            real_parent = root / "private"
+            real_parent.mkdir(mode=0o700)
+            link_parent = root / "redirect"
+            try:
+                link_parent.symlink_to(real_parent, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("symbolic-link creation is not permitted")
+            state_path = link_parent / "authority.sqlite3"
+            authority = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            descriptor = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="3" * 32,
+            )
+            with self.assertRaisesRegex(ValueError, "ancestors must not be symbolic links"):
+                authority.certify(descriptor, now=self.now)
+            self.assertFalse((real_parent / "authority.sqlite3").exists())
+
     @unittest.skipUnless(os.name == "posix", "POSIX directory permissions are required")
     def test_durable_authority_rejects_group_or_world_writable_state_directory(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
