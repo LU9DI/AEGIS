@@ -68,3 +68,24 @@ Esta auditoria verifica a presença e integridade dos artefatos, a consistência
 ## Ações ainda pendentes
 
 A árvore Git segue parcial. A publicação dos 27 módulos Python e 22 arquivos de teste restantes como arquivos individuais não foi concluída nesta rodada. O [Issue #1](https://github.com/LU9DI/AEGIS/issues/1) acompanha a publicação, comparação do snapshot e validação de instalação. O arquivo de recuperação completo de 29 MB também continua distinto do ZIP consolidado já publicado. A falha conhecida de PIR verificável permanece um bloqueador de segurança, não corrigido por esta auditoria nem pelo workflow; o [Issue #2](https://github.com/LU9DI/AEGIS/issues/2) registra o trabalho técnico e os critérios de aceitação.
+
+
+## Atualização final de recuperação — 2026-10-10
+
+### Publicação do código e artefatos
+- PR #3 foi integrado no commit `0b98818fe8e6c7472ea07ef15c55db12cab91789`: publicou como arquivos Git os módulos e testes que faltavam, documentação necessária à suíte e a proteção PIR remota fail-closed.
+- PR #5 foi integrado no commit `c60d0c39722773f3ac3a29cda043a6111daf6b47`: publicou os artefatos que faltavam, incluindo changelog, relatórios, exemplos, manifests e 102 arquivos de experimento.
+- A árvore de `main` após esses merges contém 42 módulos Python em `src/anonlab`, 26 arquivos de teste Python, 55 documentos Markdown em `docs`, 102 itens em `experiments` e 1 exemplo. A árvore consultada não está truncada e não contém uma cópia temporária `recovered-source/`.
+- A recuperação preservou deliberadamente oito arquivos já existentes cujo conteúdo difere do snapshot, em vez de substituí-los às cegas: `docs/ARCHITECTURE.md`, `docs/MALEBOLGE_CHARTER.md`, `docs/NTOR_HANDSHAKE_EXPERIMENT.md`, `docs/TELESCOPING_EXTENSION_DESIGN.md`, `docs/THREAT_MODEL.md`, `src/anonlab/pir_rpc_demo.py`, `src/anonlab/pir_two_server.py` e `tests/test_pir_two_server.py`. A comparação e reconciliação desses arquivos continuam pendentes.
+
+### Validação remota
+- A execução de GitHub Actions do PR #3 passou: [run 38063152013](https://github.com/LU9DI/AEGIS/actions/runs/38063152013). Validou o snapshot e também o checkout Git completo, incluindo instalação do pacote, dependências, entry points, compilação e pytest.
+- A execução de GitHub Actions do PR #5 passou: [run 38064033333](https://github.com/LU9DI/AEGIS/actions/runs/38064033333).
+- O teste de regressão da proteção PIR elevou a suíte de 227 para **230 testes aprovados e 76 subtestes aprovados**.
+- Os workflows de sincronização de recuperação falharam em tentativas intermediárias por configuração de staging/permissões de criação de PR. Esses PRs não foram mesclados com artefatos temporários; o PR #4 foi fechado como supersedido. Os PRs limpos #3 e #5 foram revisados pela suíte e mesclados.
+
+### Segurança — mitigação, não solução criptográfica
+- A API PIR remota agora falha fechada por padrão. O chamador precisa definir `allow_unverified_remote=True` para usar o modo de pesquisa sem prova, que continua inseguro e não deve receber dados sensíveis.
+- Isso **não** resolve a prova criptográfica de computação correta. O protocolo verifiable-PIR com privacidade e revisão criptográfica independente continua aberto na [Issue #2](https://github.com/LU9DI/AEGIS/issues/2).
+- O arquivo de recuperação histórica de 29 MB permanece distinto do ZIP consolidado publicado; o grafo original completo de commits também não foi reconstruído.
+- A árvore-fonte/testes e os artefatos de pesquisa foram restaurados, mas a alegação de identidade byte a byte de todos os arquivos do snapshot não é feita até que as oito diferenças preservadas sejam revisadas.
