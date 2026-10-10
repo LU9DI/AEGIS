@@ -1,0 +1,968 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "project": "MALEBOLGE Anonymous Network Research Lab",
+    "version": "0.21.0",
+    "experiment": "finite equal-sized flow completion-rate fairness matrix",
+    "python": "3.13.5",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "is_loopback_only": true,
+    "is_real_wan_measurement": false,
+    "is_packet_loss_simulation": false,
+    "is_production_congestion_control_test": false,
+    "fairness_metric": "Jain index calculated over finite-transfer per-stream goodput estimates derived from each stream's completion time",
+    "warning": "This completion-rate index is an exploratory proxy, not steady-state fairness proof. User-space shaping preserves TCP reliability and is not a WAN or packet-loss simulation."
+  },
+  "config": {
+    "profile": "metro",
+    "stream_counts": [
+      1,
+      2,
+      4,
+      8
+    ],
+    "trials": 3,
+    "payload_bytes_per_stream": 32768,
+    "seed": 20261021,
+    "hop_count": 3,
+    "trial_order_by_trial": [
+      [
+        1,
+        2,
+        4,
+        8
+      ],
+      [
+        2,
+        4,
+        8,
+        1
+      ],
+      [
+        4,
+        8,
+        1,
+        2
+      ]
+    ],
+    "profile_bandwidth_mbps_per_direction": 200.0,
+    "profile_latency_ms_per_direction": 5.0,
+    "profile_jitter_ms_plus_minus": 1.0
+  },
+  "summary": [
+    {
+      "stream_count": 1,
+      "trials": 3,
+      "circuit_goodput_mbps_median": 2.3777206601806573,
+      "circuit_completion_rate_jain_index_median": 1.0,
+      "direct_goodput_mbps_median": 18.36025543716583,
+      "direct_completion_rate_jain_index_median": 1.0,
+      "circuit_stream_latency_p50_ms_median": 76.725108,
+      "circuit_stream_latency_p95_ms_median": 76.725108,
+      "all_integrity_checks_passed": true,
+      "all_observability_checks_passed": true,
+      "all_cleanup_checks_passed": true
+    },
+    {
+      "stream_count": 2,
+      "trials": 3,
+      "circuit_goodput_mbps_median": 3.7223959967828053,
+      "circuit_completion_rate_jain_index_median": 0.9812653401098731,
+      "direct_goodput_mbps_median": 30.605951584047485,
+      "direct_completion_rate_jain_index_median": 0.9988154364958586,
+      "circuit_stream_latency_p50_ms_median": 84.515004,
+      "circuit_stream_latency_p95_ms_median": 95.230897,
+      "all_integrity_checks_passed": true,
+      "all_observability_checks_passed": true,
+      "all_cleanup_checks_passed": true
+    },
+    {
+      "stream_count": 4,
+      "trials": 3,
+      "circuit_goodput_mbps_median": 3.811749861738205,
+      "circuit_completion_rate_jain_index_median": 0.8805297013140603,
+      "direct_goodput_mbps_median": 50.65751196935513,
+      "direct_completion_rate_jain_index_median": 0.9860847970771882,
+      "circuit_stream_latency_p50_ms_median": 110.9807395,
+      "circuit_stream_latency_p95_ms_median": 229.142333,
+      "all_integrity_checks_passed": true,
+      "all_observability_checks_passed": true,
+      "all_cleanup_checks_passed": true
+    },
+    {
+      "stream_count": 8,
+      "trials": 3,
+      "circuit_goodput_mbps_median": 4.907437920776452,
+      "circuit_completion_rate_jain_index_median": 0.8573272648229645,
+      "direct_goodput_mbps_median": 80.76940200774253,
+      "direct_completion_rate_jain_index_median": 0.9730778365169422,
+      "circuit_stream_latency_p50_ms_median": 161.97108450000002,
+      "circuit_stream_latency_p95_ms_median": 242.811035,
+      "all_integrity_checks_passed": true,
+      "all_observability_checks_passed": true,
+      "all_cleanup_checks_passed": true
+    }
+  ],
+  "runs": [
+    {
+      "trial": 1,
+      "position_in_trial": 1,
+      "stream_count": 1,
+      "seed": 20326558,
+      "profile": "metro",
+      "circuit_goodput_mbps": 2.3256395353469017,
+      "direct_goodput_mbps": 19.46033326889711,
+      "circuit_completion_rate_jain_index": 1.0,
+      "direct_completion_rate_jain_index": 1.0,
+      "circuit_stream_latency_p50_ms": 76.746969,
+      "circuit_stream_latency_p95_ms": 76.746969,
+      "circuit_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 76.746969,
+          "goodput_mbps": 3.415691895272111,
+          "bytes_returned": 32768
+        }
+      ],
+      "direct_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 13.368279,
+          "goodput_mbps": 19.609405219624758,
+          "bytes_returned": 32768
+        }
+      ],
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "all_relay_connections_closed": true,
+      "active_proxy_connections_after_close": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "trial": 1,
+      "position_in_trial": 2,
+      "stream_count": 2,
+      "seed": 20489504,
+      "profile": "metro",
+      "circuit_goodput_mbps": 3.8057548220735873,
+      "direct_goodput_mbps": 31.769076970545882,
+      "circuit_completion_rate_jain_index": 0.9812653401098731,
+      "direct_completion_rate_jain_index": 0.9988154364958586,
+      "circuit_stream_latency_p50_ms": 83.25589,
+      "circuit_stream_latency_p95_ms": 94.759778,
+      "circuit_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 71.752002,
+          "goodput_mbps": 3.6534729720851544,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 94.759778,
+          "goodput_mbps": 2.766405805636227,
+          "bytes_returned": 32768
+        }
+      ],
+      "direct_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 15.165945,
+          "goodput_mbps": 17.28504224431778,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 16.247767,
+          "goodput_mbps": 16.13415554272781,
+          "bytes_returned": 32768
+        }
+      ],
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "all_relay_connections_closed": true,
+      "active_proxy_connections_after_close": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "trial": 1,
+      "position_in_trial": 3,
+      "stream_count": 4,
+      "seed": 20717987,
+      "profile": "metro",
+      "circuit_goodput_mbps": 3.7951768626014095,
+      "direct_goodput_mbps": 50.070611874876,
+      "circuit_completion_rate_jain_index": 0.8205758738580802,
+      "direct_completion_rate_jain_index": 0.9860847970771882,
+      "circuit_stream_latency_p50_ms": 151.60051199999998,
+      "circuit_stream_latency_p95_ms": 229.142333,
+      "circuit_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 73.814342,
+          "goodput_mbps": 3.5513965565120125,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 94.44259,
+          "goodput_mbps": 2.7756968545652976,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 2,
+          "elapsed_ms": 208.758434,
+          "goodput_mbps": 1.255728906263016,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 3,
+          "elapsed_ms": 229.142333,
+          "goodput_mbps": 1.1440225669693256,
+          "bytes_returned": 32768
+        }
+      ],
+      "direct_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 15.225276,
+          "goodput_mbps": 17.2176845923844,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 15.095019,
+          "goodput_mbps": 17.366258366418748,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 2,
+          "elapsed_ms": 16.316441,
+          "goodput_mbps": 16.06624876098899,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 3,
+          "elapsed_ms": 20.646109,
+          "goodput_mbps": 12.697017147395666,
+          "bytes_returned": 32768
+        }
+      ],
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "all_relay_connections_closed": true,
+      "active_proxy_connections_after_close": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "trial": 1,
+      "position_in_trial": 4,
+      "stream_count": 8,
+      "seed": 21077544,
+      "profile": "metro",
+      "circuit_goodput_mbps": 4.907437920776452,
+      "direct_goodput_mbps": 80.81123513043288,
+      "circuit_completion_rate_jain_index": 0.8702143190221076,
+      "direct_completion_rate_jain_index": 0.9721104112357272,
+      "circuit_stream_latency_p50_ms": 161.97108450000002,
+      "circuit_stream_latency_p95_ms": 242.811035,
+      "circuit_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 79.221826,
+          "goodput_mbps": 3.308987096560991,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 104.244663,
+          "goodput_mbps": 2.51469948154564,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 2,
+          "elapsed_ms": 127.718295,
+          "goodput_mbps": 2.052517221593038,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 3,
+          "elapsed_ms": 150.0859,
+          "goodput_mbps": 1.7466264319299811,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 4,
+          "elapsed_ms": 173.856269,
+          "goodput_mbps": 1.5078202328154184,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 5,
+          "elapsed_ms": 196.763398,
+          "goodput_mbps": 1.3322803055068198,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 6,
+          "elapsed_ms": 221.348205,
+          "goodput_mbps": 1.1843059671525231,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 7,
+          "elapsed_ms": 242.811035,
+          "goodput_mbps": 1.0796214430699165,
+          "bytes_returned": 32768
+        }
+      ],
+      "direct_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 15.500621,
+          "goodput_mbps": 16.911838564403322,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 16.784818,
+          "goodput_mbps": 15.617923292346692,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 2,
+          "elapsed_ms": 18.201894,
+          "goodput_mbps": 14.402017724089593,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 3,
+          "elapsed_ms": 20.698117,
+          "goodput_mbps": 12.665113449692067,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 4,
+          "elapsed_ms": 20.664397,
+          "goodput_mbps": 12.685780281902248,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 5,
+          "elapsed_ms": 23.076313,
+          "goodput_mbps": 11.359873650526408,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 6,
+          "elapsed_ms": 24.291806,
+          "goodput_mbps": 10.791457827384262,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 7,
+          "elapsed_ms": 25.534665,
+          "goodput_mbps": 10.266200868505617,
+          "bytes_returned": 32768
+        }
+      ],
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "all_relay_connections_closed": true,
+      "active_proxy_connections_after_close": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "trial": 2,
+      "position_in_trial": 1,
+      "stream_count": 2,
+      "seed": 21392098,
+      "profile": "metro",
+      "circuit_goodput_mbps": 3.6638934069555864,
+      "direct_goodput_mbps": 29.965812586215122,
+      "circuit_completion_rate_jain_index": 0.979274828753599,
+      "direct_completion_rate_jain_index": 0.9988552872539243,
+      "circuit_stream_latency_p50_ms": 85.03845100000001,
+      "circuit_stream_latency_p95_ms": 97.409659,
+      "circuit_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 72.667243,
+          "goodput_mbps": 3.607457627090655,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 97.409659,
+          "goodput_mbps": 2.6911499608062477,
+          "bytes_returned": 32768
+        }
+      ],
+      "direct_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 16.056404,
+          "goodput_mbps": 16.326445199062007,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 17.18161,
+          "goodput_mbps": 15.257243063950352,
+          "bytes_returned": 32768
+        }
+      ],
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "all_relay_connections_closed": true,
+      "active_proxy_connections_after_close": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "trial": 2,
+      "position_in_trial": 2,
+      "stream_count": 4,
+      "seed": 21620581,
+      "profile": "metro",
+      "circuit_goodput_mbps": 3.811749861738205,
+      "direct_goodput_mbps": 50.65751196935513,
+      "circuit_completion_rate_jain_index": 0.8805297013140603,
+      "direct_completion_rate_jain_index": 0.9793439877430707,
+      "circuit_stream_latency_p50_ms": 110.9807395,
+      "circuit_stream_latency_p95_ms": 242.021545,
+      "circuit_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 76.191316,
+          "goodput_mbps": 3.440602075963618,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 98.582306,
+          "goodput_mbps": 2.6591384462035204,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 2,
+          "elapsed_ms": 123.379173,
+          "goodput_mbps": 2.1247021975094618,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 3,
+          "elapsed_ms": 242.021545,
+          "goodput_mbps": 1.0831432383426856,
+          "bytes_returned": 32768
+        }
+      ],
+      "direct_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 13.816862,
+          "goodput_mbps": 18.972759516596458,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 16.942525,
+          "goodput_mbps": 15.472546152359227,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 2,
+          "elapsed_ms": 18.162855,
+          "goodput_mbps": 14.432973230254824,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 3,
+          "elapsed_ms": 20.369823,
+          "goodput_mbps": 12.869233080719455,
+          "bytes_returned": 32768
+        }
+      ],
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "all_relay_connections_closed": true,
+      "active_proxy_connections_after_close": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "trial": 2,
+      "position_in_trial": 3,
+      "stream_count": 8,
+      "seed": 21980138,
+      "profile": "metro",
+      "circuit_goodput_mbps": 4.638836133171992,
+      "direct_goodput_mbps": 79.40563303701315,
+      "circuit_completion_rate_jain_index": 0.8330114437517123,
+      "direct_completion_rate_jain_index": 0.9730778365169422,
+      "circuit_stream_latency_p50_ms": 162.814822,
+      "circuit_stream_latency_p95_ms": 404.42373,
+      "circuit_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 79.800974,
+          "goodput_mbps": 3.284972436551965,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 101.912673,
+          "goodput_mbps": 2.572241432623399,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 2,
+          "elapsed_ms": 126.383539,
+          "goodput_mbps": 2.0741941717583967,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 3,
+          "elapsed_ms": 150.017432,
+          "goodput_mbps": 1.7474235927462083,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 4,
+          "elapsed_ms": 175.612212,
+          "goodput_mbps": 1.49274356842564,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 5,
+          "elapsed_ms": 199.696695,
+          "goodput_mbps": 1.3127107586833122,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 6,
+          "elapsed_ms": 404.42373,
+          "goodput_mbps": 0.6481914402006035,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 7,
+          "elapsed_ms": 243.753111,
+          "goodput_mbps": 1.0754488380663172,
+          "bytes_returned": 32768
+        }
+      ],
+      "direct_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 16.032363,
+          "goodput_mbps": 16.350927183971567,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 17.191741,
+          "goodput_mbps": 15.248252053122485,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 2,
+          "elapsed_ms": 18.559292,
+          "goodput_mbps": 14.124676738746285,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 3,
+          "elapsed_ms": 19.836388,
+          "goodput_mbps": 13.215309158098743,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 4,
+          "elapsed_ms": 22.294845,
+          "goodput_mbps": 11.758054384320682,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 5,
+          "elapsed_ms": 23.512441,
+          "goodput_mbps": 11.14916141629021,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 6,
+          "elapsed_ms": 24.703226,
+          "goodput_mbps": 10.611731439448436,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 7,
+          "elapsed_ms": 25.937797,
+          "goodput_mbps": 10.10664089937939,
+          "bytes_returned": 32768
+        }
+      ],
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "all_relay_connections_closed": true,
+      "active_proxy_connections_after_close": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "trial": 2,
+      "position_in_trial": 4,
+      "stream_count": 1,
+      "seed": 21618788,
+      "profile": "metro",
+      "circuit_goodput_mbps": 2.4148865433343643,
+      "direct_goodput_mbps": 18.067064493487575,
+      "circuit_completion_rate_jain_index": 1.0,
+      "direct_completion_rate_jain_index": 1.0,
+      "circuit_stream_latency_p50_ms": 74.96024,
+      "circuit_stream_latency_p95_ms": 74.96024,
+      "circuit_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 74.96024,
+          "goodput_mbps": 3.497107266465529,
+          "bytes_returned": 32768
+        }
+      ],
+      "direct_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 14.417468,
+          "goodput_mbps": 18.182388197428285,
+          "bytes_returned": 32768
+        }
+      ],
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "all_relay_connections_closed": true,
+      "active_proxy_connections_after_close": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "trial": 3,
+      "position_in_trial": 1,
+      "stream_count": 4,
+      "seed": 22523175,
+      "profile": "metro",
+      "circuit_goodput_mbps": 4.488773829546518,
+      "direct_goodput_mbps": 52.809503712261694,
+      "circuit_completion_rate_jain_index": 0.9396337183754894,
+      "direct_completion_rate_jain_index": 0.9884445420626767,
+      "circuit_stream_latency_p50_ms": 109.591162,
+      "circuit_stream_latency_p95_ms": 143.13617,
+      "circuit_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 73.734096,
+          "goodput_mbps": 3.5552615983791274,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 98.763179,
+          "goodput_mbps": 2.6542685508330996,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 2,
+          "elapsed_ms": 120.419145,
+          "goodput_mbps": 2.1769295903902983,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 3,
+          "elapsed_ms": 143.13617,
+          "goodput_mbps": 1.8314308675438224,
+          "bytes_returned": 32768
+        }
+      ],
+      "direct_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 14.708216,
+          "goodput_mbps": 17.82296370953486,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 18.317319,
+          "goodput_mbps": 14.31126465614318,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 2,
+          "elapsed_ms": 16.990117,
+          "goodput_mbps": 15.42920510788713,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 3,
+          "elapsed_ms": 19.529076,
+          "goodput_mbps": 13.423266927733806,
+          "bytes_returned": 32768
+        }
+      ],
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "all_relay_connections_closed": true,
+      "active_proxy_connections_after_close": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "trial": 3,
+      "position_in_trial": 2,
+      "stream_count": 8,
+      "seed": 22882732,
+      "profile": "metro",
+      "circuit_goodput_mbps": 5.035233733230928,
+      "direct_goodput_mbps": 80.76940200774253,
+      "circuit_completion_rate_jain_index": 0.8573272648229645,
+      "direct_completion_rate_jain_index": 0.9763141556631191,
+      "circuit_stream_latency_p50_ms": 154.27180149999998,
+      "circuit_stream_latency_p95_ms": 236.227805,
+      "circuit_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 72.724525,
+          "goodput_mbps": 3.6046161869053113,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 95.066585,
+          "goodput_mbps": 2.757477824621553,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 2,
+          "elapsed_ms": 118.921306,
+          "goodput_mbps": 2.204348478984918,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 3,
+          "elapsed_ms": 142.698039,
+          "goodput_mbps": 1.8370539766142127,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 4,
+          "elapsed_ms": 165.845564,
+          "goodput_mbps": 1.5806512617967883,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 5,
+          "elapsed_ms": 189.68434,
+          "goodput_mbps": 1.382001276436421,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 6,
+          "elapsed_ms": 211.6548,
+          "goodput_mbps": 1.2385450270912826,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 7,
+          "elapsed_ms": 236.227805,
+          "goodput_mbps": 1.1097084866872466,
+          "bytes_returned": 32768
+        }
+      ],
+      "direct_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 15.59297,
+          "goodput_mbps": 16.811678596187896,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 18.095584,
+          "goodput_mbps": 14.486628339820369,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 2,
+          "elapsed_ms": 19.342895,
+          "goodput_mbps": 13.552469782832405,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 3,
+          "elapsed_ms": 20.562104,
+          "goodput_mbps": 12.748889899593932,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 4,
+          "elapsed_ms": 20.540071,
+          "goodput_mbps": 12.762565426380464,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 5,
+          "elapsed_ms": 22.984749,
+          "goodput_mbps": 11.405127808878833,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 6,
+          "elapsed_ms": 24.355688,
+          "goodput_mbps": 10.76315314927667,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 7,
+          "elapsed_ms": 25.552772,
+          "goodput_mbps": 10.25892611572631,
+          "bytes_returned": 32768
+        }
+      ],
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "all_relay_connections_closed": true,
+      "active_proxy_connections_after_close": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "trial": 3,
+      "position_in_trial": 3,
+      "stream_count": 1,
+      "seed": 22521382,
+      "profile": "metro",
+      "circuit_goodput_mbps": 2.3777206601806573,
+      "direct_goodput_mbps": 18.36025543716583,
+      "circuit_completion_rate_jain_index": 1.0,
+      "direct_completion_rate_jain_index": 1.0,
+      "circuit_stream_latency_p50_ms": 76.725108,
+      "circuit_stream_latency_p95_ms": 76.725108,
+      "circuit_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 76.725108,
+          "goodput_mbps": 3.416665115675041,
+          "bytes_returned": 32768
+        }
+      ],
+      "direct_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 14.150474,
+          "goodput_mbps": 18.525457168431245,
+          "bytes_returned": 32768
+        }
+      ],
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "all_relay_connections_closed": true,
+      "active_proxy_connections_after_close": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "trial": 3,
+      "position_in_trial": 4,
+      "stream_count": 2,
+      "seed": 22684328,
+      "profile": "metro",
+      "circuit_goodput_mbps": 3.7223959967828053,
+      "direct_goodput_mbps": 30.605951584047485,
+      "circuit_completion_rate_jain_index": 0.9841779506366976,
+      "direct_completion_rate_jain_index": 0.9950648640922082,
+      "circuit_stream_latency_p50_ms": 84.515004,
+      "circuit_stream_latency_p95_ms": 95.230897,
+      "circuit_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 73.799111,
+          "goodput_mbps": 3.5521295100695722,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 95.230897,
+          "goodput_mbps": 2.752720054710815,
+          "bytes_returned": 32768
+        }
+      ],
+      "direct_per_stream": [
+        {
+          "stream_index": 0,
+          "elapsed_ms": 14.623983,
+          "goodput_mbps": 17.925622588592997,
+          "bytes_returned": 32768
+        },
+        {
+          "stream_index": 1,
+          "elapsed_ms": 16.839805,
+          "goodput_mbps": 15.566926101578968,
+          "bytes_returned": 32768
+        }
+      ],
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "all_relay_connections_closed": true,
+      "active_proxy_connections_after_close": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "limitations": [
+    "All relays, proxies and destination run on one host using IPv4 loopback.",
+    "Per-stream goodput uses finite transfer completion time and includes startup/teardown effects.",
+    "Jain's index here is not a proof of fairness for long-lived flows or heterogeneous workloads.",
+    "The proxy shapes TCP byte-stream chunks and does not simulate IP packet loss or retransmission behavior.",
+    "Direct comparison has a different path length and does not offer equivalent anonymity.",
+    "The protocol is custom, experimental and unaudited."
+  ]
+}

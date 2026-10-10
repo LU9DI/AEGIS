@@ -1,0 +1,13 @@
+{
+  "computation_rows_per_server": 64,
+  "is_networked_demo": false,
+  "query_bytes_per_server": 8,
+  "record_count": 64,
+  "record_hex": "64656d6f2d726f772d3030303030303137202020202020202020202020202020",
+  "response_bytes_per_server": 32,
+  "security_model": "single-server query privacy if two replicated servers do not collude",
+  "uses_fhe": false,
+  "uses_zero_knowledge_proofs": false,
+  "version": "0.23.0",
+  "warning": "Both servers colluding can XOR their queries and recover the requested index. Traffic metadata is not hidden by PIR."
+}

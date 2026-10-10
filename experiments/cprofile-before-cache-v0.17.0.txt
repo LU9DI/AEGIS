@@ -1,0 +1,68 @@
+         312135 function calls (312047 primitive calls) in 0.226 seconds
+
+   Ordered by: cumulative time
+   List reduced from 715 to 60 due to restriction <60>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.226    0.226 /usr/lib/python3.13/asyncio/runners.py:160(run)
+        3    0.000    0.000    0.226    0.075 /usr/lib/python3.13/asyncio/base_events.py:689(run_until_complete)
+        1    0.000    0.000    0.226    0.226 /usr/lib/python3.13/asyncio/runners.py:86(run)
+        3    0.002    0.001    0.226    0.075 /usr/lib/python3.13/asyncio/base_events.py:678(run_forever)
+     1772    0.006    0.000    0.224    0.000 /usr/lib/python3.13/asyncio/base_events.py:1962(_run_once)
+     3236    0.002    0.000    0.198    0.000 /usr/lib/python3.13/asyncio/events.py:87(_run)
+     3236    0.003    0.000    0.196    0.000 {method 'run' of '_contextvars.Context' objects}
+      740    0.004    0.000    0.072    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:526(handle)
+     1425    0.002    0.000    0.030    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:407(descriptor)
+      160    0.003    0.000    0.027    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/duplex_benchmark.py:102(duplex_exchange)
+      640    0.001    0.000    0.024    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:820(forward_duplex_command)
+      338    0.001    0.000    0.023    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:748(downstream_response_dispatcher)
+      507    0.002    0.000    0.023    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:555(send_reply)
+     1429    0.002    0.000    0.021    0.000 <string>:2(__init__)
+     1942    0.002    0.000    0.019    0.000 /usr/lib/python3.13/asyncio/tasks.py:459(wait_for)
+     1429    0.002    0.000    0.019    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:192(__post_init__)
+      320    0.003    0.000    0.017    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:2073(_send_duplex_command)
+      272    0.001    0.000    0.016    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:590(send_forwarded_stream_event)
+     1458    0.001    0.000    0.016    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:106(_ensure_loopback)
+       20    0.000    0.000    0.015    0.001 <stdin>:5(go)
+       20    0.000    0.000    0.015    0.001 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/duplex_benchmark.py:36(run_duplex_benchmark)
+     1772    0.002    0.000    0.015    0.000 /usr/lib/python3.13/selectors.py:435(select)
+      264    0.001    0.000    0.014    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:1581(read_chunk)
+     1134    0.001    0.000    0.014    0.000 /usr/lib/python3.13/asyncio/selector_events.py:961(_read_ready)
+     1422    0.006    0.000    0.014    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/onion_protocol.py:77(seal)
+      256    0.000    0.000    0.014    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:1603(_grant_credit)
+     1134    0.001    0.000    0.014    0.000 /usr/lib/python3.13/asyncio/selector_events.py:1001(_read_ready__data_received)
+     1716    0.001    0.000    0.013    0.000 /usr/lib/python3.13/asyncio/streams.py:339(write)
+      169    0.001    0.000    0.013    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:1699(_response_reader_loop)
+     1458    0.001    0.000    0.013    0.000 /usr/lib/python3.13/ipaddress.py:28(ip_address)
+     1422    0.004    0.000    0.013    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/onion_protocol.py:84(open_sealed)
+     1716    0.004    0.000    0.013    0.000 /usr/lib/python3.13/asyncio/selector_events.py:1047(write)
+      120    0.001    0.000    0.013    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:618(pump_destination_stream)
+      915    0.004    0.000    0.012    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:123(_seal_reply)
+     1458    0.002    0.000    0.012    0.000 /usr/lib/python3.13/ipaddress.py:1286(__init__)
+     1772    0.012    0.000    0.012    0.000 {method 'poll' of 'select.epoll' objects}
+     2320    0.002    0.000    0.010    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:115(read_frame)
+      136    0.001    0.000    0.010    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:581(send_local_stream_event)
+     1458    0.002    0.000    0.010    0.000 /usr/lib/python3.13/ipaddress.py:1187(_ip_int_from_string)
+      642    0.000    0.000    0.009    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:812(forward_packet)
+     1422    0.009    0.000    0.009    0.000 {method 'decrypt' of 'cryptography.hazmat.bindings._rust.openssl.aead.ChaCha20Poly1305' objects}
+      136    0.002    0.000    0.009    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:1466(_accept_event)
+      915    0.002    0.000    0.009    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:130(_open_reply)
+     1716    0.008    0.000    0.008    0.000 {method 'send' of '_socket.socket' objects}
+     2928    0.002    0.000    0.008    0.000 {built-in method from_bytes}
+     3748    0.006    0.000    0.008    0.000 /usr/lib/python3.13/asyncio/streams.py:739(readexactly)
+     1099    0.001    0.000    0.008    0.000 /usr/lib/python3.13/asyncio/streams.py:278(data_received)
+     1422    0.008    0.000    0.008    0.000 {method 'encrypt' of 'cryptography.hazmat.bindings._rust.openssl.aead.ChaCha20Poly1305' objects}
+     1099    0.001    0.000    0.007    0.000 /usr/lib/python3.13/asyncio/streams.py:493(feed_data)
+     1033    0.001    0.000    0.007    0.000 /usr/lib/python3.13/asyncio/timeouts.py:85(__aenter__)
+       16    0.000    0.000    0.007    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:1539(write_pipelined)
+      408    0.001    0.000    0.007    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:573(write_link_message)
+       16    0.001    0.000    0.007    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:1991(_send_duplex_write_batch)
+     5832    0.004    0.000    0.006    0.000 /usr/lib/python3.13/ipaddress.py:1213(_parse_octet)
+     2070    0.001    0.000    0.006    0.000 /usr/lib/python3.13/asyncio/base_events.py:823(call_soon)
+     5473    0.001    0.000    0.006    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:214(relay_id)
+     1033    0.001    0.000    0.006    0.000 /usr/lib/python3.13/asyncio/timeouts.py:50(reschedule)
+        8    0.000    0.000    0.006    0.001 /usr/lib/python3.13/random.py:288(randbytes)
+47139/47091    0.005    0.000    0.005    0.000 {built-in method builtins.len}
+      337    0.001    0.000    0.005    0.000 /mnt/data/malebolge-v0.17.0-final-extracted/MALEBOLGE-research-lab-v0.17.0/src/anonlab/telescoping.py:773(queue_downstream_packet)
+
+

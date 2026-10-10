@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "measurement_type": "real_loopback_tcp_relay_benchmark",
+  "is_live_internet_test": false,
+  "is_anonymity_test": false,
+  "encryption": "none; intentionally measures raw relay forwarding only",
+  "topology": {
+    "host": "127.0.0.1",
+    "relay_count": 3,
+    "path": [
+      "client",
+      "relay-1",
+      "relay-2",
+      "relay-3",
+      "echo-destination"
+    ]
+  },
+  "config": {
+    "payload_bytes_each_direction": 8000000,
+    "trials": 3,
+    "latency_samples": 30,
+    "seed": 20261009,
+    "chunk_bytes": 65536,
+    "persistent_circuit_for_latency_and_bulk_transfers": true
+  },
+  "environment": {
+    "python": "3.13.5",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41"
+  },
+  "results": {
+    "rtt_p50_ms": 0.114,
+    "rtt_p95_ms": 0.223,
+    "echo_goodput_mbps_median": 3712.629,
+    "echo_goodput_mbps_trials": [
+      3712.629,
+      2696.631,
+      3738.721
+    ],
+    "rtt_samples_ms": [
+      0.225,
+      0.232,
+      0.138,
+      0.135,
+      0.132,
+      0.215,
+      0.123,
+      0.137,
+      0.122,
+      0.111,
+      0.113,
+      0.112,
+      0.111,
+      0.111,
+      0.109,
+      0.221,
+      0.133,
+      0.113,
+      0.14,
+      0.11,
+      0.11,
+      0.106,
+      0.106,
+      0.109,
+      0.202,
+      0.114,
+      0.143,
+      0.114,
+      0.109,
+      0.107
+    ],
+    "transfer_trials": [
+      {
+        "payload_bytes_each_direction": 8000000,
+        "elapsed_ms": 17.238,
+        "echo_goodput_mbps": 3712.629,
+        "sha256": "eb7aed184742cdf12fca9a1d5e8c3df12a5369fe101efe04de0402b6f531c368"
+      },
+      {
+        "payload_bytes_each_direction": 8000000,
+        "elapsed_ms": 23.733,
+        "echo_goodput_mbps": 2696.631,
+        "sha256": "eb7aed184742cdf12fca9a1d5e8c3df12a5369fe101efe04de0402b6f531c368"
+      },
+      {
+        "payload_bytes_each_direction": 8000000,
+        "elapsed_ms": 17.118,
+        "echo_goodput_mbps": 3738.721,
+        "sha256": "eb7aed184742cdf12fca9a1d5e8c3df12a5369fe101efe04de0402b6f531c368"
+      }
+    ],
+    "integrity_verified": true
+  },
+  "limitations": [
+    "All sockets terminate on loopback; results measure this host's local TCP stack.",
+    "Relays forward plaintext. No confidentiality, onion encryption, anonymity, or traffic-analysis defense is implemented.",
+    "TCP echo goodput is payload goodput for one direction; each byte is echoed back and therefore traverses the relay chain twice. Bulk trials reuse a persistent relay circuit.",
+    "These measurements cannot predict WAN performance or compare directly to live Tor without an equivalent controlled setup."
+  ]
+}

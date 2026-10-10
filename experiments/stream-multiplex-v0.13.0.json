@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "project": "MALEBOLGE Anonymous Network Research Lab",
+    "version": "0.13.0",
+    "experiment": "same-circuit multiplexing vs serial request-response baseline",
+    "is_loopback_only": true,
+    "is_production_security_test": false,
+    "python": "3.13.5",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "seed": 20261009,
+    "warning": "One host, three loopback relays. Multiplexing results are not WAN or anonymity claims."
+  },
+  "config": {
+    "streams": 16,
+    "payload_bytes_per_stream": 4096,
+    "hop_count": 3,
+    "total_useful_bytes_per_round": 65536,
+    "echo_endpoint": "127.0.0.1"
+  },
+  "results": {
+    "integrity_verified": true,
+    "route_knowledge_separation_check": true,
+    "direct_client_connections": 1,
+    "circuit_build_ms": 2.700826,
+    "multiplexed_rtt_ms_p50": 8.75116,
+    "multiplexed_rtt_ms_p95": 8.921562,
+    "multiplexed_wall_ms": 9.273112,
+    "multiplexed_goodput_mbps": 56.53851695094376,
+    "serial_rtt_ms_p50": 0.565543,
+    "serial_rtt_ms_p95": 0.719726,
+    "serial_wall_ms": 9.565924,
+    "serial_goodput_mbps": 54.80787846526901,
+    "active_streams_after_completion": 0,
+    "active_connections_after_close": [
+      0,
+      0,
+      0
+    ]
+  },
+  "limitations": [
+    "A stream is one bounded request plus one response, not arbitrary full-duplex TCP byte streams.",
+    "All relay and destination sockets run on one host over IPv4 loopback.",
+    "Response correlation metadata is visible to the immediate peer on each hop.",
+    "The protocol, key derivation and cancellation semantics have not had an independent security audit.",
+    "No conclusion about traffic-analysis resistance or Tor-relative performance can be inferred."
+  ]
+}

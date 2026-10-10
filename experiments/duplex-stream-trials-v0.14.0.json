@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "project": "MALEBOLGE Anonymous Network Research Lab",
+    "version": "0.14.0",
+    "experiment": "three repeated loopback trials of full-duplex streams vs direct TCP",
+    "trials": 3,
+    "is_loopback_only": true,
+    "is_production_security_test": false,
+    "warning": "Three one-host microbenchmarks are noisy and not WAN or anonymity results."
+  },
+  "configuration": {
+    "streams": 8,
+    "payload_bytes_per_stream": 65536,
+    "hop_count": 3
+  },
+  "trials": [
+    {
+      "seed": 20261009,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 4.427946,
+        "stream_open_batch_ms": 7.432746,
+        "duplex_wall_ms": 35.967435,
+        "duplex_goodput_mbps": 116.61393146328061,
+        "duplex_stream_latency_p50_ms": 32.1481675,
+        "duplex_stream_latency_p95_ms": 32.644706,
+        "direct_wall_ms": 1.8047009999999999,
+        "direct_goodput_mbps": 2324.099116695785,
+        "direct_stream_latency_p50_ms": 1.5229110000000001,
+        "direct_stream_latency_p95_ms": 1.663157,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      }
+    },
+    {
+      "seed": 20261010,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.200568,
+        "stream_open_batch_ms": 6.409624,
+        "duplex_wall_ms": 32.125063000000004,
+        "duplex_goodput_mbps": 130.56173617464967,
+        "duplex_stream_latency_p50_ms": 28.139724,
+        "duplex_stream_latency_p95_ms": 29.215035,
+        "direct_wall_ms": 1.4657,
+        "direct_goodput_mbps": 2861.6388073957837,
+        "direct_stream_latency_p50_ms": 1.2036099999999998,
+        "direct_stream_latency_p95_ms": 1.339399,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      }
+    },
+    {
+      "seed": 20261011,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.959451,
+        "stream_open_batch_ms": 5.772583,
+        "duplex_wall_ms": 30.623559,
+        "duplex_goodput_mbps": 136.9633098491263,
+        "duplex_stream_latency_p50_ms": 27.249156,
+        "duplex_stream_latency_p95_ms": 27.928636,
+        "direct_wall_ms": 2.057602,
+        "direct_goodput_mbps": 2038.4428086675655,
+        "direct_stream_latency_p50_ms": 1.527393,
+        "direct_stream_latency_p95_ms": 1.796979,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      }
+    }
+  ],
+  "summary": {
+    "integrity_all_trials": true,
+    "relay_observability_all_trials": true,
+    "duplex_goodput_mbps_median": 130.56173617464967,
+    "duplex_goodput_mbps_min": 116.61393146328061,
+    "duplex_goodput_mbps_max": 136.9633098491263,
+    "duplex_stream_latency_p50_ms_median": 28.139724,
+    "duplex_stream_latency_p95_ms_median": 29.215035,
+    "direct_goodput_mbps_median": 2324.099116695785,
+    "direct_stream_latency_p50_ms_median": 1.5229110000000001,
+    "all_relays_clean_after_close": true,
+    "all_streams_clean_after_completion": true
+  }
+}

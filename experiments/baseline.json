@@ -1,0 +1,93 @@
+{
+  "metadata": {
+    "simulator": "REA Anonymous Network Research Lab",
+    "version": "0.3.0",
+    "is_live_network_test": false,
+    "is_security_proof": false,
+    "config": {
+      "duration_s": 180.0,
+      "request_rate_per_s": 1.4,
+      "seed": 20261009,
+      "bin_ms": 100,
+      "max_correlation_lag_ms": 3000
+    },
+    "warning": "Illustrative model outputs are not measurements of Tor, a live network, or a production protocol."
+  },
+  "results": [
+    {
+      "profile": "direct_reference",
+      "event_count": 244,
+      "payload_mb": 52.394,
+      "offered_load_mbps": 2.329,
+      "bottleneck_mbps": 500,
+      "p50_latency_ms": 13.89,
+      "p95_latency_ms": 21.18,
+      "max_lag_pearson": 0.9318,
+      "correlation_lag_ms": 0,
+      "cover_mb": 0.0,
+      "traffic_overhead_ratio": 0.0,
+      "fixed_rate_mbps": null,
+      "interpretation": "Direct path baseline; useful for speed comparison, not an anonymity solution."
+    },
+    {
+      "profile": "onion_reference",
+      "event_count": 244,
+      "payload_mb": 52.394,
+      "offered_load_mbps": 2.329,
+      "bottleneck_mbps": 10,
+      "p50_latency_ms": 251.65,
+      "p95_latency_ms": 717.25,
+      "max_lag_pearson": 0.8157,
+      "correlation_lag_ms": 100,
+      "cover_mb": 0.0,
+      "traffic_overhead_ratio": 0.0,
+      "fixed_rate_mbps": null,
+      "interpretation": "Illustrative three-hop baseline; parameters are not measurements of live Tor."
+    },
+    {
+      "profile": "candidate_fast_hypothesis",
+      "event_count": 244,
+      "payload_mb": 52.394,
+      "offered_load_mbps": 2.329,
+      "bottleneck_mbps": 100,
+      "p50_latency_ms": 51.1,
+      "p95_latency_ms": 92.73,
+      "max_lag_pearson": 0.6134,
+      "correlation_lag_ms": 0,
+      "cover_mb": 0.0,
+      "traffic_overhead_ratio": 0.0,
+      "fixed_rate_mbps": null,
+      "interpretation": "Hypothetical candidate; performance follows assumed link capacities and delays."
+    },
+    {
+      "profile": "candidate_independent_noise_hypothesis",
+      "event_count": 244,
+      "payload_mb": 52.394,
+      "offered_load_mbps": 2.329,
+      "bottleneck_mbps": 100,
+      "p50_latency_ms": 51.1,
+      "p95_latency_ms": 92.73,
+      "max_lag_pearson": 0.185,
+      "correlation_lag_ms": 0,
+      "cover_mb": 157.183,
+      "traffic_overhead_ratio": 3.0,
+      "fixed_rate_mbps": null,
+      "interpretation": "Optimistic noise-only result; independent edge noise is an assumption, not a protocol guarantee."
+    },
+    {
+      "profile": "candidate_fixed_rate_hypothesis",
+      "event_count": 244,
+      "payload_mb": 52.394,
+      "offered_load_mbps": 2.329,
+      "bottleneck_mbps": 100,
+      "p50_latency_ms": 160.87,
+      "p95_latency_ms": 372.43,
+      "max_lag_pearson": 0.0592,
+      "correlation_lag_ms": -1400,
+      "cover_mb": 422.606,
+      "traffic_overhead_ratio": 8.0659,
+      "fixed_rate_mbps": 20,
+      "interpretation": "Idealized constant-rate tunnel; correlation result excludes several real-world side channels."
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "project": "MALEBOLGE Anonymous Network Research Lab",
+    "version": "0.7.0",
+    "experiment": "concurrent independent three-hop telescoping circuits vs direct loopback TCP",
+    "is_loopback_only": true,
+    "is_production_security_test": false,
+    "seed": 20261009,
+    "python": "3.13.5",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "warning": "Single-host concurrent microbenchmark. It does not measure WAN performance or prove anonymity."
+  },
+  "config": {
+    "clients": 8,
+    "payload_bytes_per_client": 65536,
+    "total_useful_payload_bytes": 524288,
+    "hop_count": 3,
+    "relay_connection_limit": 64,
+    "echo_endpoint": "127.0.0.1"
+  },
+  "results": {
+    "integrity_verified": true,
+    "route_knowledge_separation_check": true,
+    "client_direct_connections_per_circuit": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "circuit_build_ms_p50": 11.704179499999999,
+    "circuit_build_ms_p95": 11.924226,
+    "concurrent_circuit_build_wall_ms": 12.289176,
+    "circuit_echo_rtt_ms_p50": 20.026825000000002,
+    "circuit_echo_rtt_ms_p95": 20.402126,
+    "circuit_aggregate_response_goodput_mbps": 199.36378377774594,
+    "direct_echo_rtt_ms_p50": 1.05836,
+    "direct_echo_rtt_ms_p95": 1.173599,
+    "direct_aggregate_response_goodput_mbps": 3213.885677024068,
+    "active_connections_after_client_close": [
+      0,
+      0,
+      0
+    ],
+    "relay_handlers_returned_to_zero": true
+  },
+  "limitations": [
+    "All relay and destination sockets use IPv4 loopback on a single host.",
+    "All circuits share one process, CPU, kernel and failure domain.",
+    "Relay descriptors are caller-pinned in memory, not signed or revocable.",
+    "The MALEBOLGE-specific KDF is experimental and unaudited.",
+    "The experiment measures framed echo response payload, not bidirectional application streams.",
+    "It does not test traffic correlation, malicious relays, internet routing or censorship resilience."
+  ]
+}
