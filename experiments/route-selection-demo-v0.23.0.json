@@ -1,0 +1,21 @@
+{
+  "bottleneck_mbps": 40.0,
+  "estimated_link_count": 0,
+  "estimated_rtt_ms": 10.5,
+  "geometric_rtt_floor_ms": 0.05,
+  "is_live_network_test": false,
+  "measured_link_count": 4,
+  "metadata": {
+    "component": "AEGIS route scoring prototype",
+    "input_source": "json",
+    "version": "0.23.0"
+  },
+  "relays": [
+    "guard-pinned-sp",
+    "middle-sp",
+    "exit-sp"
+  ],
+  "score_ms": 12.125,
+  "uses_zero_knowledge_proofs": false,
+  "warning": "Offline heuristic only; geometry is a propagation lower bound, not a ping guarantee. No zero-knowledge proof or anonymity guarantee is provided."
+}

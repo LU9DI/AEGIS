@@ -1,0 +1,85 @@
+{
+  "version": "0.20.0",
+  "summary": [
+    {
+      "profile": "loopback",
+      "trials": 2,
+      "circuit_goodput_mbps_median": 35.181,
+      "direct_goodput_mbps_median": 126.088,
+      "circuit_stream_latency_p50_ms_median": 2.766,
+      "circuit_stream_latency_p95_ms_median": 3.051,
+      "integrity_all_passed": true,
+      "cleanup_all_passed": true,
+      "max_queue_never_exceeded": true,
+      "rejected_connections_total": 0
+    },
+    {
+      "profile": "lan",
+      "trials": 2,
+      "circuit_goodput_mbps_median": 4.079,
+      "direct_goodput_mbps_median": 37.277,
+      "circuit_stream_latency_p50_ms_median": 19.691,
+      "circuit_stream_latency_p95_ms_median": 22.623,
+      "integrity_all_passed": true,
+      "cleanup_all_passed": true,
+      "max_queue_never_exceeded": true,
+      "rejected_connections_total": 0
+    },
+    {
+      "profile": "metro",
+      "trials": 2,
+      "circuit_goodput_mbps_median": 0.938,
+      "direct_goodput_mbps_median": 10.071,
+      "circuit_stream_latency_p50_ms_median": 82.068,
+      "circuit_stream_latency_p95_ms_median": 93.87,
+      "integrity_all_passed": true,
+      "cleanup_all_passed": true,
+      "max_queue_never_exceeded": true,
+      "rejected_connections_total": 0
+    },
+    {
+      "profile": "intercontinental",
+      "trials": 2,
+      "circuit_goodput_mbps_median": 0.207,
+      "direct_goodput_mbps_median": 2.283,
+      "circuit_stream_latency_p50_ms_median": 377.34,
+      "circuit_stream_latency_p95_ms_median": 429.641,
+      "integrity_all_passed": true,
+      "cleanup_all_passed": true,
+      "max_queue_never_exceeded": true,
+      "rejected_connections_total": 0
+    },
+    {
+      "profile": "constrained",
+      "trials": 2,
+      "circuit_goodput_mbps_median": 0.098,
+      "direct_goodput_mbps_median": 1.172,
+      "circuit_stream_latency_p50_ms_median": 916.517,
+      "circuit_stream_latency_p95_ms_median": 993.602,
+      "integrity_all_passed": true,
+      "cleanup_all_passed": true,
+      "max_queue_never_exceeded": true,
+      "rejected_connections_total": 0
+    },
+    {
+      "profile": "intercontinental_sparse",
+      "trials": 2,
+      "circuit_goodput_mbps_median": 0.038,
+      "direct_goodput_mbps_median": 1.012,
+      "circuit_stream_latency_p50_ms_median": 1472.512,
+      "circuit_stream_latency_p95_ms_median": 1516.115,
+      "integrity_all_passed": true,
+      "cleanup_all_passed": true,
+      "max_queue_never_exceeded": true,
+      "rejected_connections_total": 0
+    }
+  ],
+  "limitations": [
+    "All measurements use a single host and IPv4 loopback.",
+    "The proxy shapes a TCP byte stream with one-way delay, bounded jitter, and an aggregate per-proxy/per-direction bandwidth cap shared by connections.",
+    "The shaper operates on application reads from a TCP byte stream, not IP packets. It does not emulate packet loss or TCP retransmission behavior.",
+    "Direct comparison uses one shaped proxy link, while the three-relay circuit uses four shaped proxy links. This models differing path lengths and is not a like-for-like anonymity/performance comparison.",
+    "The workload is small and repeated twice per profile; results are exploratory, not statistically sufficient for general conclusions.",
+    "The experimental protocol is not independently audited and the measurements do not prove anonymity."
+  ]
+}

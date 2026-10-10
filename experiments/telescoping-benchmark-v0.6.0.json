@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "project": "MALEBOLGE Anonymous Network Research Lab",
+    "version": "0.6.0",
+    "experiment": "three-hop telescoping echo path versus direct TCP echo",
+    "is_loopback_only": true,
+    "is_production_security_test": false,
+    "seed": 20261009,
+    "python": "3.13.5",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "warning": "Local microbenchmark only. It does not measure WAN performance or prove anonymity."
+  },
+  "config": {
+    "hop_count": 3,
+    "payload_bytes": 65536,
+    "trials": 5,
+    "echo_endpoint": "127.0.0.1",
+    "application_destination_visible_only_to_exit_in_parsed_commands": true
+  },
+  "results": {
+    "integrity_verified": true,
+    "direct_connections_from_client_per_circuit": [
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "circuit_build_ms_p50": 2.082189,
+    "circuit_build_ms_p95": 2.711639,
+    "direct_echo_rtt_ms_p50": 0.221664,
+    "direct_echo_rtt_ms_p95": 0.342857,
+    "telescoping_echo_rtt_ms_p50": 1.067931,
+    "telescoping_echo_rtt_ms_p95": 1.613983,
+    "telescoping_response_goodput_mbps_median": 490.9380849511813,
+    "parsed_command_observations": {
+      "entry": [
+        {
+          "operation": "extend",
+          "target_port": 34665
+        },
+        {
+          "operation": "forward",
+          "target_port": null
+        },
+        {
+          "operation": "forward",
+          "target_port": null
+        },
+        {
+          "operation": "extend",
+          "target_port": 34665
+        },
+        {
+          "operation": "forward",
+          "target_port": null
+        },
+        {
+          "operation": "forward",
+          "target_port": null
+        },
+        {
+          "operation": "extend",
+          "target_port": 34665
+        },
+        {
+          "operation": "forward",
+          "target_port": null
+        },
+        {
+          "operation": "forward",
+          "target_port": null
+        },
+        {
+          "operation": "extend",
+          "target_port": 34665
+        },
+        {
+          "operation": "forward",
+          "target_port": null
+        },
+        {
+          "operation": "forward",
+          "target_port": null
+        },
+        {
+          "operation": "extend",
+          "target_port": 34665
+        },
+        {
+          "operation": "forward",
+          "target_port": null
+        },
+        {
+          "operation": "forward",
+          "target_port": null
+        }
+      ],
+      "middle": [
+        {
+          "operation": "extend",
+          "target_port": 37839
+        },
+        {
+          "operation": "forward",
+          "target_port": null
+        },
+        {
+          "operation": "extend",
+          "target_port": 37839
+        },
+        {
+          "operation": "forward",
+          "target_port": null
+        },
+        {
+          "operation": "extend",
+          "target_port": 37839
+        },
+        {
+          "operation": "forward",
+          "target_port": null
+        },
+        {
+          "operation": "extend",
+          "target_port": 37839
+        },
+        {
+          "operation": "forward",
+          "target_port": null
+        },
+        {
+          "operation": "extend",
+          "target_port": 37839
+        },
+        {
+          "operation": "forward",
+          "target_port": null
+        }
+      ],
+      "exit": [
+        {
+          "operation": "data",
+          "target_port": 36863
+        },
+        {
+          "operation": "data",
+          "target_port": 36863
+        },
+        {
+          "operation": "data",
+          "target_port": 36863
+        },
+        {
+          "operation": "data",
+          "target_port": 36863
+        },
+        {
+          "operation": "data",
+          "target_port": 36863
+        }
+      ]
+    },
+    "route_knowledge_separation_check": true
+  },
+  "limitations": [
+    "All relay and echo sockets are on IPv4 loopback within one Python process.",
+    "Relay-to-relay links are not mutually authenticated in this harness.",
+    "The MALEBOLGE-specific KDF is experimental and unaudited.",
+    "The echo endpoint is explicitly loopback-only; this is not a general-purpose proxy.",
+    "Parsed-command separation does not evaluate timing, packet size, collusion, or global observation.",
+    "Goodput is useful echo-response payload divided by round-trip elapsed time, not bidirectional wire throughput."
+  ]
+}

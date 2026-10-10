@@ -1,0 +1,677 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "project": "MALEBOLGE Anonymous Network Research Lab",
+    "version": "0.18.0",
+    "experiment": "bounded WRITE pipeline-depth comparison on three-hop IPv4 loopback circuit",
+    "trials_per_depth": 5,
+    "python": "3.13.5",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "is_loopback_only": true,
+    "is_production_security_test": false,
+    "warning": "Single-host loopback microbenchmark only. Results do not predict WAN performance, prove anonymity, or compare securely with Tor. Re-run on different hosts and workloads."
+  },
+  "config": {
+    "streams": 8,
+    "payload_bytes_per_stream": 1048576,
+    "chunk_bytes": 65536,
+    "pipeline_depths": [
+      1,
+      2,
+      4
+    ],
+    "max_in_flight_bytes_per_stream": 262144,
+    "hop_count": 3,
+    "order_rotates_each_trial": true,
+    "base_seed": 20261018
+  },
+  "summary": {
+    "all_integrity_checks_passed": true,
+    "all_relay_observability_checks_passed": true,
+    "all_cleanup_checks_passed": true,
+    "goodput_ratio_depth_2_vs_1": 1.0198090720202233,
+    "goodput_percent_change_depth_2_vs_1": 1.9809072020223306,
+    "goodput_ratio_depth_4_vs_1": 0.9625138410294923,
+    "goodput_percent_change_depth_4_vs_1": -3.7486158970507666
+  },
+  "by_pipeline_depth": {
+    "1": {
+      "pipeline_depth": 1,
+      "trials": 5,
+      "integrity_all_trials": true,
+      "relay_observability_all_trials": true,
+      "cleanup_all_trials": true,
+      "duplex_goodput_mbps_median": 289.955854240825,
+      "duplex_goodput_mbps_min": 257.23058040488297,
+      "duplex_goodput_mbps_max": 319.17898564942044,
+      "duplex_stream_latency_p50_ms_median": 227.65601700000002,
+      "duplex_stream_latency_p95_ms_median": 227.715036,
+      "direct_goodput_mbps_median": 4205.38729822447,
+      "direct_p95_ms_median": 15.182512,
+      "pipeline_payload_bytes_per_stream": 65536
+    },
+    "2": {
+      "pipeline_depth": 2,
+      "trials": 5,
+      "integrity_all_trials": true,
+      "relay_observability_all_trials": true,
+      "cleanup_all_trials": true,
+      "duplex_goodput_mbps_median": 295.69961064016684,
+      "duplex_goodput_mbps_min": 281.5657723541341,
+      "duplex_goodput_mbps_max": 303.46619931869844,
+      "duplex_stream_latency_p50_ms_median": 222.76169800000002,
+      "duplex_stream_latency_p95_ms_median": 223.152704,
+      "direct_goodput_mbps_median": 4286.123206508733,
+      "direct_p95_ms_median": 14.897995,
+      "pipeline_payload_bytes_per_stream": 131072
+    },
+    "4": {
+      "pipeline_depth": 4,
+      "trials": 5,
+      "integrity_all_trials": true,
+      "relay_observability_all_trials": true,
+      "cleanup_all_trials": true,
+      "duplex_goodput_mbps_median": 279.08652299432407,
+      "duplex_goodput_mbps_min": 238.9823046009623,
+      "duplex_goodput_mbps_max": 315.28467535690066,
+      "duplex_stream_latency_p50_ms_median": 233.3976835,
+      "duplex_stream_latency_p95_ms_median": 234.695316,
+      "direct_goodput_mbps_median": 4139.848178321843,
+      "direct_p95_ms_median": 15.472292,
+      "pipeline_payload_bytes_per_stream": 262144
+    }
+  },
+  "trials": [
+    {
+      "trial": 1,
+      "pipeline_depth": 1,
+      "seed": 20261018,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.709549,
+        "stream_open_batch_ms": 6.145895,
+        "duplex_wall_ms": 260.889914,
+        "duplex_goodput_mbps": 257.23058040488297,
+        "duplex_stream_latency_p50_ms": 257.42524000000003,
+        "duplex_stream_latency_p95_ms": 257.566949,
+        "direct_wall_ms": 15.957832000000002,
+        "direct_goodput_mbps": 4205.38729822447,
+        "direct_stream_latency_p50_ms": 14.088716,
+        "direct_stream_latency_p95_ms": 15.182512,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      },
+      "benchmark_config": {
+        "streams": 8,
+        "payload_bytes_per_stream": 1048576,
+        "total_useful_bytes": 8388608,
+        "hop_count": 3,
+        "response_event_chunk_bytes": 16384,
+        "write_chunk_bytes": 65536,
+        "pipeline_depth": 1,
+        "max_pipeline_payload_bytes": 4194304,
+        "write_acknowledgements_per_full_64k_stream": 1,
+        "initial_read_window_bytes": 65536,
+        "destination": "127.0.0.1"
+      }
+    },
+    {
+      "trial": 1,
+      "pipeline_depth": 2,
+      "seed": 20261018,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.134552,
+        "stream_open_batch_ms": 5.351526,
+        "duplex_wall_ms": 228.910128,
+        "duplex_goodput_mbps": 293.1668624116099,
+        "duplex_stream_latency_p50_ms": 224.123276,
+        "duplex_stream_latency_p95_ms": 224.440425,
+        "direct_wall_ms": 15.657240999999999,
+        "direct_goodput_mbps": 4286.123206508733,
+        "direct_stream_latency_p50_ms": 13.673218,
+        "direct_stream_latency_p95_ms": 14.72798,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      },
+      "benchmark_config": {
+        "streams": 8,
+        "payload_bytes_per_stream": 1048576,
+        "total_useful_bytes": 8388608,
+        "hop_count": 3,
+        "response_event_chunk_bytes": 16384,
+        "write_chunk_bytes": 65536,
+        "pipeline_depth": 2,
+        "max_pipeline_payload_bytes": 4194304,
+        "write_acknowledgements_per_full_64k_stream": 1,
+        "initial_read_window_bytes": 65536,
+        "destination": "127.0.0.1"
+      }
+    },
+    {
+      "trial": 1,
+      "pipeline_depth": 4,
+      "seed": 20261018,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.071575,
+        "stream_open_batch_ms": 5.477012,
+        "duplex_wall_ms": 280.811017,
+        "duplex_goodput_mbps": 238.9823046009623,
+        "duplex_stream_latency_p50_ms": 276.341905,
+        "duplex_stream_latency_p95_ms": 277.502385,
+        "direct_wall_ms": 16.859174,
+        "direct_goodput_mbps": 3980.554681979081,
+        "direct_stream_latency_p50_ms": 15.023579999999999,
+        "direct_stream_latency_p95_ms": 16.072097,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      },
+      "benchmark_config": {
+        "streams": 8,
+        "payload_bytes_per_stream": 1048576,
+        "total_useful_bytes": 8388608,
+        "hop_count": 3,
+        "response_event_chunk_bytes": 16384,
+        "write_chunk_bytes": 65536,
+        "pipeline_depth": 4,
+        "max_pipeline_payload_bytes": 4194304,
+        "write_acknowledgements_per_full_64k_stream": 1,
+        "initial_read_window_bytes": 65536,
+        "destination": "127.0.0.1"
+      }
+    },
+    {
+      "trial": 2,
+      "pipeline_depth": 2,
+      "seed": 20261019,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.098636,
+        "stream_open_batch_ms": 5.247807,
+        "duplex_wall_ms": 238.34169699999998,
+        "duplex_goodput_mbps": 281.5657723541341,
+        "duplex_stream_latency_p50_ms": 234.354898,
+        "duplex_stream_latency_p95_ms": 234.633513,
+        "direct_wall_ms": 15.59107,
+        "direct_goodput_mbps": 4304.314200372392,
+        "direct_stream_latency_p50_ms": 13.811500500000001,
+        "direct_stream_latency_p95_ms": 14.897995,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      },
+      "benchmark_config": {
+        "streams": 8,
+        "payload_bytes_per_stream": 1048576,
+        "total_useful_bytes": 8388608,
+        "hop_count": 3,
+        "response_event_chunk_bytes": 16384,
+        "write_chunk_bytes": 65536,
+        "pipeline_depth": 2,
+        "max_pipeline_payload_bytes": 4194304,
+        "write_acknowledgements_per_full_64k_stream": 1,
+        "initial_read_window_bytes": 65536,
+        "destination": "127.0.0.1"
+      }
+    },
+    {
+      "trial": 2,
+      "pipeline_depth": 4,
+      "seed": 20261019,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.25375,
+        "stream_open_batch_ms": 5.721391,
+        "duplex_wall_ms": 222.511887,
+        "duplex_goodput_mbps": 301.5967591879709,
+        "duplex_stream_latency_p50_ms": 218.5198235,
+        "duplex_stream_latency_p95_ms": 219.607675,
+        "direct_wall_ms": 15.211407999999999,
+        "direct_goodput_mbps": 4411.745710850699,
+        "direct_stream_latency_p50_ms": 13.329499,
+        "direct_stream_latency_p95_ms": 14.401867,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      },
+      "benchmark_config": {
+        "streams": 8,
+        "payload_bytes_per_stream": 1048576,
+        "total_useful_bytes": 8388608,
+        "hop_count": 3,
+        "response_event_chunk_bytes": 16384,
+        "write_chunk_bytes": 65536,
+        "pipeline_depth": 4,
+        "max_pipeline_payload_bytes": 4194304,
+        "write_acknowledgements_per_full_64k_stream": 1,
+        "initial_read_window_bytes": 65536,
+        "destination": "127.0.0.1"
+      }
+    },
+    {
+      "trial": 2,
+      "pipeline_depth": 1,
+      "seed": 20261019,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.224746,
+        "stream_open_batch_ms": 5.01127,
+        "duplex_wall_ms": 232.581557,
+        "duplex_goodput_mbps": 288.53906073042583,
+        "duplex_stream_latency_p50_ms": 229.388976,
+        "duplex_stream_latency_p95_ms": 229.436352,
+        "direct_wall_ms": 16.086609000000003,
+        "direct_goodput_mbps": 4171.722206961082,
+        "direct_stream_latency_p50_ms": 14.182786499999999,
+        "direct_stream_latency_p95_ms": 15.2986,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      },
+      "benchmark_config": {
+        "streams": 8,
+        "payload_bytes_per_stream": 1048576,
+        "total_useful_bytes": 8388608,
+        "hop_count": 3,
+        "response_event_chunk_bytes": 16384,
+        "write_chunk_bytes": 65536,
+        "pipeline_depth": 1,
+        "max_pipeline_payload_bytes": 4194304,
+        "write_acknowledgements_per_full_64k_stream": 1,
+        "initial_read_window_bytes": 65536,
+        "destination": "127.0.0.1"
+      }
+    },
+    {
+      "trial": 3,
+      "pipeline_depth": 4,
+      "seed": 20261020,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.1738,
+        "stream_open_batch_ms": 5.613128,
+        "duplex_wall_ms": 240.45899200000002,
+        "duplex_goodput_mbps": 279.08652299432407,
+        "duplex_stream_latency_p50_ms": 233.3976835,
+        "duplex_stream_latency_p95_ms": 234.695316,
+        "direct_wall_ms": 16.36937,
+        "direct_goodput_mbps": 4099.660768862821,
+        "direct_stream_latency_p50_ms": 14.380283,
+        "direct_stream_latency_p95_ms": 15.553629,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      },
+      "benchmark_config": {
+        "streams": 8,
+        "payload_bytes_per_stream": 1048576,
+        "total_useful_bytes": 8388608,
+        "hop_count": 3,
+        "response_event_chunk_bytes": 16384,
+        "write_chunk_bytes": 65536,
+        "pipeline_depth": 4,
+        "max_pipeline_payload_bytes": 4194304,
+        "write_acknowledgements_per_full_64k_stream": 1,
+        "initial_read_window_bytes": 65536,
+        "destination": "127.0.0.1"
+      }
+    },
+    {
+      "trial": 3,
+      "pipeline_depth": 1,
+      "seed": 20261020,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.427242,
+        "stream_open_batch_ms": 6.572165,
+        "duplex_wall_ms": 231.445108,
+        "duplex_goodput_mbps": 289.955854240825,
+        "duplex_stream_latency_p50_ms": 222.672863,
+        "duplex_stream_latency_p95_ms": 222.895399,
+        "direct_wall_ms": 17.666342,
+        "direct_goodput_mbps": 3798.684753187728,
+        "direct_stream_latency_p50_ms": 15.872681,
+        "direct_stream_latency_p95_ms": 16.953196,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      },
+      "benchmark_config": {
+        "streams": 8,
+        "payload_bytes_per_stream": 1048576,
+        "total_useful_bytes": 8388608,
+        "hop_count": 3,
+        "response_event_chunk_bytes": 16384,
+        "write_chunk_bytes": 65536,
+        "pipeline_depth": 1,
+        "max_pipeline_payload_bytes": 4194304,
+        "write_acknowledgements_per_full_64k_stream": 1,
+        "initial_read_window_bytes": 65536,
+        "destination": "127.0.0.1"
+      }
+    },
+    {
+      "trial": 3,
+      "pipeline_depth": 2,
+      "seed": 20261020,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.116994,
+        "stream_open_batch_ms": 5.655161,
+        "duplex_wall_ms": 223.863034,
+        "duplex_goodput_mbps": 299.77644276901924,
+        "duplex_stream_latency_p50_ms": 220.36606849999998,
+        "duplex_stream_latency_p95_ms": 220.7645,
+        "direct_wall_ms": 14.68202,
+        "direct_goodput_mbps": 4570.819546629142,
+        "direct_stream_latency_p50_ms": 12.961839999999999,
+        "direct_stream_latency_p95_ms": 13.947993,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      },
+      "benchmark_config": {
+        "streams": 8,
+        "payload_bytes_per_stream": 1048576,
+        "total_useful_bytes": 8388608,
+        "hop_count": 3,
+        "response_event_chunk_bytes": 16384,
+        "write_chunk_bytes": 65536,
+        "pipeline_depth": 2,
+        "max_pipeline_payload_bytes": 4194304,
+        "write_acknowledgements_per_full_64k_stream": 1,
+        "initial_read_window_bytes": 65536,
+        "destination": "127.0.0.1"
+      }
+    },
+    {
+      "trial": 4,
+      "pipeline_depth": 1,
+      "seed": 20261021,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.088981,
+        "stream_open_batch_ms": 5.600949,
+        "duplex_wall_ms": 230.72873199999998,
+        "duplex_goodput_mbps": 290.8561210313417,
+        "duplex_stream_latency_p50_ms": 227.65601700000002,
+        "duplex_stream_latency_p95_ms": 227.715036,
+        "direct_wall_ms": 14.967690000000001,
+        "direct_goodput_mbps": 4483.581902083754,
+        "direct_stream_latency_p50_ms": 12.9629055,
+        "direct_stream_latency_p95_ms": 14.134283,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      },
+      "benchmark_config": {
+        "streams": 8,
+        "payload_bytes_per_stream": 1048576,
+        "total_useful_bytes": 8388608,
+        "hop_count": 3,
+        "response_event_chunk_bytes": 16384,
+        "write_chunk_bytes": 65536,
+        "pipeline_depth": 1,
+        "max_pipeline_payload_bytes": 4194304,
+        "write_acknowledgements_per_full_64k_stream": 1,
+        "initial_read_window_bytes": 65536,
+        "destination": "127.0.0.1"
+      }
+    },
+    {
+      "trial": 4,
+      "pipeline_depth": 2,
+      "seed": 20261021,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.120579,
+        "stream_open_batch_ms": 5.075898,
+        "duplex_wall_ms": 221.141149,
+        "duplex_goodput_mbps": 303.46619931869844,
+        "duplex_stream_latency_p50_ms": 217.7618245,
+        "duplex_stream_latency_p95_ms": 218.091497,
+        "direct_wall_ms": 15.778804000000001,
+        "direct_goodput_mbps": 4253.102072882076,
+        "direct_stream_latency_p50_ms": 13.7283805,
+        "direct_stream_latency_p95_ms": 14.978457,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      },
+      "benchmark_config": {
+        "streams": 8,
+        "payload_bytes_per_stream": 1048576,
+        "total_useful_bytes": 8388608,
+        "hop_count": 3,
+        "response_event_chunk_bytes": 16384,
+        "write_chunk_bytes": 65536,
+        "pipeline_depth": 2,
+        "max_pipeline_payload_bytes": 4194304,
+        "write_acknowledgements_per_full_64k_stream": 1,
+        "initial_read_window_bytes": 65536,
+        "destination": "127.0.0.1"
+      }
+    },
+    {
+      "trial": 4,
+      "pipeline_depth": 4,
+      "seed": 20261021,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.641015,
+        "stream_open_batch_ms": 4.830237,
+        "duplex_wall_ms": 243.028168,
+        "duplex_goodput_mbps": 276.1361555422662,
+        "duplex_stream_latency_p50_ms": 238.6720605,
+        "duplex_stream_latency_p95_ms": 239.900819,
+        "direct_wall_ms": 16.210465,
+        "direct_goodput_mbps": 4139.848178321843,
+        "direct_stream_latency_p50_ms": 14.227063000000001,
+        "direct_stream_latency_p95_ms": 15.472292,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      },
+      "benchmark_config": {
+        "streams": 8,
+        "payload_bytes_per_stream": 1048576,
+        "total_useful_bytes": 8388608,
+        "hop_count": 3,
+        "response_event_chunk_bytes": 16384,
+        "write_chunk_bytes": 65536,
+        "pipeline_depth": 4,
+        "max_pipeline_payload_bytes": 4194304,
+        "write_acknowledgements_per_full_64k_stream": 1,
+        "initial_read_window_bytes": 65536,
+        "destination": "127.0.0.1"
+      }
+    },
+    {
+      "trial": 5,
+      "pipeline_depth": 2,
+      "seed": 20261022,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.151265,
+        "stream_open_batch_ms": 5.136699,
+        "duplex_wall_ms": 226.94944999999998,
+        "duplex_goodput_mbps": 295.69961064016684,
+        "duplex_stream_latency_p50_ms": 222.76169800000002,
+        "duplex_stream_latency_p95_ms": 223.152704,
+        "direct_wall_ms": 16.168331000000002,
+        "direct_goodput_mbps": 4150.636450973202,
+        "direct_stream_latency_p50_ms": 14.2911495,
+        "direct_stream_latency_p95_ms": 15.399201,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      },
+      "benchmark_config": {
+        "streams": 8,
+        "payload_bytes_per_stream": 1048576,
+        "total_useful_bytes": 8388608,
+        "hop_count": 3,
+        "response_event_chunk_bytes": 16384,
+        "write_chunk_bytes": 65536,
+        "pipeline_depth": 2,
+        "max_pipeline_payload_bytes": 4194304,
+        "write_acknowledgements_per_full_64k_stream": 1,
+        "initial_read_window_bytes": 65536,
+        "destination": "127.0.0.1"
+      }
+    },
+    {
+      "trial": 5,
+      "pipeline_depth": 4,
+      "seed": 20261022,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.112557,
+        "stream_open_batch_ms": 4.978691,
+        "duplex_wall_ms": 212.851652,
+        "duplex_goodput_mbps": 315.28467535690066,
+        "duplex_stream_latency_p50_ms": 208.62447500000002,
+        "duplex_stream_latency_p95_ms": 209.738606,
+        "direct_wall_ms": 15.43778,
+        "direct_goodput_mbps": 4347.054045335534,
+        "direct_stream_latency_p50_ms": 13.5079585,
+        "direct_stream_latency_p95_ms": 14.444472,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      },
+      "benchmark_config": {
+        "streams": 8,
+        "payload_bytes_per_stream": 1048576,
+        "total_useful_bytes": 8388608,
+        "hop_count": 3,
+        "response_event_chunk_bytes": 16384,
+        "write_chunk_bytes": 65536,
+        "pipeline_depth": 4,
+        "max_pipeline_payload_bytes": 4194304,
+        "write_acknowledgements_per_full_64k_stream": 1,
+        "initial_read_window_bytes": 65536,
+        "destination": "127.0.0.1"
+      }
+    },
+    {
+      "trial": 5,
+      "pipeline_depth": 1,
+      "seed": 20261022,
+      "results": {
+        "integrity_verified": true,
+        "circuit_build_ms": 2.195372,
+        "stream_open_batch_ms": 4.978991,
+        "duplex_wall_ms": 210.25464399999998,
+        "duplex_goodput_mbps": 319.17898564942044,
+        "duplex_stream_latency_p50_ms": 207.152264,
+        "duplex_stream_latency_p95_ms": 207.347339,
+        "direct_wall_ms": 15.677572000000001,
+        "direct_goodput_mbps": 4280.564873183169,
+        "direct_stream_latency_p50_ms": 13.5353,
+        "direct_stream_latency_p95_ms": 14.592275,
+        "destination_connections": 16,
+        "active_streams_after_completion": 0,
+        "active_connections_after_close": [
+          0,
+          0,
+          0
+        ],
+        "relay_observability_check": true
+      },
+      "benchmark_config": {
+        "streams": 8,
+        "payload_bytes_per_stream": 1048576,
+        "total_useful_bytes": 8388608,
+        "hop_count": 3,
+        "response_event_chunk_bytes": 16384,
+        "write_chunk_bytes": 65536,
+        "pipeline_depth": 1,
+        "max_pipeline_payload_bytes": 4194304,
+        "write_acknowledgements_per_full_64k_stream": 1,
+        "initial_read_window_bytes": 65536,
+        "destination": "127.0.0.1"
+      }
+    }
+  ],
+  "limitations": [
+    "All relays and the destination are on one host and IPv4 loopback.",
+    "Pipeline depths are bounded to four commands per stream; relays cap per-stream and aggregate in-flight bytes.",
+    "TCP direct is unencrypted and is not an anonymity-equivalent baseline.",
+    "No fairness proof, WAN congestion analysis, traffic-correlation analysis, or independent protocol audit is included."
+  ]
+}

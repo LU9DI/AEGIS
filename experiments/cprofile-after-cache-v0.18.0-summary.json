@@ -1,0 +1,124 @@
+{
+  "run": {
+    "integrity_verified": true,
+    "circuit_build_ms": 5.282247,
+    "stream_open_batch_ms": 13.951113,
+    "duplex_wall_ms": 130.885037,
+    "duplex_goodput_mbps": 128.18284186297015,
+    "duplex_stream_latency_p50_ms": 122.1485945,
+    "duplex_stream_latency_p95_ms": 122.757318,
+    "direct_wall_ms": 6.15287,
+    "direct_goodput_mbps": 2726.730127566485,
+    "direct_stream_latency_p50_ms": 5.295728,
+    "direct_stream_latency_p95_ms": 5.463781,
+    "destination_connections": 16,
+    "active_streams_after_completion": 0,
+    "active_connections_after_close": [
+      0,
+      0,
+      0
+    ],
+    "relay_observability_check": true
+  },
+  "functions": [
+    {
+      "file": "/mnt/data/malebolge-v0.18.0-work/src/anonlab/ntor_experiment.py",
+      "line": 85,
+      "function": "__post_init__",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_seconds": 9.834000000000001e-06,
+      "cumulative_seconds": 1.308e-05
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.18.0-work/src/anonlab/telescoping.py",
+      "line": 192,
+      "function": "__post_init__",
+      "primitive_calls": 7,
+      "calls": 7,
+      "self_seconds": 1.3646000000000001e-05,
+      "cumulative_seconds": 0.00011056400000000001
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.18.0-work/src/anonlab/telescoping.py",
+      "line": 376,
+      "function": "__post_init__",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_seconds": 6.0330000000000005e-06,
+      "cumulative_seconds": 1.842e-05
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.18.0-work/src/anonlab/telescoping.py",
+      "line": 106,
+      "function": "_ensure_loopback",
+      "primitive_calls": 36,
+      "calls": 36,
+      "self_seconds": 4.0138e-05,
+      "cumulative_seconds": 0.0005230920000000001
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.18.0-work/src/anonlab/telescoping.py",
+      "line": 409,
+      "function": "descriptor",
+      "primitive_calls": 1425,
+      "calls": 1425,
+      "self_seconds": 0.000428603,
+      "cumulative_seconds": 0.0013121370000000001
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.18.0-work/src/anonlab/telescoping.py",
+      "line": 766,
+      "function": "downstream_response_dispatcher",
+      "primitive_calls": 337,
+      "calls": 337,
+      "self_seconds": 0.001582892,
+      "cumulative_seconds": 0.017268414000000003
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.18.0-work/src/anonlab/telescoping.py",
+      "line": 838,
+      "function": "forward_duplex_command",
+      "primitive_calls": 640,
+      "calls": 640,
+      "self_seconds": 0.00078649,
+      "cumulative_seconds": 0.016810842
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.18.0-work/src/anonlab/telescoping.py",
+      "line": 544,
+      "function": "handle",
+      "primitive_calls": 740,
+      "calls": 740,
+      "self_seconds": 0.005001397,
+      "cumulative_seconds": 0.047782279000000004
+    },
+    {
+      "file": "/usr/lib/python3.13/ipaddress.py",
+      "line": 28,
+      "function": "ip_address",
+      "primitive_calls": 36,
+      "calls": 36,
+      "self_seconds": 2.5450000000000002e-05,
+      "cumulative_seconds": 0.00042503100000000003
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.18.0-work/src/anonlab/onion_protocol.py",
+      "line": 84,
+      "function": "open_sealed",
+      "primitive_calls": 1422,
+      "calls": 1422,
+      "self_seconds": 0.0037616740000000004,
+      "cumulative_seconds": 0.010047037
+    },
+    {
+      "file": "/mnt/data/malebolge-v0.18.0-work/src/anonlab/onion_protocol.py",
+      "line": 77,
+      "function": "seal",
+      "primitive_calls": 1422,
+      "calls": 1422,
+      "self_seconds": 0.005628928,
+      "cumulative_seconds": 0.012947092
+    }
+  ]
+}

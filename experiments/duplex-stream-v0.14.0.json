@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "project": "MALEBOLGE Anonymous Network Research Lab",
+    "version": "0.14.0",
+    "experiment": "continuous duplex stream with bounded per-stream read credit",
+    "is_loopback_only": true,
+    "is_production_security_test": false,
+    "python": "3.13.5",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "seed": 20261009,
+    "warning": "Single-host loopback measurements are not WAN results and do not prove anonymity or security."
+  },
+  "config": {
+    "streams": 8,
+    "payload_bytes_per_stream": 65536,
+    "total_useful_bytes": 524288,
+    "hop_count": 3,
+    "chunk_bytes": 16384,
+    "initial_read_window_bytes": 65536,
+    "destination": "127.0.0.1"
+  },
+  "results": {
+    "integrity_verified": true,
+    "circuit_build_ms": 3.00418,
+    "stream_open_batch_ms": 6.235001,
+    "duplex_wall_ms": 32.62528,
+    "duplex_goodput_mbps": 128.5599387959276,
+    "duplex_stream_latency_p50_ms": 28.9278195,
+    "duplex_stream_latency_p95_ms": 29.70743,
+    "direct_wall_ms": 2.4918869999999997,
+    "direct_goodput_mbps": 1683.1838682893726,
+    "direct_stream_latency_p50_ms": 2.099866,
+    "direct_stream_latency_p95_ms": 2.34853,
+    "destination_connections": 16,
+    "active_streams_after_completion": 0,
+    "active_connections_after_close": [
+      0,
+      0,
+      0
+    ],
+    "relay_observability_check": true
+  },
+  "limitations": [
+    "All relays and destination use one host and IPv4 loopback.",
+    "This is a custom experimental protocol, not Tor-compatible, audited, or production-safe.",
+    "The exit can observe the destination and cleartext application bytes; adjacent relays observe timings, sizes, and per-link stream identifiers.",
+    "Flow control is a bounded per-stream read-credit window with acknowledgements; no fairness proof or congestion-control analysis exists.",
+    "No conclusion about traffic-analysis resistance or Tor-relative performance can be inferred."
+  ]
+}

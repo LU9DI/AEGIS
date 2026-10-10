@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "project": "MALEBOLGE Anonymous Network Research Lab",
+    "version": "0.22.0",
+    "experiment": "mixed-workload A/B comparison: baseline versus optional round-robin write scheduler",
+    "loopback_only": true,
+    "real_wan_measurement": false,
+    "production_congestion_test": false,
+    "note": "Positive deltas mean higher values. For latency/completion metrics, negative deltas are generally better. Medians across small finite-flow samples are exploratory only."
+  },
+  "config": {
+    "profile": "metro",
+    "trials_per_scheduler": 5,
+    "bulk_bytes": 262144,
+    "interactive_requests": 5,
+    "request_bytes": 128,
+    "request_gap_ms": 5.0,
+    "stagger_after_ms": 20.0,
+    "write_chunk_bytes": 16384,
+    "pipeline_depth": 4,
+    "seed": 20261023,
+    "paired_seed_policy": "same seed for baseline and round-robin within each trial; condition order alternates",
+    "order_by_trial": [
+      [
+        "baseline",
+        "round_robin"
+      ],
+      [
+        "round_robin",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "round_robin"
+      ],
+      [
+        "round_robin",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "round_robin"
+      ]
+    ]
+  },
+  "summary": {
+    "bulk_goodput_mbps": {
+      "baseline_median": 6.245199592742849,
+      "round_robin_median": 5.442446089523528,
+      "round_robin_delta_percent": -12.853928706332308
+    },
+    "bulk_time_to_first_byte_ms": {
+      "baseline_median": 55.752467000047545,
+      "round_robin_median": 55.27792500004125,
+      "round_robin_delta_percent": -0.8511587478378102
+    },
+    "bulk_completion_ms": {
+      "baseline_median": 335.80223800004205,
+      "round_robin_median": 385.33261800000673,
+      "round_robin_delta_percent": 14.749865961274056
+    },
+    "early_interactive_first_response_rtt_ms": {
+      "baseline_median": 46.263561999921876,
+      "round_robin_median": 47.23965300001964,
+      "round_robin_delta_percent": 2.1098483512778765
+    },
+    "early_interactive_rtt_p50_ms": {
+      "baseline_median": 98.66618199998811,
+      "round_robin_median": 99.90634400003273,
+      "round_robin_delta_percent": 1.256927120221163
+    },
+    "early_interactive_rtt_p95_ms": {
+      "baseline_median": 109.68926600003215,
+      "round_robin_median": 107.80785299994022,
+      "round_robin_delta_percent": -1.7152207036296274
+    },
+    "early_interactive_completion_ms": {
+      "baseline_median": 526.5182910000021,
+      "round_robin_median": 500.5150440000534,
+      "round_robin_delta_percent": -4.938716744400551
+    },
+    "late_interactive_first_response_rtt_ms": {
+      "baseline_median": 86.9375280000213,
+      "round_robin_median": 84.99300899995887,
+      "round_robin_delta_percent": -2.236685404790839
+    },
+    "late_interactive_rtt_p50_ms": {
+      "baseline_median": 85.67698200010909,
+      "round_robin_median": 84.99300899995887,
+      "round_robin_delta_percent": -0.7983159352524138
+    },
+    "late_interactive_rtt_p95_ms": {
+      "baseline_median": 123.04331799998636,
+      "round_robin_median": 126.16037599991614,
+      "round_robin_delta_percent": 2.5333013207024635
+    },
+    "late_interactive_completion_ms": {
+      "baseline_median": 528.640289000009,
+      "round_robin_median": 530.0411719999829,
+      "round_robin_delta_percent": 0.26499739598428995
+    }
+  },
+  "runs": [
+    {
+      "trial": 1,
+      "scheduler": "baseline",
+      "seed": 20261023,
+      "bulk_goodput_mbps": 6.245199592742849,
+      "bulk_time_to_first_byte_ms": 61.0834579999846,
+      "bulk_completion_ms": 335.80223800004205,
+      "early_interactive_first_response_rtt_ms": 48.86565599997539,
+      "early_interactive_rtt_p50_ms": 95.98598700006278,
+      "early_interactive_rtt_p95_ms": 128.88573800000813,
+      "early_interactive_completion_ms": 526.5182910000021,
+      "late_interactive_first_response_rtt_ms": 86.9375280000213,
+      "late_interactive_rtt_p50_ms": 86.9375280000213,
+      "late_interactive_rtt_p95_ms": 122.80854200002977,
+      "late_interactive_completion_ms": 526.2085619999652,
+      "late_flow_started_while_bulk_active": true,
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "resources_closed": true
+    },
+    {
+      "trial": 1,
+      "scheduler": "round_robin",
+      "seed": 20261023,
+      "bulk_goodput_mbps": 5.355972866754242,
+      "bulk_time_to_first_byte_ms": 56.78439999996954,
+      "bulk_completion_ms": 391.5538879999758,
+      "early_interactive_first_response_rtt_ms": 51.94507099997736,
+      "early_interactive_rtt_p50_ms": 105.24335399998108,
+      "early_interactive_rtt_p95_ms": 168.9488810000057,
+      "early_interactive_completion_ms": 595.8600149999711,
+      "late_interactive_first_response_rtt_ms": 66.81439700003011,
+      "late_interactive_rtt_p50_ms": 79.86207400006151,
+      "late_interactive_rtt_p95_ms": 121.08672699991985,
+      "late_interactive_completion_ms": 521.4125520000152,
+      "late_flow_started_while_bulk_active": true,
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "resources_closed": true
+    },
+    {
+      "trial": 2,
+      "scheduler": "round_robin",
+      "seed": 21261026,
+      "bulk_goodput_mbps": 5.442446089523528,
+      "bulk_time_to_first_byte_ms": 54.364736000025005,
+      "bulk_completion_ms": 385.33261800000673,
+      "early_interactive_first_response_rtt_ms": 48.112285000001975,
+      "early_interactive_rtt_p50_ms": 100.47901699999784,
+      "early_interactive_rtt_p95_ms": 105.33059299996239,
+      "early_interactive_completion_ms": 499.68169999999645,
+      "late_interactive_first_response_rtt_ms": 88.7988709999945,
+      "late_interactive_rtt_p50_ms": 88.7988709999945,
+      "late_interactive_rtt_p95_ms": 131.9075190000376,
+      "late_interactive_completion_ms": 530.0411719999829,
+      "late_flow_started_while_bulk_active": true,
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "resources_closed": true
+    },
+    {
+      "trial": 2,
+      "scheduler": "baseline",
+      "seed": 21261026,
+      "bulk_goodput_mbps": 5.958872614482832,
+      "bulk_time_to_first_byte_ms": 53.254056000014316,
+      "bulk_completion_ms": 351.9377130000976,
+      "early_interactive_first_response_rtt_ms": 46.92357900000843,
+      "early_interactive_rtt_p50_ms": 101.33248599993294,
+      "early_interactive_rtt_p95_ms": 127.0919360000562,
+      "early_interactive_completion_ms": 540.0389820000555,
+      "late_interactive_first_response_rtt_ms": 88.5152849999713,
+      "late_interactive_rtt_p50_ms": 88.5152849999713,
+      "late_interactive_rtt_p95_ms": 114.08961699999054,
+      "late_interactive_completion_ms": 558.4184959999448,
+      "late_flow_started_while_bulk_active": true,
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "resources_closed": true
+    },
+    {
+      "trial": 3,
+      "scheduler": "baseline",
+      "seed": 22261029,
+      "bulk_goodput_mbps": 6.564204657241943,
+      "bulk_time_to_first_byte_ms": 55.752467000047545,
+      "bulk_completion_ms": 319.4830310000043,
+      "early_interactive_first_response_rtt_ms": 46.263561999921876,
+      "early_interactive_rtt_p50_ms": 103.46570100000463,
+      "early_interactive_rtt_p95_ms": 104.77159599997776,
+      "early_interactive_completion_ms": 506.4895030000116,
+      "late_interactive_first_response_rtt_ms": 85.67698200010909,
+      "late_interactive_rtt_p50_ms": 85.67698200010909,
+      "late_interactive_rtt_p95_ms": 130.23751100001846,
+      "late_interactive_completion_ms": 528.640289000009,
+      "late_flow_started_while_bulk_active": true,
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "resources_closed": true
+    },
+    {
+      "trial": 3,
+      "scheduler": "round_robin",
+      "seed": 22261029,
+      "bulk_goodput_mbps": 5.412278023904659,
+      "bulk_time_to_first_byte_ms": 55.88513800000783,
+      "bulk_completion_ms": 387.4804640000775,
+      "early_interactive_first_response_rtt_ms": 46.4043040000206,
+      "early_interactive_rtt_p50_ms": 98.51280899999892,
+      "early_interactive_rtt_p95_ms": 107.80785299994022,
+      "early_interactive_completion_ms": 500.5150440000534,
+      "late_interactive_first_response_rtt_ms": 84.99300899995887,
+      "late_interactive_rtt_p50_ms": 84.99300899995887,
+      "late_interactive_rtt_p95_ms": 126.16037599991614,
+      "late_interactive_completion_ms": 532.2187089999488,
+      "late_flow_started_while_bulk_active": true,
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "resources_closed": true
+    },
+    {
+      "trial": 4,
+      "scheduler": "round_robin",
+      "seed": 23261032,
+      "bulk_goodput_mbps": 6.621120281054503,
+      "bulk_time_to_first_byte_ms": 50.747797999974864,
+      "bulk_completion_ms": 316.7367319999812,
+      "early_interactive_first_response_rtt_ms": 47.23965300001964,
+      "early_interactive_rtt_p50_ms": 96.87460799989367,
+      "early_interactive_rtt_p95_ms": 114.00865200005228,
+      "early_interactive_completion_ms": 499.22849299991867,
+      "late_interactive_first_response_rtt_ms": 64.31019199999355,
+      "late_interactive_rtt_p50_ms": 78.44013300007191,
+      "late_interactive_rtt_p95_ms": 112.96539700003905,
+      "late_interactive_completion_ms": 482.79465600001004,
+      "late_flow_started_while_bulk_active": true,
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "resources_closed": true
+    },
+    {
+      "trial": 4,
+      "scheduler": "baseline",
+      "seed": 23261032,
+      "bulk_goodput_mbps": 5.481154945297977,
+      "bulk_time_to_first_byte_ms": 52.95683600002121,
+      "bulk_completion_ms": 382.61133299999983,
+      "early_interactive_first_response_rtt_ms": 45.38493099994412,
+      "early_interactive_rtt_p50_ms": 97.95011199992132,
+      "early_interactive_rtt_p95_ms": 107.09267299989733,
+      "early_interactive_completion_ms": 499.6829640000442,
+      "late_interactive_first_response_rtt_ms": 85.30792500005191,
+      "late_interactive_rtt_p50_ms": 85.30792500005191,
+      "late_interactive_rtt_p95_ms": 129.91937399999642,
+      "late_interactive_completion_ms": 529.6829670000989,
+      "late_flow_started_while_bulk_active": true,
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "resources_closed": true
+    },
+    {
+      "trial": 5,
+      "scheduler": "baseline",
+      "seed": 24261035,
+      "bulk_goodput_mbps": 7.342319150770303,
+      "bulk_time_to_first_byte_ms": 55.949430000055145,
+      "bulk_completion_ms": 285.62528500003737,
+      "early_interactive_first_response_rtt_ms": 42.348407000076804,
+      "early_interactive_rtt_p50_ms": 98.66618199998811,
+      "early_interactive_rtt_p95_ms": 109.68926600003215,
+      "early_interactive_completion_ms": 530.412804999969,
+      "late_interactive_first_response_rtt_ms": 87.20168400009243,
+      "late_interactive_rtt_p50_ms": 81.3754539999536,
+      "late_interactive_rtt_p95_ms": 123.04331799998636,
+      "late_interactive_completion_ms": 513.2273189999523,
+      "late_flow_started_while_bulk_active": true,
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "resources_closed": true
+    },
+    {
+      "trial": 5,
+      "scheduler": "round_robin",
+      "seed": 24261035,
+      "bulk_goodput_mbps": 6.501320303229492,
+      "bulk_time_to_first_byte_ms": 55.27792500004125,
+      "bulk_completion_ms": 322.57324700003664,
+      "early_interactive_first_response_rtt_ms": 42.449240999985705,
+      "early_interactive_rtt_p50_ms": 99.90634400003273,
+      "early_interactive_rtt_p95_ms": 106.35166200006552,
+      "early_interactive_completion_ms": 506.91226399999323,
+      "late_interactive_first_response_rtt_ms": 89.73068099999182,
+      "late_interactive_rtt_p50_ms": 89.73068099999182,
+      "late_interactive_rtt_p95_ms": 130.73980899991966,
+      "late_interactive_completion_ms": 533.2653909999863,
+      "late_flow_started_while_bulk_active": true,
+      "integrity_verified": true,
+      "relay_observability_check": true,
+      "resources_closed": true
+    }
+  ],
+  "all_integrity_and_cleanup_checks_passed": true,
+  "all_late_flows_started_during_bulk": true,
+  "limitations": [
+    "Single-host IPv4 loopback; not a real WAN or packet-loss simulator.",
+    "No global observer, anonymity or production security claim is tested.",
+    "Finite flows; results do not prove steady-state scheduler fairness."
+  ]
+}
