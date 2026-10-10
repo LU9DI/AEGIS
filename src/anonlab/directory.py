@@ -252,8 +252,32 @@ class DirectoryAuthority:
             raise ValueError("durable authority state is not configured")
         path = Path(self.state_path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        if path.is_symlink():
-            raise ValueError("authority state path must not be a symbolic link")
+        if os.name == "posix":
+            # A pathname check alone is vulnerable to a symlink/rename race.
+            # Require a private, user-owned parent so another local user cannot
+            # replace the database between validation and SQLite opening it.
+            parent_info = path.parent.stat()
+            if parent_info.st_uid != os.geteuid() or parent_info.st_mode & (stat.S_IWGRP | stat.S_IWOTH):
+                raise ValueError("authority state directory must be owned by the current user and not group/world-writable")
+            flags = os.O_RDWR | os.O_CREAT
+            flags |= getattr(os, "O_CLOEXEC", 0)
+            flags |= getattr(os, "O_NOFOLLOW", 0)
+            try:
+                state_fd = os.open(path, flags, stat.S_IRUSR | stat.S_IWUSR)
+            except OSError as exc:
+                raise ValueError("authority state path could not be opened safely") from exc
+            try:
+                state_info = os.fstat(state_fd)
+                if not stat.S_ISREG(state_info.st_mode):
+                    raise ValueError("authority state path must be a regular file")
+                os.fchmod(state_fd, stat.S_IRUSR | stat.S_IWUSR)
+            finally:
+                os.close(state_fd)
+            # The private parent directory prevents an untrusted local user
+            # from swapping this validated path before SQLite opens it.
+        else:
+            if path.is_symlink():
+                raise ValueError("authority state path must not be a symbolic link")
         connection = sqlite3.connect(path, timeout=10.0, isolation_level=None)
         try:
             if os.name == "posix":
