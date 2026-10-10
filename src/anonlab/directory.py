@@ -261,6 +261,9 @@ class DirectoryAuthority:
             connection.execute("PRAGMA busy_timeout = 10000")
             connection.execute("PRAGMA synchronous = FULL")
             connection.execute("PRAGMA journal_mode = DELETE")
+            # Serialize first-open schema and key binding too, not only issuance.
+            # Otherwise two fresh processes can both observe missing metadata.
+            connection.execute("BEGIN IMMEDIATE")
             connection.execute("CREATE TABLE IF NOT EXISTS authority_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
             connection.execute("CREATE TABLE IF NOT EXISTS issued_descriptors (relay_id TEXT PRIMARY KEY, sequence INTEGER NOT NULL, descriptor_digest TEXT NOT NULL, serial TEXT NOT NULL UNIQUE)")
             connection.execute("CREATE TABLE IF NOT EXISTS issued_serials (serial TEXT PRIMARY KEY, relay_id TEXT NOT NULL, sequence INTEGER NOT NULL, descriptor_digest TEXT NOT NULL)")
@@ -270,6 +273,7 @@ class DirectoryAuthority:
                 connection.execute("INSERT INTO authority_meta(key, value) VALUES(?, ?)", ("authority_key_fingerprint", fingerprint))
             elif not hmac.compare_digest(str(row[0]), fingerprint):
                 raise ValueError("authority state belongs to a different authority key")
+            connection.execute("COMMIT")
             return connection
         except Exception:
             connection.close()
