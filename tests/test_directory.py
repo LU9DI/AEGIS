@@ -184,6 +184,23 @@ class SignedDirectoryTests(unittest.TestCase):
             finally:
                 parent.chmod(0o700)
 
+    @unittest.skipUnless(os.name == "posix" and hasattr(os, "link"), "POSIX hard links are required")
+    def test_durable_authority_rejects_hard_linked_state_file(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            target = parent / "other.sqlite3"
+            state_path = parent / "authority.sqlite3"
+            target.write_bytes(b"do not modify")
+            os.link(target, state_path)
+            authority = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            descriptor = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="3" * 32,
+            )
+            with self.assertRaisesRegex(ValueError, "multiple hard links"):
+                authority.certify(descriptor, now=self.now)
+            self.assertEqual(target.read_bytes(), b"do not modify")
+
     def test_durable_authority_revocation_epochs_survive_restart(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             state_path = Path(directory) / "authority.sqlite3"
