@@ -219,9 +219,9 @@ jobs:
             - The PR workflow must install the checkout itself, validate console entry points, compile the source, and pass the full test suite before merge.
             - This does not resolve the separately tracked cryptographic PIR-verifiability research blocker.
           add-paths: |
-            :(top,glob)src/**
-            :(top,glob)tests/**
-            :(top,glob)docs/**
-            :(top,glob)experiments/**
-            :(top,glob)examples/**
-            :(top,glob)*.md
+            :/src
+            :/tests
+            :/docs
+            :/experiments
+            :/examples
+            :/*.md
