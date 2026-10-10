@@ -143,6 +143,32 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
         response = _verify_envelope(first[4:], self.key_a, _RESPONSE_DOMAIN)
         self.assertEqual(response["nonce"], nonce)
 
+    async def test_rate_limited_request_does_not_mutate_replay_cache(self):
+        nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+        payload = {
+            "protocol": "AEGIS-PIR-RPC-v1",
+            "server_id": "replica-a",
+            "nonce": nonce,
+            "issued_at": int(time.time()),
+            "query": base64.b64encode(b"\\x00" * 4).decode("ascii"),
+        }
+        frame = _signed_envelope(payload, self.key_a, _REQUEST_DOMAIN)
+        original_acquire = self.server_a._rate_limiter.acquire
+        self.server_a._rate_limiter.acquire = lambda: False
+        writer = None
+        try:
+            reader, writer = await asyncio.open_connection("127.0.0.1", self.server_a.port)
+            writer.write(frame)
+            await writer.drain()
+            self.assertEqual(await asyncio.wait_for(reader.read(1), timeout=2), b"")
+            self.assertNotIn(nonce, self.server_a._seen_nonces)
+            self.assertEqual(self.server_a.aggregate_stats["requests_rate_limited"], 1)
+        finally:
+            self.server_a._rate_limiter.acquire = original_acquire
+            if writer is not None:
+                writer.close()
+                await writer.wait_closed()
+
     async def test_response_mac_tampering_is_detected(self):
         payload = {"protocol": "AEGIS-PIR-RPC-v1", "server_id": "replica-a", "nonce": "n", "answer": "AA=="}
         frame = _signed_envelope(payload, self.key_a, _RESPONSE_DOMAIN)
