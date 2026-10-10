@@ -168,6 +168,7 @@ jobs:
           for source_base, target_base, pattern in (
               (root / "src" / "anonlab", workspace / "src" / "anonlab", "*.py"),
               (root / "tests", workspace / "tests", "test_*.py"),
+              (root / "docs", workspace / "docs", "*.md"),
           ):
               for source in sorted(source_base.glob(pattern)):
                   target = target_base / source.name
@@ -213,3 +214,4 @@ jobs:
           add-paths: |
             src/anonlab/*.py
             tests/test_*.py
+            docs/*.md
