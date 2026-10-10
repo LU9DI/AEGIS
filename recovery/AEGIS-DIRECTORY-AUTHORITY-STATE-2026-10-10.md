@@ -44,3 +44,20 @@ Após registrar o achado, a implementação foi endurecida na branch desta PR:
 
 
 A revisão também adicionou rejeição explícita de arquivos de estado com mais de um hard link (`st_nlink != 1`) e o teste `test_durable_authority_rejects_hard_linked_state_file`, para evitar que a aplicação altere um arquivo externo compartilhando o mesmo inode. O HEAD agora inclui esse teste; a execução CI correspondente ainda precisa terminar para validar a alteração integrada.
+
+
+## Atualização final da validação — 2026-10-10
+
+A validação do HEAD f227857c67e55b741ba3430cdce6ac1eb1d43c44 terminou com sucesso:
+
+- Workflow: [Recovery archive validation, execução 38076779021](https://github.com/LU9DI/AEGIS/actions/runs/38076779021).
+- Todas as etapas executadas terminaram com sucesso, incluindo compilação, instalação e verificação de dependências, validação de entry points, suíte de testes da fonte recuperada e validação da árvore Git.
+- A execução anterior no commit a2d881e634a4e1b053c07c9eaaff0003b6158e58, que incluiu o teste de hard links, também terminou com sucesso.
+
+Este resultado substitui as notas anteriores que diziam que o CI estava pendente. É evidência de que o workflow passou no HEAD; não é uma prova formal de ausência de vulnerabilidades.
+
+## Riscos residuais após o hardening
+
+A abertura SQLite ainda valida o diretório pai por caminho e depois abre o banco por caminho. A proteção de diretório privado reduz a possibilidade de troca por outro usuário local, mas não é uma garantia geral contra manipulação de ancestrais de caminho, processos sob o mesmo UID ou comprometimento do host. Uma defesa mais forte pode usar abertura relativa a descritores de diretório (openat/dir_fd) e validar a cadeia de diretórios; deve ser implementada de forma portátil e coberta por testes antes de alegar proteção contra um adversário local forte.
+
+Permanecem bloqueadores de arquitetura: rollback por restauração de uma cópia antiga do SQLite sem âncora monotônica externa, protocolo transacional conjunto para emissão e revogação, e verificabilidade criptográfica da correção de respostas PIR. A PR permanece draft e não deve ser descrita como pronta para produção ou como auditoria de segurança concluída.
