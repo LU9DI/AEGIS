@@ -90,3 +90,57 @@ Cada item deve ser classificado como **IDEIA**, **DESENHO**, **PROTÓTIPO**, **I
 Nenhum item será declarado concluído apenas porque existe uma classe, configuração ou teste feliz. Exigir implementação integrada, testes adversariais, regressões, benchmark quando aplicável, documentação dos metadados expostos, revisão de dependências e avaliação independente proporcional ao risco.
 
 **Estado inicial:** todas as propostas acima são requisitos de roadmap. A existência de protótipos em outras partes do repositório deve ser verificada item a item antes de atualizar qualquer estado.
+
+
+## 7. Propostas adicionais preservadas (2026-10-10)
+
+### 7.1 Distribuição de banda estilo BitTorrent para conteúdo grande
+- **Ideia:** dividir downloads grandes em blocos autenticados e permitir que vários peers/circuitos forneçam blocos em paralelo, com reassemblagem no cliente.
+- **Uso apropriado:** conteúdo estático, downloads retomáveis e mídia que possa tolerar buffering; não aplicar automaticamente a cada fluxo interativo de navegação.
+- **Requisitos:** manifesto de blocos autenticado, hashes/Merkle tree, validação de cada bloco, tratamento de blocos maliciosos ou duplicados, retomada, limites de memória/disco e proteção contra peers que anunciam blocos inexistentes.
+- **Risco de anonimato:** peers que veem o mesmo identificador de conteúdo ou padrão de blocos podem correlacionar pedidos. Múltiplos caminhos não equivalem a anonimato mais forte; separar os circuitos pode ampliar a superfície de observação.
+- **Risco de arquitetura:** peers P2P comuns não devem ser tratados automaticamente como nós de saída. O fornecimento de conteúdo deve respeitar política de saída, consentimento e o modelo de confiança.
+- **Critério de sucesso:** comparar throughput útil, latência inicial, overhead, uso de CPU/RAM, resiliência à perda e resultados de testes de correlação contra o download por circuito único.
+
+### 7.2 Canais estocásticos contra Website Fingerprinting
+- **Ideia:** avaliar padding e temporização estocástica para tornar menos previsíveis os tamanhos e intervalos dos pacotes observados.
+- **Requisitos:** definir distribuições e limites de overhead, aplicar padding em camadas controladas pelo protocolo e evitar que atrasos comprometam timeouts, interatividade ou controle de congestionamento.
+- **Limite essencial:** ruído aleatório não torna o tráfego “impossível de classificar”. Modelos de aprendizado de máquina podem explorar padrões residuais e efeitos de ponta a ponta; atrasos de microssegundos podem ser irrelevantes em redes com jitter muito maior.
+- **Critério de sucesso:** avaliar classificadores de website fingerprinting em conjuntos de treino/teste separados, incluindo ambientes diferentes e ataques adaptativos; reportar redução de precisão do atacante junto com custo de banda e latência. Não declarar imunidade sem evidência.
+
+### 7.3 Quotas colaborativas / crédito local de prioridade
+- **Ideia:** usuários que contribuem com capacidade de retransmissão saudável poderiam receber prioridade de serviço, sem moeda ou token negociável.
+- **Requisitos:** definir contabilização verificável, validade e decaimento dos créditos, limites por dispositivo/identidade, prevenção de replay e abuso, e mecanismo de justiça para conexões domésticas com capacidades diferentes.
+- **Risco:** reputação em DHT pode ser manipulada por identidades Sybil, conluio ou métricas falsas. A prioridade pode criar correlações entre contribuição e atividade do usuário ou concentrar tráfego nos operadores mais poderosos.
+- **Princípio de privacidade:** não armazenar um histórico público e permanente de quem contribuiu, quando navegou ou quais destinos acessou. Avaliar créditos cegos ou provas limitadas de contribuição apenas se a complexidade criptográfica e o modelo de abuso justificarem.
+- **Critério de sucesso:** testes contra Sybil, conluio, inflação de contribuição e discriminação de peers; medir justiça, privacidade, latência e concentração de tráfego.
+
+### 7.4 Política de saída segura e sandbox
+- **Ideia:** evitar que computadores residenciais sejam, por padrão, saídas abertas para a Internet pública. Separar a função de relay interno da função de saída.
+- **Opções de arquitetura a avaliar:** (a) rede interna de serviços P2P/serviços ocultos, sem saída para a web pública; (b) saída apenas por gateways dedicados e explicitamente configurados, com isolamento, controles contra abuso e política operacional clara; (c) proxy externo opcional, apenas quando o operador tiver autorização e compreender as condições e riscos.
+- **Precisão:** não prometer “risco jurídico zero”. Nenhuma arquitetura pode garantir isso; gateways, provedores, leis locais, logs, abuso e configuração afetam o risco. Proxies comerciais também deslocam confiança para o operador do proxy e podem introduzir rastreamento, custos ou termos restritivos.
+- **Requisitos:** sandbox de processo/contêiner, privilégios mínimos, egress firewall, limites de taxa, isolamento entre tráfego de usuários, atualizações seguras e logs minimizados; não registrar conteúdo nem destinos além do estritamente necessário para segurança e operação.
+- **Critério de sucesso:** testes de escape da sandbox, bypass de política de egress, abuso, comprometimento do gateway e documentação explícita do que cada operador pode observar.
+
+### 7.5 Metas de arquitetura: Rust, DHT, multipath, ofuscação e quotas
+As seguintes afirmações são **metas a verificar**, não fatos já comprovados sobre o AEGIS:
+- núcleo crítico em Rust, com inventário claro de componentes escritos em outras linguagens;
+- descoberta distribuída por DHT sem depender de uma autoridade única para toda a disponibilidade;
+- transferência multipath somente para casos de uso em que blocos paralelos façam sentido e após avaliação de correlação;
+- transportes ofuscados substituíveis, testados contra detecção e bloqueio ativos;
+- prioridade por contribuição sem criptomoeda, com controles anti-Sybil e sem perfil público de atividade.
+
+A comparação com Tor/I2P/BitTorrent deve ser feita por propriedade específica e versão testada. Evitar caracterizar Tor como simplesmente “arquitetura antiga” ou afirmar que DHT elimina pontos de falha: esses sistemas têm objetivos, mecanismos e compromissos diferentes.
+
+## 8. Matriz de verificação das novas propostas
+
+| Proposta | Evidência necessária antes de marcar como implementada |
+|---|---|
+| Blocos paralelos / estilo BitTorrent | Código integrado de blocos, manifesto autenticado, verificação de integridade, retomada e testes adversariais |
+| Canais estocásticos | Padding e temporização realmente integrados, benchmark de website fingerprinting e relatório de overhead |
+| Crédito de prioridade | Contabilidade verificável, resistência a Sybil/conluio, testes de justiça e análise de vazamento de metadados |
+| Saída por sandbox/gateway | Política de egress aplicada tecnicamente, testes de escape e abuso, documentação de responsabilidades |
+| Núcleo 100% Rust | Inventário de linguagens e dependências que demonstre cobertura real; não basta ter componentes Rust |
+| DHT sem autoridade única | Testes de disponibilidade, eclipse, Sybil, envenenamento, enumeração e partição de rede |
+
+**Estado das propostas desta seção:** preservadas como ideias/requisitos de roadmap. Não foram promovidas automaticamente a “implementadas”; isso exige auditoria do código, testes e evidências correspondentes.
