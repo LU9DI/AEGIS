@@ -55,6 +55,47 @@ class SignedDirectoryTests(unittest.TestCase):
         )
         return self.authority.certify(unsigned, now=current)
 
+    def test_durable_authority_rejects_conflicting_sequence_after_restart(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "authority.sqlite3"
+            authority = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            first = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="a" * 32,
+            )
+            first_certified = authority.certify(first, now=self.now)
+            restarted = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            self.assertEqual(first_certified, restarted.certify(first, now=self.now))
+            conflict = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(X25519PrivateKey.generate()), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="b" * 32,
+            )
+            with self.assertRaisesRegex(ValueError, "conflicting descriptors share the same sequence"):
+                restarted.certify(conflict, now=self.now)
+            next_sequence = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=2, serial="c" * 32,
+            )
+            restarted.certify(next_sequence, now=self.now)
+            with self.assertRaisesRegex(ValueError, "sequence rollback"):
+                restarted.certify(first, now=self.now)
+
+    def test_durable_authority_rejects_serial_reuse(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            authority = DirectoryAuthority(self.authority.private_key, state_path=Path(directory) / "authority.sqlite3")
+            first = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="d" * 32,
+            )
+            authority.certify(first, now=self.now)
+            other_identity = Ed25519PrivateKey.generate()
+            second = create_relay_descriptor(
+                other_identity, raw_x25519_public(X25519PrivateKey.generate()), "127.0.0.1", 9002,
+                now=self.now, sequence=1, serial="d" * 32,
+            )
+            with self.assertRaises(Exception):
+                authority.certify(second, now=self.now)
+
     def test_valid_descriptor_round_trips_and_verifies(self) -> None:
         encoded = descriptor_to_json(self.descriptor)
         parsed = descriptor_from_json(encoded)
