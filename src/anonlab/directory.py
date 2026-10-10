@@ -335,6 +335,38 @@ class DirectoryAuthority:
                 connection.close()
         return certified
 
+    def sign_revocations(
+        self,
+        revoked_relay_ids: list[str] | tuple[str, ...] | set[str],
+        *,
+        epoch: int,
+        now: int | None = None,
+        valid_for_seconds: int = 3600,
+    ) -> dict[str, Any]:
+        current = _now_seconds(now)
+        if not isinstance(epoch, int) or isinstance(epoch, bool) or epoch < 1:
+            raise ValueError("revocation epoch must be a positive integer")
+        if not isinstance(valid_for_seconds, int) or isinstance(valid_for_seconds, bool):
+            raise ValueError("valid_for_seconds must be an integer")
+        if not 1 <= valid_for_seconds <= MAX_REVOCATION_LIFETIME_SECONDS:
+            raise ValueError("revocation snapshot validity must be between 1 second and 6 hours")
+        if not isinstance(revoked_relay_ids, (list, tuple, set)):
+            raise ValueError("revoked relay IDs must be a list, tuple, or set")
+        values = list(revoked_relay_ids)
+        if any(not isinstance(relay_id, str) or not _HEX_40.fullmatch(relay_id) for relay_id in values):
+            raise ValueError("revoked relay IDs must be 40 lowercase hexadecimal characters")
+        ids = sorted(set(values))
+        body = {
+            "schema_version": SCHEMA_VERSION,
+            "epoch": epoch,
+            "issued_at": current,
+            "expires_at": current + valid_for_seconds,
+            "revoked_relay_ids": ids,
+        }
+        signature = self.private_key.sign(_REVOCATION_DOMAIN + _canonical(body)).hex()
+        return {**body, "authority_signature": signature}
+
+
 @dataclass(frozen=True, slots=True)
 class VerifiedRelayDescriptor:
     relay_id: str
