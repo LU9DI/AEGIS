@@ -14,6 +14,7 @@ from anonlab.pir_rpc import (
     PirRpcProtocolError,
     _REQUEST_DOMAIN,
     _RESPONSE_DOMAIN,
+    _query_endpoint,
     _signed_envelope,
     _verify_envelope,
     recover_colluded_index,
@@ -346,6 +347,48 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
                 )
         finally:
             await third.close()
+
+
+    async def test_boolean_response_dimensions_are_rejected_as_malformed_json_types(self):
+        # In Python, bool subclasses int and True == 1. JSON peers must not be
+        # allowed to smuggle booleans into integer protocol fields.
+        for malformed_field in ("item_count", "record_bytes"):
+            key = secrets.token_bytes(32)
+
+            async def handle(reader, writer, field=malformed_field, shared_key=key):
+                try:
+                    header = await reader.readexactly(4)
+                    length = int.from_bytes(header, "big")
+                    request_raw = await reader.readexactly(length)
+                    request = _verify_envelope(request_raw, shared_key, _REQUEST_DOMAIN)
+                    response = {
+                        "protocol": "AEGIS-PIR-RPC-v1",
+                        "server_id": request["server_id"],
+                        "nonce": request["nonce"],
+                        "answer": base64.b64encode(b"X").decode("ascii"),
+                        "item_count": 1,
+                        "record_bytes": 1,
+                        "snapshot_sha256": "a" * 64,
+                    }
+                    response[field] = True
+                    writer.write(_signed_envelope(response, shared_key, _RESPONSE_DOMAIN))
+                    await writer.drain()
+                finally:
+                    writer.close()
+                    await writer.wait_closed()
+
+            server = await asyncio.start_server(handle, "127.0.0.1", 0)
+            try:
+                port = server.sockets[0].getsockname()[1]
+                endpoint = PirRpcEndpoint("malformed-peer", "127.0.0.1", port, key)
+                with self.subTest(field=malformed_field):
+                    with self.assertRaisesRegex(PirRpcProtocolError, "dimensions do not match"):
+                        await _query_endpoint(
+                            endpoint, b"\\x00", 1, 1, timeout_seconds=1.0,
+                        )
+            finally:
+                server.close()
+                await server.wait_closed()
 
 
 if __name__ == "__main__":
