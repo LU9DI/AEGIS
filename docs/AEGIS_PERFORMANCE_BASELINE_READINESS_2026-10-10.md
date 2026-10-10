@@ -26,7 +26,7 @@ Optional environment variables: `TRIALS` (default 5, range 1–10), `PAYLOAD_BYT
 TRIALS=3 PAYLOAD_BYTES=65536 SEED=20261009 PROFILE=metro bash scripts/run_performance_baseline.sh
 ```
 
-The runner records a manifest with commit SHA, dirty-worktree status, Python/platform, CPU metadata where available, logical CPU count, Linux memory metadata where available, `pip freeze`, and the configuration. It saves raw JSON from the telescoping comparison, repeated shaped-network runs with separate seeds, and the mixed-workload matrix. Results go into a timestamped directory under `artifacts/` unless `OUT_DIR` is set.
+The runner records a manifest with commit SHA, tracked-source dirty status, Python/platform, CPU metadata where available, logical CPU count, Linux memory metadata where available, `pip freeze`, and the configuration. Untracked output files do not mark the source tree dirty. It saves raw JSON from the telescoping comparison, repeated shaped-network runs with separate seeds, and the mixed-workload matrix. Results go into a timestamped directory under `artifacts/` unless `OUT_DIR` is set. The PR validation workflow now syntax-checks the shell script and executes a small smoke run, then checks each harness's integrity/cleanup result.
 
 This is a **local characterization suite**, not the complete accepted baseline. It deliberately records limitations and does not claim to collect CPU/RSS or TCP retransmission counts. The network impairment proxy shapes a reliable byte stream; it is not packet-loss simulation or a live WAN. Preserve the manifest and all raw JSON files. A dirty checkout is recorded, not rejected, so archive the source diff if running with local modifications.
 
