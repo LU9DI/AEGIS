@@ -39,7 +39,7 @@ def command(args):
 out = Path(os.environ["AEGIS_OUT_DIR"])
 try:
     commit = command(["git", "rev-parse", "HEAD"])
-    dirty = bool(command(["git", "status", "--porcelain"]))
+    dirty = bool(command(["git", "status", "--porcelain", "--untracked-files=no"]))
 except Exception:
     commit, dirty = None, None
 cpu_model = None
