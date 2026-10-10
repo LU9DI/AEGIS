@@ -1,8 +1,8 @@
 # AEGIS — estado durável da autoridade de diretório
 
-## Implementação proposta
+## Implementação submetida na PR #8
 
-DirectoryAuthority aceita state_path para registrar emissão em SQLite. A transação BEGIN IMMEDIATE serializa emissores concorrentes entre processos; o banco é vinculado ao fingerprint SHA-256 da chave pública da autoridade. Cada relay tem uma sequência atual, digest do descritor certificado e serial único. Sequências menores são rejeitadas, repetição idempotente na mesma sequência é aceita, e conteúdo diferente com a mesma sequência é rejeitado. A reserva é confirmada antes de devolver o certificado.
+A implementação na PR #8 faz DirectoryAuthority aceitar state_path para registrar emissão em SQLite. A transação BEGIN IMMEDIATE serializa emissores concorrentes entre processos; o banco é vinculado ao fingerprint SHA-256 da chave pública da autoridade. Cada relay tem uma sequência atual, digest do descritor certificado e serial único. Sequências menores são rejeitadas, repetição idempotente na mesma sequência é aceita, e conteúdo diferente com a mesma sequência é rejeitado. A reserva é confirmada antes de devolver o certificado.
 
 ## Limitações explícitas
 
