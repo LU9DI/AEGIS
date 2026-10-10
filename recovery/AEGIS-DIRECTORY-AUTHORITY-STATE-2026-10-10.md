@@ -30,3 +30,14 @@ A revisão estática do commit atual identificou um hardening pendente no tratam
 **Estado:** achado de revisão estática, ainda não corrigido nem validado por teste. A PR não deve ser tratada como hardening completo para um ambiente multiusuário hostil até resolver a abertura segura do arquivo, a criação com permissões restritas desde o primeiro instante e testes de regressão adequados. O teste existente que rejeita um symlink cobre o caso estático, não a corrida TOCTOU.
 
 Esse achado não altera o resultado do CI existente: o workflow testa o código submetido, mas não comprova ausência desse tipo de corrida. Também não resolve o rollback por restauração de backup antigo, que exige uma âncora monotônica externa ou testemunhas independentes.
+
+
+## Mitigação implementada na revisão seguinte
+
+Após registrar o achado, a implementação foi endurecida na branch desta PR:
+
+- Em POSIX, o diretório que contém o estado deve pertencer ao usuário efetivo e não pode ser gravável por grupo/outros.
+- O banco é aberto primeiro com `os.open`, `O_NOFOLLOW` quando disponível, `O_CLOEXEC` quando disponível e modo de criação `0600`; o descritor é validado como arquivo regular e as permissões são aplicadas via `fchmod` antes da abertura SQLite.
+- O teste de symlink existente foi preservado e foi adicionado `test_durable_authority_rejects_group_or_world_writable_state_directory`.
+
+**Validação ainda pendente:** no momento deste registro, as execuções CI para os commits que contêm o hardening e o teste estão em andamento/fila. Não considerar a mitigação validada até o workflow do HEAD mais recente terminar com sucesso. A proteção reduz a exposição a troca do caminho por outros usuários locais, mas não protege contra processos maliciosos executados sob o mesmo UID, comprometimento do host ou rollback do arquivo por backup antigo.
