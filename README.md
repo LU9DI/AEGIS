@@ -1,27 +1,31 @@
-# AEGIS / MALEBOLGE — Research archive
+# AEGIS / MALEBOLGE — recovered research archive
 
-This repository is being populated incrementally from recovered project files. **It is not yet a complete mirror of the source tree or recovery archive.** Do not treat the current GitHub tree as a complete release.
+This repository is being populated incrementally from recovered project files. **It is not yet a complete mirror of the recovered source tree or recovery archives.** Do not treat the current GitHub tree as a complete release.
 
 ## Current upload status
 
-Uploaded and verified in this repository:
-- Package metadata: `pyproject.toml` (declares `aegis-anon-lab==0.26.0`).
-- `.gitignore` and v0.26.0 validation record.
-- Research simulator subset: `src/anonlab/__init__.py`, `model.py`, `profiles.py`, `simulator.py`, `cli.py`.
-- Local two-server XOR PIR prototype: `src/anonlab/pir.py` and its regression tests `tests/test_pir.py`.
-- Local XOR secret-sharing prototype: `src/anonlab/secret_sharing.py` and its regression tests `tests/test_secret_sharing.py`.
-- Architecture notes and full-history recovery audit under `docs/` and `recovery/`.
+Published and verified so far:
+- package metadata (`pyproject.toml`), `.gitignore`, and v0.26.0 validation notes;
+- simulator subset: `src/anonlab/__init__.py`, `model.py`, `profiles.py`, `simulator.py`, and `cli.py`;
+- PIR implementations: `src/anonlab/pir.py` and `pir_two_server.py`, with selected tests;
+- local XOR secret-sharing prototype `src/anonlab/secret_sharing.py` and tests;
+- offline route-selection engine and synthetic demo;
+- loopback-only TCP relay and experimental binary onion envelope module;
+- architecture, threat model, roadmap, MALEBOLGE charter, protocol v2, onion, PIR and XOR-sharing design notes;
+- full-history recovery audit, checksum audit, archive inventory and recovery status.
 
-**Not yet uploaded:** the remaining implementation modules, most tests, the historical source snapshots/wheels/JSON experiment outputs, the full recovery ZIP, the Git bundle, and the complete checksum inventory. The package's declared entry points therefore refer to files that are not all present in this partial GitHub tree yet.
+**Still not uploaded:** many remaining implementation modules (including the telescoping circuit, directory and authenticated PIR RPC/TLS code), most tests, many experiment outputs and reports, full changelog, historical source ZIPs/wheels, the local Git bundle, and the full-history recovery ZIP as binary assets. The package entry points therefore refer to files that are not all present in this partial GitHub tree yet.
 
 ## Recovery archive details
 
-The recovery audit describes 246 files in the latest recovered source snapshot and the historical artifacts found. The expanded archive's SHA-256 is recorded in `recovery/AEGIS-FULL-HISTORY-RECOVERY-2026-10-09.SHA256`; the archive itself is still held in the working session and has not been uploaded as a GitHub release asset.
+The recovered full-history archive is named `AEGIS-FULL-HISTORY-RECOVERY-2026-10-09.zip`, with SHA-256 `8b0f01c8b54e356234dab4920e228af98fe3f63b06ecbd0060906626ed7265c2`. The archive itself remains in the working session and has **not** been uploaded as a GitHub release asset.
+
+The recovery audit describes a latest recovered source snapshot of 246 tracked files. The publish-stage export currently contains 233 files excluding caches and bytecode, so the snapshot and stage counts should not be conflated.
 
 ## Security caveats
 
-AEGIS is a research prototype, not a production-ready or independently audited anonymity system. The two-server XOR PIR prototype assumes replicated databases and non-colluding servers. Four-server PIR consistency checks are not a cryptographic proof of correct PIR computation and do not prevent collusion or common-mode failures. Simulator outputs are hypothetical models, not measurements of Tor or a live network.
+AEGIS is a research prototype, not a production-ready or independently audited anonymity system. The two-server XOR PIR prototypes assume replicated databases and non-colluding servers. The four-server PIR consistency check described in the experimental snapshots is not a cryptographic proof of correct PIR computation and does not prevent collusion or common-mode failures. Simulator outputs and route-selection examples are hypothetical or synthetic, not measurements of Tor or a live network.
 
 ## Recovery integrity
 
-Historical ZIP snapshots are not a reconstructed original Git commit graph. The recovered Git bundle contains a recovery baseline, not all original commits. Missing artifacts and checksum discrepancies are documented in the full-history audit. Keep an independent copy of the recovery archive outside this temporary working environment.
+Historical ZIP snapshots are not a reconstructed original Git commit graph. The recovered Git bundle contains a recovery baseline, not all original commits. Missing artifacts and checksum discrepancies are documented under `recovery/`. Keep an independent copy of the recovery archive outside this temporary working environment.
