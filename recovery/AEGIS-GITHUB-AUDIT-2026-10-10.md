@@ -3,7 +3,7 @@
 **Data da auditoria:** 2026-10-10  
 **Repositório:** https://github.com/LU9DI/AEGIS  
 **Branch examinada:** `main`  
-**Commit examinado:** `48dea598ba0ca66a329b14a3137dd8ac477abd6d`
+**Commit examinado:** `7264fc590e63aed32050c79c32854f2b54da443f`
 
 ## Resumo executivo
 
@@ -11,7 +11,7 @@ O ZIP consolidado publicado está presente e íntegro. O repositório Git, poré
 
 ## O que foi verificado
 
-- A árvore remota de `main` foi consultada pela API do GitHub: **59 entradas**, `truncated=false`.
+- A árvore remota de `main` foi consultada pela API do GitHub: **52 arquivos** (59 entradas contando 7 diretórios), `truncated=false`.
 - O commit de upload `aee4349` registra `AEGIS-consolidated-recovery-2026-10-09.zip`, com **6.177.944 bytes**.
 - O Git blob SHA remoto do ZIP é `38c5c008e66466af01ad790f329b34e9b464eadd`. O mesmo SHA de objeto Git foi calculado localmente para o arquivo disponível, confirmando correspondência byte a byte com o objeto publicado.
 - SHA-256 local do ZIP consolidado: `ae59e83cf68caebdebeb7522dd36c0bc16f9bbe288bbff1ce99bd7880c659be3`.
