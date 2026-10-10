@@ -61,7 +61,7 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
                 self.assertFalse(result.is_production_secure)
 
     async def test_base64_wire_fields_must_have_canonical_encoding(self):
-        self.assertEqual(_decode_b64("/w==", "nonce"), b"\\xff")
+        self.assertEqual(_decode_b64("/w==", "nonce"), bytes([255]))
         with self.assertRaisesRegex(PirRpcProtocolError, "canonical base64"):
             _decode_b64("/x==", "nonce")
 
