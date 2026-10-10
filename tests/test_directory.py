@@ -147,6 +147,38 @@ class SignedDirectoryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "symbolic link"):
                 authority.certify(descriptor, now=self.now)
 
+    def test_durable_authority_revocation_epochs_survive_restart(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "authority.sqlite3"
+            authority = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            revoked = "a" * 40
+            first = authority.sign_revocations([revoked], epoch=1, now=self.now)
+            # Same epoch is immutable and idempotent, even if called later.
+            repeated = authority.sign_revocations([revoked], epoch=1, now=self.now + 10)
+            self.assertEqual(repeated, first)
+            second_id = "b" * 40
+            next_snapshot = authority.sign_revocations([revoked, second_id], epoch=2, now=self.now + 20)
+            restarted = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            self.assertEqual(
+                restarted.sign_revocations([revoked, second_id], epoch=2, now=self.now + 30),
+                next_snapshot,
+            )
+
+    def test_durable_authority_rejects_revocation_rollback_and_equivocation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            authority = DirectoryAuthority(
+                self.authority.private_key, state_path=Path(directory) / "authority.sqlite3"
+            )
+            first_id = "a" * 40
+            second_id = "b" * 40
+            authority.sign_revocations([first_id], epoch=4, now=self.now)
+            with self.assertRaisesRegex(ValueError, "epoch rollback"):
+                authority.sign_revocations([first_id], epoch=3, now=self.now + 1)
+            with self.assertRaisesRegex(ValueError, "same epoch"):
+                authority.sign_revocations([second_id], epoch=4, now=self.now + 1)
+            with self.assertRaisesRegex(ValueError, "cumulative"):
+                authority.sign_revocations([], epoch=5, now=self.now + 2)
+
     def test_valid_descriptor_round_trips_and_verifies(self) -> None:
         encoded = descriptor_to_json(self.descriptor)
         parsed = descriptor_from_json(encoded)
