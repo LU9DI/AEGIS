@@ -13,6 +13,7 @@ from anonlab.pir_rpc import (
     PirRpcError,
     PirRpcProtocolError,
     _REQUEST_DOMAIN,
+    _decode_b64,
     _RESPONSE_DOMAIN,
     _query_endpoint,
     _mac,
@@ -58,6 +59,11 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(result.response_bytes_per_server, len(expected))
                 self.assertEqual(result.authenticated_messages, 4)
                 self.assertFalse(result.is_production_secure)
+
+    async def test_base64_wire_fields_must_have_canonical_encoding(self):
+        self.assertEqual(_decode_b64("/w==", "nonce"), b"\\xff")
+        with self.assertRaisesRegex(PirRpcProtocolError, "canonical base64"):
+            _decode_b64("/x==", "nonce")
 
     async def test_query_wire_schema_contains_mask_but_never_selected_index(self):
         query_a, query_b = make_query_pair(len(self.records), 19)
