@@ -75,3 +75,17 @@ Após as atualizações de documentação acima, o workflow **Recovery archive v
 O job `recovered-source` concluiu com sucesso a verificação de checksum/integridade do ZIP, compilação da fonte recuperada e testes, instalação/verificação de dependências, validação de entry points e verificação da árvore Git. Etapas de recuperação/publicação de arquivos foram corretamente ignoradas por não serem necessárias neste PR.
 
 Isso valida o workflow automatizado neste commit, não a ausência de corridas TOCTOU, rollback por restauração de backup, nem a segurança do protocolo PIR. A PR segue aberta como draft; os bloqueadores arquiteturais e a revisão independente continuam pendentes.
+
+
+## Validação integrada do HEAD com proteção contra ancestral symlink — 2026-10-10
+
+O workflow **Recovery archive validation**, execução [38080290388](https://github.com/LU9DI/AEGIS/actions/runs/38080290388), terminou com sucesso no HEAD `b27f1283bd4932390cfdab08a70f1df486c9537e`.
+
+No job `recovered-source`, o log confirma:
+- primeira execução da suíte recuperada: **230 testes + 76 subtestes aprovados**;
+- validação da árvore Git/checkout: **248 testes + 76 subtestes aprovados** em 24,76 s;
+- compilação, instalação do pacote, `pip check`, entry points e verificação de integridade do arquivo recuperado concluídos sem falha.
+
+A segunda execução de 248 testes inclui os testes atuais do checkout, incluindo a regressão que rejeita um diretório ancestral simbólico. A execução valida o workflow nesse commit; não prova ausência de vulnerabilidades. O workflow também emitiu aviso não bloqueante de depreciação do runtime Node.js 20 para `actions/checkout@v4` e `actions/setup-python@v5`.
+
+A branch foi alterada depois? Esta evidência é estritamente para o SHA acima. Qualquer commit subsequente exige sua própria validação. A PR continua draft e não foi mesclada.
