@@ -9,6 +9,7 @@ Uploaded and verified in this repository:
 - `.gitignore` and v0.26.0 validation record.
 - Research simulator subset: `src/anonlab/__init__.py`, `model.py`, `profiles.py`, `simulator.py`, `cli.py`.
 - Local two-server XOR PIR prototype: `src/anonlab/pir.py` and its regression tests `tests/test_pir.py`.
+- Local XOR secret-sharing prototype: `src/anonlab/secret_sharing.py` and its regression tests `tests/test_secret_sharing.py`.
 - Architecture notes and full-history recovery audit under `docs/` and `recovery/`.
 
 **Not yet uploaded:** the remaining implementation modules, most tests, the historical source snapshots/wheels/JSON experiment outputs, the full recovery ZIP, the Git bundle, and the complete checksum inventory. The package's declared entry points therefore refer to files that are not all present in this partial GitHub tree yet.
