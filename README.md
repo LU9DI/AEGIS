@@ -8,7 +8,8 @@ Published and verified:
 - package metadata (`pyproject.toml`), ignore rules, validation notes and recovery reports;
 - a subset of simulator, routing, onion-envelope, PIR and XOR secret-sharing modules with selected tests;
 - architecture, threat model, roadmap, protocol, onion, PIR and sharing design notes;
-- `AEGIS-consolidated-recovery-2026-10-09.zip`, which contains selected research ZIPs, a recoverable Git baseline bundle and status/checksum files.
+- `AEGIS-consolidated-recovery-2026-10-09.zip`, which contains selected research ZIPs, a recoverable Git baseline bundle and status/checksum files;
+- GitHub Actions workflow at `.github/workflows/recovery-validation.yml`, which verifies the archive checksum and nested ZIPs, extracts the v0.27.4 source snapshot, compiles the source/tests, and runs pytest.
 
 **The consolidated ZIP is not the full-history recovery archive.** It contains the v0.27.4 research snapshot, which was verified to match the recovered 246-file source tree exactly. It also contains selected older/research snapshots, not every historical artifact.
 
@@ -17,7 +18,7 @@ Still missing as ordinary files from the Git tree:
 - many experiment outputs, docs, changelog and reports;
 - historical ZIPs/wheels and the expanded full-history recovery ZIP.
 
-Because the Git tree is partial, some console entry points declared in `pyproject.toml` refer to modules that are not present as individual files in `main`. Extract the full v0.27.4 source snapshot from the consolidated ZIP if you need the complete recovered source tree, or wait until the remaining files are published into Git.
+Because the Git tree is partial, some console entry points declared in `pyproject.toml` refer to modules that are not present as individual files in `main`. Extract the full v0.27.4 source snapshot from the consolidated ZIP if you need the complete recovered source tree, or wait until the remaining files are published into Git. The new CI workflow validates the source snapshot embedded in the archive; it does **not** claim the partial Git checkout itself is complete.
 
 ## Recovery archive details
 
