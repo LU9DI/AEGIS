@@ -207,7 +207,7 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: automation/recovered-artifact-completion
+          branch: automation/recovered-artifact-completion-v2
           delete-branch: true
           commit-message: "recovery: publish remaining snapshot artifacts"
           title: "Recovery: publish remaining recovered source and research artifacts"
