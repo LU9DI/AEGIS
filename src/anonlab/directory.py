@@ -331,6 +331,10 @@ class DirectoryAuthority:
                     (body["relay_id"], body["sequence"], digest, body["serial"]),
                 )
                 connection.execute("COMMIT")
+            except sqlite3.IntegrityError as exc:
+                if connection.in_transaction:
+                    connection.execute("ROLLBACK")
+                raise ValueError("authority state rejected a duplicate issuance record") from exc
             except Exception:
                 if connection.in_transaction:
                     connection.execute("ROLLBACK")
