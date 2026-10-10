@@ -101,7 +101,10 @@ class SignedDirectoryTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as directory:
             state_path = Path(directory) / "authority.sqlite3"
-            descriptor = self.issue_descriptor()
+            descriptor = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="e" * 32,
+            )
             authorities = [
                 DirectoryAuthority(self.authority.private_key, state_path=state_path)
                 for _ in range(8)
@@ -117,10 +120,14 @@ class SignedDirectoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             state_path = Path(directory) / "authority.sqlite3"
             first = DirectoryAuthority(self.authority.private_key, state_path=state_path)
-            first.certify(self.issue_descriptor(), now=self.now)
+            descriptor = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="f" * 32,
+            )
+            first.certify(descriptor, now=self.now)
             other = DirectoryAuthority(Ed25519PrivateKey.generate(), state_path=state_path)
             with self.assertRaisesRegex(ValueError, "different authority key"):
-                other.certify(self.issue_descriptor(), now=self.now)
+                other.certify(descriptor, now=self.now)
 
     @unittest.skipUnless(hasattr(os, "symlink"), "symbolic links are unavailable")
     def test_durable_authority_rejects_symlink_state_path(self) -> None:
@@ -133,8 +140,12 @@ class SignedDirectoryTests(unittest.TestCase):
             except (OSError, NotImplementedError):
                 self.skipTest("symbolic-link creation is not permitted")
             authority = DirectoryAuthority(self.authority.private_key, state_path=link)
+            descriptor = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="1" * 32,
+            )
             with self.assertRaisesRegex(ValueError, "symbolic link"):
-                authority.certify(self.issue_descriptor(), now=self.now)
+                authority.certify(descriptor, now=self.now)
 
     def test_valid_descriptor_round_trips_and_verifies(self) -> None:
         encoded = descriptor_to_json(self.descriptor)
