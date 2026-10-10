@@ -48,3 +48,15 @@ O arquivo de recuperação de histórico completo `AEGIS-FULL-HISTORY-RECOVERY-2
 ## Limites desta auditoria
 
 Esta auditoria verifica a presença e integridade dos artefatos, a consistência do snapshot-fonte e a suíte automatizada. Não é uma auditoria criptográfica independente, não prova anonimato contra adversários reais e não substitui revisão de protocolo ou testes de rede multioperador.
+
+
+## Correção operacional adicionada após a auditoria inicial
+
+- Adicionado `.github/workflows/recovery-validation.yml` para verificar o SHA-256 do ZIP consolidado, testar os oito ZIPs de pesquisa internos, extrair o snapshot v0.27.4, compilar o código e executar a suíte de testes.
+- O checksum do ZIP consolidado foi recalculado a partir do backup de histórico completo e confirma **6.177.944 bytes** e SHA-256 `ae59e83cf68caebdebeb7522dd36c0bc16f9bbe288bbff1ce99bd7880c659be3`.
+- Reexecução local independente da suíte dentro do snapshot v0.27.4: **227 testes e 76 subtestes aprovados em 32,86 segundos**, com saída normal de código 0.
+- O workflow foi publicado no GitHub, mas ainda não foi possível confirmar um resultado de execução do GitHub Actions nesta auditoria. Portanto, o resultado local não deve ser confundido com um CI remoto verde.
+
+## Ações ainda pendentes
+
+A árvore Git segue parcial. A publicação dos 27 módulos Python e 22 arquivos de teste restantes como arquivos individuais não foi concluída nesta rodada. O arquivo de recuperação completo de 29 MB também continua distinto do ZIP consolidado já publicado. A falha conhecida de PIR verificável permanece um bloqueador de segurança, não corrigido por esta auditoria nem pelo workflow.
