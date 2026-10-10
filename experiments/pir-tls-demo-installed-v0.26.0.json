@@ -1,0 +1,40 @@
+{
+  "metadata": {
+    "client_certificate_required": false,
+    "client_shared_hmac_keys_distributed": false,
+    "is_live_remote_network_test": false,
+    "is_production_secure": false,
+    "is_security_proof": false,
+    "network_mode": "TLS over two separate local TCP listeners in one process",
+    "project": "AEGIS",
+    "protocol": "AEGIS-PIR-RPC-v1",
+    "transport": "TLS 1.2+ encrypted stream with verified server certificate/hostname; no client certificate",
+    "version": "0.26.0",
+    "warning": "This demonstrates server certificate and hostname verification plus TLS confidentiality/integrity. The listeners still run on one machine/process; the global endpoint rate limit is not per-client, does not prevent distributed abuse, and is not a substitute for edge protection. No remote operator independence, authenticated database update protocol, verifiable server computation, anonymous-network circuit, or protection from two-server collusion is proved."
+  },
+  "result": {
+    "client_index_sent_to_servers": false,
+    "client_local_target_index": 17,
+    "query_bytes_per_replica": 8,
+    "record_sha256": "a2ced6add9ba112194edd6f61243e56db7c3d858e10a2faff40082fd1adeb5a4",
+    "replica_a_aggregate_stats": {
+      "active_connections": 0,
+      "requests_accepted": 1,
+      "requests_rate_limited": 0
+    },
+    "replica_b_aggregate_stats": {
+      "active_connections": 0,
+      "requests_accepted": 1,
+      "requests_rate_limited": 0
+    },
+    "replica_ids": [
+      "replica-a",
+      "replica-b"
+    ],
+    "replica_ports_distinct": true,
+    "response_bytes_per_replica": 32,
+    "retrieval_correct": true,
+    "tls_server_identity_verified": true,
+    "two_server_collusion_can_recover_index": true
+  }
+}

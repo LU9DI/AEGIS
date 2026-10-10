@@ -1,0 +1,137 @@
+{
+  "client": {
+    "id": "client-local",
+    "latitude": -23.5505,
+    "longitude": -46.6333
+  },
+  "destination": {
+    "id": "destination-local",
+    "latitude": -23.5617,
+    "longitude": -46.6559
+  },
+  "pinned_guard_id": "guard-pinned-sp",
+  "relays": [
+    {
+      "relay_id": "guard-pinned-sp",
+      "roles": [
+        "guard"
+      ],
+      "latitude": -23.55,
+      "longitude": -46.63,
+      "bandwidth_mbps": 50,
+      "asn_group": "asn-1",
+      "family_id": "family-1",
+      "subnet_group": "subnet-1",
+      "country_code": "BR",
+      "utilization": 0.25,
+      "confirmed_guard": true
+    },
+    {
+      "relay_id": "middle-sp",
+      "roles": [
+        "middle"
+      ],
+      "latitude": -23.56,
+      "longitude": -46.64,
+      "bandwidth_mbps": 80,
+      "asn_group": "asn-2",
+      "family_id": "family-2",
+      "subnet_group": "subnet-2",
+      "country_code": "BR",
+      "utilization": 0.15
+    },
+    {
+      "relay_id": "middle-rj",
+      "roles": [
+        "middle"
+      ],
+      "latitude": -22.9,
+      "longitude": -43.2,
+      "bandwidth_mbps": 150,
+      "asn_group": "asn-3",
+      "family_id": "family-3",
+      "subnet_group": "subnet-3",
+      "country_code": "BR",
+      "utilization": 0.1
+    },
+    {
+      "relay_id": "middle-eu",
+      "roles": [
+        "middle"
+      ],
+      "latitude": 50.11,
+      "longitude": 8.68,
+      "bandwidth_mbps": 250,
+      "asn_group": "asn-4",
+      "family_id": "family-4",
+      "subnet_group": "subnet-4",
+      "country_code": "DE",
+      "utilization": 0.45
+    },
+    {
+      "relay_id": "exit-sp",
+      "roles": [
+        "exit"
+      ],
+      "latitude": -23.55,
+      "longitude": -46.64,
+      "bandwidth_mbps": 40,
+      "asn_group": "asn-5",
+      "family_id": "family-5",
+      "subnet_group": "subnet-5",
+      "country_code": "BR",
+      "utilization": 0.2
+    },
+    {
+      "relay_id": "exit-usa",
+      "roles": [
+        "exit"
+      ],
+      "latitude": 40.71,
+      "longitude": -74.0,
+      "bandwidth_mbps": 300,
+      "asn_group": "asn-6",
+      "family_id": "family-6",
+      "subnet_group": "subnet-6",
+      "country_code": "US",
+      "utilization": 0.05
+    }
+  ],
+  "link_rtts_ms": [
+    {
+      "source": "client-local",
+      "target": "guard-pinned-sp",
+      "rtt_ms": 4.2
+    },
+    {
+      "source": "guard-pinned-sp",
+      "target": "middle-sp",
+      "rtt_ms": 1.5
+    },
+    {
+      "source": "middle-sp",
+      "target": "exit-sp",
+      "rtt_ms": 1.7
+    },
+    {
+      "source": "exit-sp",
+      "target": "destination-local",
+      "rtt_ms": 3.1
+    },
+    {
+      "source": "guard-pinned-sp",
+      "target": "middle-rj",
+      "rtt_ms": 18.0
+    },
+    {
+      "source": "middle-rj",
+      "target": "exit-sp",
+      "rtt_ms": 17.0
+    },
+    {
+      "source": "middle-sp",
+      "target": "exit-usa",
+      "rtt_ms": 135.0
+    }
+  ]
+}

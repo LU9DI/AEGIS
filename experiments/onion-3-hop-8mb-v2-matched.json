@@ -1,0 +1,117 @@
+{
+  "schema_version": 2,
+  "measurement_type": "real_loopback_encrypted_onion_persistent_circuit",
+  "is_live_internet_test": false,
+  "is_anonymity_test": false,
+  "cryptography": "ChaCha20-Poly1305 AEAD per hop; random pre-shared keys for this run; protocol v2 binary frames with circuit id and sequence checks",
+  "topology": {
+    "host": "127.0.0.1",
+    "relay_count": 3,
+    "path": [
+      "client",
+      "relay-1",
+      "relay-2",
+      "relay-3",
+      "echo-destination"
+    ]
+  },
+  "config": {
+    "payload_bytes_each_direction": 8000000,
+    "trials": 5,
+    "latency_samples": 30,
+    "seed": 20261009,
+    "keys_persist_only_for_this_benchmark": true,
+    "persistent_circuit": true,
+    "latency_metric": "persistent_circuit_request_response"
+  },
+  "environment": {
+    "python": "3.13.5",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41"
+  },
+  "results": {
+    "request_response_latency_p50_ms": 0.316,
+    "request_response_latency_p95_ms": 0.454,
+    "payload_goodput_mbps_median": 701.647,
+    "payload_goodput_mbps_trials": [
+      571.054,
+      770.178,
+      679.929,
+      701.647,
+      770.873
+    ],
+    "latency_samples_ms": [
+      0.515,
+      0.4,
+      0.323,
+      0.344,
+      0.307,
+      0.256,
+      0.438,
+      0.391,
+      0.347,
+      0.33,
+      0.262,
+      0.455,
+      0.387,
+      0.41,
+      0.454,
+      0.318,
+      0.273,
+      0.245,
+      0.256,
+      0.309,
+      0.257,
+      0.226,
+      0.272,
+      0.234,
+      0.227,
+      0.288,
+      0.406,
+      0.314,
+      0.396,
+      0.31
+    ],
+    "transfer_trials": [
+      {
+        "payload_bytes_each_direction": 8000000,
+        "elapsed_ms": 112.073,
+        "payload_goodput_mbps": 571.054,
+        "sha256": "eb7aed184742cdf12fca9a1d5e8c3df12a5369fe101efe04de0402b6f531c368"
+      },
+      {
+        "payload_bytes_each_direction": 8000000,
+        "elapsed_ms": 83.098,
+        "payload_goodput_mbps": 770.178,
+        "sha256": "eb7aed184742cdf12fca9a1d5e8c3df12a5369fe101efe04de0402b6f531c368"
+      },
+      {
+        "payload_bytes_each_direction": 8000000,
+        "elapsed_ms": 94.128,
+        "payload_goodput_mbps": 679.929,
+        "sha256": "eb7aed184742cdf12fca9a1d5e8c3df12a5369fe101efe04de0402b6f531c368"
+      },
+      {
+        "payload_bytes_each_direction": 8000000,
+        "elapsed_ms": 91.214,
+        "payload_goodput_mbps": 701.647,
+        "sha256": "eb7aed184742cdf12fca9a1d5e8c3df12a5369fe101efe04de0402b6f531c368"
+      },
+      {
+        "payload_bytes_each_direction": 8000000,
+        "elapsed_ms": 83.023,
+        "payload_goodput_mbps": 770.873,
+        "sha256": "eb7aed184742cdf12fca9a1d5e8c3df12a5369fe101efe04de0402b6f531c368"
+      }
+    ],
+    "integrity_verified": true
+  },
+  "limitations": [
+    "All relays run on one host and bind to loopback; no Internet/WAN behavior is measured.",
+    "The test supports request/response multiplexing only for the loopback echo destination; it is not a general bidirectional stream protocol or a browser circuit.",
+    "Keys are static pre-shared keys for each run; there is no authenticated key exchange, forward secrecy, key rotation, or authenticated relay directory.",
+    "Protocol v2 checks monotonic per-circuit sequence numbers and rejects duplicate circuit identifiers within each relay process; this bounded loopback-lab mechanism is not a general production replay solution.",
+    "A relay process and local host can inspect their own state. The destination relay sees the destination and plaintext payload; use end-to-end application encryption for content confidentiality.",
+    "The protocol has not been independently reviewed and is not safe for production or sensitive communications.",
+    "No batching/mixing, cover traffic, padding schedule, congestion control, peer discovery, multi-user anonymity set, or traffic-correlation defense is implemented."
+  ]
+}

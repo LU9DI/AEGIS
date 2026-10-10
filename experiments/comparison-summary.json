@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "note": "Local loopback microbenchmarks only; no anonymity or WAN performance claim. Bulk traffic reused persistent circuits.",
+  "runs": {
+    "raw_1hop_8mb": {
+      "source_file": "raw-1-hop-8mb.json",
+      "relay_count": 1,
+      "payload_bytes_each_direction": 8000000,
+      "persistent_circuit": true,
+      "median_payload_goodput_mbps": 4883.117,
+      "goodput_trials_mbps": [
+        3677.4,
+        4507.174,
+        5250.817,
+        4883.117,
+        5019.407
+      ],
+      "latency_metric": "warm_connection_rtt",
+      "latency_p50_ms": 0.059,
+      "latency_p95_ms": 0.175,
+      "integrity_verified": true
+    },
+    "raw_2hop_8mb": {
+      "source_file": "raw-2-hop-8mb.json",
+      "relay_count": 2,
+      "payload_bytes_each_direction": 8000000,
+      "persistent_circuit": true,
+      "median_payload_goodput_mbps": 3950.36,
+      "goodput_trials_mbps": [
+        3815.117,
+        4918.895,
+        3950.36,
+        4529.696,
+        3892.422
+      ],
+      "latency_metric": "warm_connection_rtt",
+      "latency_p50_ms": 0.152,
+      "latency_p95_ms": 0.711,
+      "integrity_verified": true
+    },
+    "raw_3hop_8mb": {
+      "source_file": "raw-3-hop-8mb.json",
+      "relay_count": 3,
+      "payload_bytes_each_direction": 8000000,
+      "persistent_circuit": true,
+      "median_payload_goodput_mbps": 3599.606,
+      "goodput_trials_mbps": [
+        3599.606,
+        3679.416,
+        3653.628,
+        3531.412,
+        2483.512
+      ],
+      "latency_metric": "warm_connection_rtt",
+      "latency_p50_ms": 0.142,
+      "latency_p95_ms": 0.27,
+      "integrity_verified": true
+    },
+    "onion_1hop_8mb": {
+      "source_file": "onion-1-hop-8mb.json",
+      "relay_count": 1,
+      "payload_bytes_each_direction": 8000000,
+      "persistent_circuit": true,
+      "median_payload_goodput_mbps": 1890.747,
+      "goodput_trials_mbps": [
+        1410.647,
+        1938.122,
+        1890.747,
+        2189.604,
+        1817.331
+      ],
+      "latency_metric": "persistent_circuit_request_response",
+      "latency_p50_ms": 0.111,
+      "latency_p95_ms": 0.203,
+      "integrity_verified": true
+    },
+    "onion_2hop_8mb": {
+      "source_file": "onion-2-hop-8mb.json",
+      "relay_count": 2,
+      "payload_bytes_each_direction": 8000000,
+      "persistent_circuit": true,
+      "median_payload_goodput_mbps": 1275.633,
+      "goodput_trials_mbps": [
+        998.222,
+        1366.783,
+        1524.688,
+        1134.575,
+        1275.633
+      ],
+      "latency_metric": "persistent_circuit_request_response",
+      "latency_p50_ms": 0.195,
+      "latency_p95_ms": 0.294,
+      "integrity_verified": true
+    },
+    "onion_3hop_8mb": {
+      "source_file": "onion-3-hop-8mb.json",
+      "relay_count": 3,
+      "payload_bytes_each_direction": 8000000,
+      "persistent_circuit": true,
+      "median_payload_goodput_mbps": 789.116,
+      "goodput_trials_mbps": [
+        619.838,
+        934.254,
+        777.133,
+        789.116,
+        800.076
+      ],
+      "latency_metric": "persistent_circuit_request_response",
+      "latency_p50_ms": 0.279,
+      "latency_p95_ms": 0.426,
+      "integrity_verified": true
+    }
+  }
+}

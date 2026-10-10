@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "experiment": "MALEBOLGE ntor-derived one-hop handshake loopback benchmark",
+  "is_anonymity_test": false,
+  "environment": {
+    "python": "3.13.5",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "host": "127.0.0.1"
+  },
+  "config": {
+    "rounds": 100,
+    "relay_count": 1,
+    "new_tcp_connection_per_handshake": true
+  },
+  "protocol": {
+    "handshake_basis": "Tor ntor v1 transcript; MALEBOLGE-specific HKDF context for AEAD keys",
+    "client_handshake_bytes": 84,
+    "relay_handshake_bytes": 64,
+    "total_handshake_payload_bytes": 148
+  },
+  "results": {
+    "crypto_only_ms_p50": 0.21848450023753685,
+    "crypto_only_ms_p95": 0.28621564981676784,
+    "loopback_handshake_rtt_ms_p50": 0.42080949992850947,
+    "loopback_handshake_rtt_ms_p95": 0.6074740997519257,
+    "loopback_handshakes_per_second": 2276.2730336814757,
+    "all_key_agreements_verified": true
+  },
+  "limitations": [
+    "One local hop only; this does not implement a telescoping multi-hop circuit handshake.",
+    "The relay identity digest and static onion key must come from an authenticated descriptor; this harness injects them directly.",
+    "The handshake follows the ntor v1 authentication transcript but its MALEBOLGE AEAD key expansion is not Tor-wire-compatible.",
+    "Python cannot guarantee zeroization of ephemeral private key objects; secure key erasure is not proven.",
+    "Loopback latency is not a WAN estimate and says nothing about resistance to traffic correlation.",
+    "The module has not received independent cryptographic review and must not protect real or sensitive traffic."
+  ]
+}
