@@ -265,6 +265,8 @@ class DirectoryAuthority:
             try:
                 state_fd = os.open(path, flags, stat.S_IRUSR | stat.S_IWUSR)
             except OSError as exc:
+                if path.is_symlink():
+                    raise ValueError("authority state path must not be a symbolic link") from exc
                 raise ValueError("authority state path could not be opened safely") from exc
             try:
                 state_info = os.fstat(state_fd)
