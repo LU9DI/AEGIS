@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import json
 import os
+import sqlite3
 from pathlib import Path
 import tempfile
 import unittest
@@ -540,7 +541,7 @@ class SignedDirectoryTests(unittest.TestCase):
                 self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
                 now=self.now, sequence=1, serial="7" * 32,
             )
-            with self.assertRaises(Exception):
+            with self.assertRaises(sqlite3.DatabaseError):
                 authority.certify(descriptor, now=self.now)
             self.assertEqual(state_path.read_bytes(), b"not a sqlite database")
 
