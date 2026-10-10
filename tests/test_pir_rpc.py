@@ -165,7 +165,7 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
             "server_id": "replica-a",
             "nonce": first_nonce,
             "issued_at": int(time.time()),
-            "query": base64.b64encode(b"\\x00" * 4).decode("ascii"),
+            "query": base64.b64encode(bytes(4)).decode("ascii"),
         }
         first_frame = _signed_envelope(first_payload, self.key_a, _REQUEST_DOMAIN)
 
