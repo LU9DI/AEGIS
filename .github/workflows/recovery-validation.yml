@@ -1,0 +1,94 @@
+name: Recovery archive validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "AEGIS-consolidated-recovery-2026-10-09.zip"
+      - ".github/workflows/recovery-validation.yml"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recovered-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify archive checksum and nested ZIP integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "ae59e83cf68caebdebeb7522dd36c0bc16f9bbe288bbff1ce99bd7880c659be3  AEGIS-consolidated-recovery-2026-10-09.zip" | sha256sum --check
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile, BadZipFile
+          outer = Path("AEGIS-consolidated-recovery-2026-10-09.zip")
+          with ZipFile(outer) as archive:
+              bad = archive.testzip()
+              if bad:
+                  raise SystemExit(f"Corrupt outer ZIP member: {bad}")
+              nested = [name for name in archive.namelist() if name.lower().endswith(".zip")]
+              if not nested:
+                  raise SystemExit("No nested research ZIP archives found")
+              for name in nested:
+                  data = archive.read(name)
+                  import io
+                  with ZipFile(io.BytesIO(data)) as inner:
+                      bad = inner.testzip()
+                      if bad:
+                          raise SystemExit(f"Corrupt nested member {name}: {bad}")
+              print(f"Validated outer ZIP and {len(nested)} nested ZIP archives")
+          PY
+
+      - name: Extract complete recovered v0.27.4 source snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import io
+          outer = Path("AEGIS-consolidated-recovery-2026-10-09.zip")
+          destination = Path("recovered-source")
+          destination.mkdir()
+          target_name = "AEGIS-v0.27.4-four-server-fault-detection-research.zip"
+          with ZipFile(outer) as archive:
+              matches = [n for n in archive.namelist() if n.endswith(target_name)]
+              if len(matches) != 1:
+                  raise SystemExit(f"Expected exactly one {target_name}, found {len(matches)}")
+              with ZipFile(io.BytesIO(archive.read(matches[0]))) as snapshot:
+                  snapshot.extractall(destination)
+          roots = list(destination.rglob("pyproject.toml"))
+          roots = [p.parent for p in roots if (p.parent / "src" / "anonlab").is_dir() and (p.parent / "tests").is_dir()]
+          if len(roots) != 1:
+              raise SystemExit(f"Expected one complete source root, found {len(roots)}")
+          print(f"Recovered source root: {roots[0]}")
+          Path("recovered-source-root.txt").write_text(str(roots[0]), encoding="utf-8")
+          PY
+
+      - name: Compile recovered source and tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$(cat recovered-source-root.txt)"
+          python -m compileall -q "$ROOT/src" "$ROOT/tests"
+
+      - name: Run recovered test suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip pytest cryptography
+          ROOT="$(cat recovered-source-root.txt)"
+          cd "$ROOT"
+          PYTHONPATH=src python -m pytest -q
