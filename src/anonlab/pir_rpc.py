@@ -409,12 +409,18 @@ class AuthenticatedPirRpcServer:
             self._seen_nonces.pop(oldest_nonce, None)
         if nonce_text in self._seen_nonces:
             raise PirRpcProtocolError("request replay detected")
+        # Never evict a still-live nonce to admit new work: doing so would let
+        # an observed request become replayable before its timestamp expires.
+        # When the bounded cache is saturated, fail closed until entries expire.
+        if len(self._seen_nonces) >= self._replay_capacity:
+            raise PirRpcProtocolError("replay cache capacity exhausted")
 
     def _remember_nonce(self, nonce_text: str) -> None:
-        """Reserve a nonce only after the request passes admission control."""
+        """Reserve a nonce only after validation and admission control."""
+        # _validate_nonce checks capacity first; no live entry is evicted here.
+        if len(self._seen_nonces) >= self._replay_capacity:
+            raise PirRpcProtocolError("replay cache capacity exhausted")
         self._seen_nonces[nonce_text] = time.time()
-        while len(self._seen_nonces) > self._replay_capacity:
-            self._seen_nonces.popitem(last=False)
 
     async def _handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         # Bound concurrent handlers and slow clients. asyncio creates a task per
