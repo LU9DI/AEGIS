@@ -37,7 +37,8 @@ This is a **local characterization suite**, not the complete accepted baseline. 
 - [ ] Capture process CPU time and peak RSS; collect TCP retransmissions only where the host exposes a reliable counter, otherwise record the field as unavailable rather than zero.
 - [ ] Add small interactive requests during a large transfer and concurrent clients to the end-to-end baseline, preserving per-trial raw data and integrity/cleanup failures.
 - [ ] Keep local user-space shaping results clearly separated from true multi-host/WAN measurements. A shaped loopback proxy is not a substitute for packet loss, real congestion control, independent operators or a live network.
-- [ ] Write a privacy observation matrix per topology: what each relay sees, collusion assumptions, destination visibility, and which metadata/timing correlation remains possible. Passing a route-observation assertion is not an anonymity proof.
+- [x] Draft a privacy observation matrix per topology: [`AEGIS_PRIVACY_OBSERVATION_MATRIX.md`](AEGIS_PRIVACY_OBSERVATION_MATRIX.md) records expected visibility, collusion assumptions, destination visibility, traffic-correlation risks, and required measurement fields. **The matrix is a threat-model worksheet, not evidence that every property is implemented or an anonymity proof.**
+- [ ] Validate the matrix against packet captures, runtime instrumentation and code review; run traffic-correlation experiments with false-positive/false-negative analysis.
 - [ ] Ensure baseline runs never enable unsafe remote PIR or skip security checks.
 
 ## Interpretation rules
