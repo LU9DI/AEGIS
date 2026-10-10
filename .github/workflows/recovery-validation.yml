@@ -152,7 +152,7 @@ jobs:
           python -m compileall -q src tests
           python -m pytest -q
 
-      - name: Prepare missing recovered source and test files
+      - name: Prepare missing recovered source, tests, docs, and research artifacts
         if: github.event_name != 'pull_request'
         shell: bash
         run: |
@@ -164,23 +164,30 @@ jobs:
           import sys
           root = Path(sys.argv[1])
           workspace = Path.cwd()
+          excluded = {Path("README.md"), Path("pyproject.toml"), Path(".gitignore")}
           copied = []
-          for source_base, target_base, pattern in (
-              (root / "src" / "anonlab", workspace / "src" / "anonlab", "*.py"),
-              (root / "tests", workspace / "tests", "test_*.py"),
-              (root / "docs", workspace / "docs", "*.md"),
-          ):
-              for source in sorted(source_base.glob(pattern)):
-                  target = target_base / source.name
-                  if not target.exists():
-                      target.parent.mkdir(parents=True, exist_ok=True)
-                      shutil.copy2(source, target)
-                      copied.append(target.relative_to(workspace).as_posix())
-          print(f"Prepared {len(copied)} missing files for review")
+          conflicts = []
+          for source in sorted(root.rglob("*")):
+              if not source.is_file():
+                  continue
+              relative = source.relative_to(root)
+              if relative in excluded or any(part.startswith(".") for part in relative.parts):
+                  continue
+              target = workspace / relative
+              if target.exists():
+                  if target.read_bytes() != source.read_bytes():
+                      conflicts.append(relative.as_posix())
+                  continue
+              target.parent.mkdir(parents=True, exist_ok=True)
+              shutil.copy2(source, target)
+              copied.append(relative.as_posix())
+          print(f"Prepared {len(copied)} missing snapshot files; preserved {len(conflicts)} existing files with different content.")
+          print("Existing differences are not overwritten:")
+          for path in conflicts:
+              print(f"DIFF {path}")
+          print("Added files:")
           for path in copied:
               print(path)
-          if not copied:
-              print("Git source tree already contains all recovered Python modules and tests.")
           PY
 
       - name: Validate the completed checkout before publishing the PR
@@ -200,18 +207,21 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: automation/recovered-source-completion
+          branch: automation/recovered-artifact-completion
           delete-branch: true
-          commit-message: "recovery: publish missing source modules and tests"
-          title: "Recovery: publish all recovered source modules and tests"
+          commit-message: "recovery: publish remaining snapshot artifacts"
+          title: "Recovery: publish remaining recovered source and research artifacts"
           body: |
-            This PR adds recovered Python modules and tests that were present in the verified v0.27.4 source snapshot but missing as individual Git files.
+            This PR adds missing files from the verified v0.27.4 source snapshot, including code, tests, docs, examples, experiment artifacts, reports, and changelog.
 
             - Adds only files absent from the current tree; existing files are not overwritten.
             - The archive validation workflow verified the embedded snapshot checksum and ZIP integrity.
             - The PR workflow must install the checkout itself, validate console entry points, compile the source, and pass the full test suite before merge.
             - This does not resolve the separately tracked cryptographic PIR-verifiability research blocker.
           add-paths: |
-            src/anonlab/*.py
-            tests/test_*.py
-            docs/*.md
+            src/**
+            tests/**
+            docs/**
+            experiments/**
+            examples/**
+            *.md
