@@ -604,6 +604,25 @@ class SignedDirectoryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "already been used"):
                 authority.certify(reused, now=self.now + 1)
 
+    def test_durable_authority_validates_persisted_revocation_snapshot_before_reuse(self) -> None:
+        mutations = (
+            ("snapshot_json", json.dumps({"epoch": 1})),
+            ("digest", "0" * 64),
+            ("revoked_ids_json", json.dumps(["z" * 40])),
+        )
+        for column, replacement in mutations:
+            with self.subTest(column=column), tempfile.TemporaryDirectory() as directory:
+                state_path = Path(directory) / "authority.sqlite3"
+                authority = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+                original = authority.sign_revocations(["a" * 40], epoch=1, now=self.now)
+                with sqlite3.connect(state_path) as connection:
+                    connection.execute(
+                        f"UPDATE issued_revocation_snapshots SET {column}=? WHERE epoch=1",
+                        (replacement,),
+                    )
+                with self.assertRaisesRegex(ValueError, "stored revocation"):
+                    authority.sign_revocations(["a" * 40], epoch=1, now=self.now + 1)
+
     def test_durable_authority_fails_closed_on_corrupt_database(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             state_path = Path(directory) / "authority.sqlite3"
