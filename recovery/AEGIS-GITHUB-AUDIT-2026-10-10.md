@@ -76,3 +76,9 @@ A issue #2 permanece um bloqueador. Para encerrá-la, é necessário selecionar 
 ## Atualização pós-PR #6 (2026-10-10)
 
 O PR #6 foi integrado no commit `a1ed52e7dc9bd3b931fa7b92b1cc853c1062f92e`. A API RPC agora rejeita toda recuperação PIR não-loopback, mesmo se o parâmetro legado de pesquisa for definido, até existir prova criptográfica real de computação. Foram adicionados testes para bypass, host e hostname. A validação do PR passou em https://github.com/LU9DI/AEGIS/actions/runs/38067810483: 233 testes e 76 subtestes no checkout e 230 testes e 76 subtestes no snapshot recuperado. A issue #2 permanece aberta: esta mudança é mitigação, não prova verificável de PIR. As oito diferenças de arquivos preservadas continuam pendentes de reconciliação manual.
+
+## Fechamento da reconciliação operacional
+
+A decisão para os oito arquivos preservados foi registrada em [AEGIS-SNAPSHOT-RECONCILIATION-2026-10-10.md](https://github.com/LU9DI/AEGIS/blob/main/recovery/AEGIS-SNAPSHOT-RECONCILIATION-2026-10-10.md). A issue #1 foi encerrada para o escopo de recuperação/publicação: os arquivos faltantes foram publicados e as diferenças foram documentadas sem sobrescrever versões atuais. A issue #2 continua aberta por tratar de segurança criptográfica, não de publicação.
+
+A validação completa mais recente da branch `main` passou em [run #36](https://github.com/LU9DI/AEGIS/actions/runs/38068038522), incluindo checksum/ZIPs, compilação, instalação, entry points, suíte do snapshot e validação do checkout. O resultado do PR #6 foi de 233 testes e 76 subtestes no checkout; o snapshot recuperado passou com 230 testes e 76 subtestes.
