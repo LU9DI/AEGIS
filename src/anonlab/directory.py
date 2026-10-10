@@ -251,7 +251,25 @@ class DirectoryAuthority:
         if self.state_path is None:
             raise ValueError("durable authority state is not configured")
         path = Path(self.state_path)
+        # Reject pre-existing symlink ancestors before mkdir/stat/open can follow
+        # them. Repeat after creating missing parents to catch static replacement
+        # during setup. This is defense in depth, not a race-free defense against
+        # an attacker who can rename ancestors concurrently under the same UID.
+        for ancestor in (path.parent, *path.parent.parents):
+            try:
+                ancestor_info = ancestor.lstat()
+            except FileNotFoundError:
+                continue
+            if stat.S_ISLNK(ancestor_info.st_mode):
+                raise ValueError("authority state path ancestors must not be symbolic links")
         path.parent.mkdir(parents=True, exist_ok=True)
+        for ancestor in (path.parent, *path.parent.parents):
+            try:
+                ancestor_info = ancestor.lstat()
+            except FileNotFoundError:
+                continue
+            if stat.S_ISLNK(ancestor_info.st_mode):
+                raise ValueError("authority state path ancestors must not be symbolic links")
         if os.name == "posix":
             # A pathname check alone is vulnerable to a symlink/rename race.
             # Require a private, user-owned parent so another local user cannot
