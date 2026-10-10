@@ -1,15 +1,26 @@
 # AEGIS / MALEBOLGE — Research archive
 
-This repository is being initialized with recovered project materials. The recovered source baseline declares package version 0.26.0; v0.27.x artifacts are experimental research snapshots, not official releases.
+This repository is being populated incrementally from recovered project files. **It is not yet a complete mirror of the source tree or recovery archive.** Do not treat the current GitHub tree as a complete release.
 
-## Recovery status
+## Current upload status
 
-The recovery archive and audit were assembled from files available in the ChatGPT session and Library. This repository is not yet a complete mirror of the recovery archive. The local Git bundle contains one recovery baseline commit, not the original historical commit graph.
+Uploaded and verified in this repository:
+- Package metadata: `pyproject.toml` (declares `aegis-anon-lab==0.26.0`).
+- `.gitignore` and v0.26.0 validation record.
+- Research simulator subset: `src/anonlab/__init__.py`, `model.py`, `profiles.py`, `simulator.py`, `cli.py`.
+- Local two-server XOR PIR prototype: `src/anonlab/pir.py` and its regression tests `tests/test_pir.py`.
+- Architecture notes and full-history recovery audit under `docs/` and `recovery/`.
+
+**Not yet uploaded:** the remaining implementation modules, most tests, the historical source snapshots/wheels/JSON experiment outputs, the full recovery ZIP, the Git bundle, and the complete checksum inventory. The package's declared entry points therefore refer to files that are not all present in this partial GitHub tree yet.
+
+## Recovery archive details
+
+The recovery audit describes 246 files in the latest recovered source snapshot and the historical artifacts found. The expanded archive's SHA-256 is recorded in `recovery/AEGIS-FULL-HISTORY-RECOVERY-2026-10-09.SHA256`; the archive itself is still held in the working session and has not been uploaded as a GitHub release asset.
 
 ## Security caveats
 
-AEGIS is a research prototype, not a production-ready or independently audited anonymity system. Four-server PIR consistency checks are not a cryptographic proof of correct PIR computation and do not prevent collusion or common-mode failures.
+AEGIS is a research prototype, not a production-ready or independently audited anonymity system. The two-server XOR PIR prototype assumes replicated databases and non-colluding servers. Four-server PIR consistency checks are not a cryptographic proof of correct PIR computation and do not prevent collusion or common-mode failures. Simulator outputs are hypothetical models, not measurements of Tor or a live network.
 
-## Remaining work
+## Recovery integrity
 
-The source tree, historical snapshots, recovery ZIP, checksum manifests, and audit reports still need to be uploaded and verified separately.
+Historical ZIP snapshots are not a reconstructed original Git commit graph. The recovered Git bundle contains a recovery baseline, not all original commits. Missing artifacts and checksum discrepancies are documented in the full-history audit. Keep an independent copy of the recovery archive outside this temporary working environment.
