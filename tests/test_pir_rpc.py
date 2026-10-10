@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import base64
 import json
 import secrets
@@ -155,6 +154,51 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(acquire_calls, 1)  # replay rejection happens before admission control
         response = _verify_envelope(first[4:], self.key_a, _RESPONSE_DOMAIN)
         self.assertEqual(response["nonce"], nonce)
+
+    async def test_saturated_replay_cache_preserves_live_nonces_and_fails_closed(self):
+        # A full bounded cache must not evict a still-fresh nonce, otherwise a
+        # captured request could be replayed before its timestamp expires.
+        self.server_a._replay_capacity = 1
+        first_nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+        first_payload = {
+            "protocol": "AEGIS-PIR-RPC-v1",
+            "server_id": "replica-a",
+            "nonce": first_nonce,
+            "issued_at": int(time.time()),
+            "query": base64.b64encode(b"\\x00" * 4).decode("ascii"),
+        }
+        first_frame = _signed_envelope(first_payload, self.key_a, _REQUEST_DOMAIN)
+
+        async def submit(frame):
+            reader, writer = await asyncio.open_connection("127.0.0.1", self.server_a.port)
+            try:
+                writer.write(frame)
+                await writer.drain()
+                return await asyncio.wait_for(reader.read(1024), timeout=2)
+            finally:
+                writer.close()
+                await writer.wait_closed()
+
+        self.assertTrue(await submit(first_frame))
+        self.assertIn(first_nonce, self.server_a._seen_nonces)
+        second_payload = dict(first_payload)
+        second_payload["nonce"] = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+        second_frame = _signed_envelope(second_payload, self.key_a, _REQUEST_DOMAIN)
+        original_acquire = self.server_a._rate_limiter.acquire
+        acquire_calls = 0
+
+        def count_acquire():
+            nonlocal acquire_calls
+            acquire_calls += 1
+            return original_acquire()
+
+        self.server_a._rate_limiter.acquire = count_acquire
+        try:
+            self.assertEqual(await submit(second_frame), b"")
+        finally:
+            self.server_a._rate_limiter.acquire = original_acquire
+        self.assertEqual(acquire_calls, 0)
+        self.assertEqual(list(self.server_a._seen_nonces), [first_nonce])
 
     async def test_rate_limited_request_does_not_mutate_replay_cache(self):
         nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
