@@ -96,6 +96,29 @@ class SignedDirectoryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "already been used"):
                 authority.certify(second, now=self.now)
 
+    def test_durable_authority_state_is_bound_to_authority_key(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "authority.sqlite3"
+            first = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            first.certify(self.issue_descriptor(), now=self.now)
+            other = DirectoryAuthority(Ed25519PrivateKey.generate(), state_path=state_path)
+            with self.assertRaisesRegex(ValueError, "different authority key"):
+                other.certify(self.issue_descriptor(), now=self.now)
+
+    @unittest.skipUnless(hasattr(os, "symlink"), "symbolic links are unavailable")
+    def test_durable_authority_rejects_symlink_state_path(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "real.sqlite3"
+            link = Path(directory) / "authority.sqlite3"
+            target.touch()
+            try:
+                link.symlink_to(target)
+            except (OSError, NotImplementedError):
+                self.skipTest("symbolic-link creation is not permitted")
+            authority = DirectoryAuthority(self.authority.private_key, state_path=link)
+            with self.assertRaisesRegex(ValueError, "symbolic link"):
+                authority.certify(self.issue_descriptor(), now=self.now)
+
     def test_valid_descriptor_round_trips_and_verifies(self) -> None:
         encoded = descriptor_to_json(self.descriptor)
         parsed = descriptor_from_json(encoded)
