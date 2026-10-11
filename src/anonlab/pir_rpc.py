@@ -246,6 +246,19 @@ class AuthenticatedPirRpcServer:
                 raise ValueError("remote binds require TLS, allow_remote=True, and no client-shared HMAC key")
         if not isinstance(replay_cache_capacity, int) or isinstance(replay_cache_capacity, bool) or not 1 <= replay_cache_capacity <= MAX_SEEN_NONCES:
             raise ValueError(f"replay_cache_capacity must be within 1..{MAX_SEEN_NONCES}")
+        # A nonce can remain valid for two clock-skew windows when its timestamp
+        # is at the future edge of the accepted interval. Reserve enough entries
+        # for the configured sustained rate over that retention period plus burst.
+        required_replay_capacity = (
+            int((float(max_requests_per_second) * (2 * MAX_CLOCK_SKEW_SECONDS)) + 0.999999999)
+            + request_burst
+        )
+        if replay_cache_capacity < required_replay_capacity:
+            raise ValueError(
+                "replay_cache_capacity must be at least "
+                f"{required_replay_capacity} for the configured request rate, burst, "
+                "and nonce validity window"
+            )
         # Reuse the shared validation rules from the in-process PIR reference server.
         from .pir_two_server import PirReferenceServer
         self._reference = PirReferenceServer(records)
