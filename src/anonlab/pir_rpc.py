@@ -410,8 +410,10 @@ class AuthenticatedPirRpcServer:
             if not isinstance(issued_at, int) or isinstance(issued_at, bool):
                 raise PirRpcProtocolError("issued_at must be an integer Unix timestamp")
             nonce_text = payload["nonce"]
-            self._accept_nonce(nonce_text, issued_at)
             query = _decode_b64(payload["query"], "query")
+            # Reject malformed masks before replay-cache mutation or rate limiting.
+            self._reference.validate_query_mask(query)
+            self._accept_nonce(nonce_text, issued_at)
             # An aggregate token bucket limits total endpoint work without storing
             # per-client identifiers, which could become an anonymity side channel.
             if not self._rate_limiter.acquire():
