@@ -502,6 +502,15 @@ class SignedDirectoryTests(unittest.TestCase):
             self.assertFalse(state_path.exists())
             self.assertEqual(lock_path.stat().st_nlink, 2)
 
+    def test_durable_state_fails_closed_without_cross_process_locking(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "trust-state.json"
+            verifier = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+            with patch("anonlab.directory.fcntl", None):
+                with self.assertRaisesRegex(ValueError, "requires a supported cross-process file lock"):
+                    verifier.apply_revocations(self.empty_revocations, now=self.now)
+            self.assertFalse(state_path.exists())
+
     @unittest.skipUnless(os.name == "posix", "POSIX flock is required for durable verifier state")
     def test_two_verifiers_reload_state_under_cross_process_lock(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
