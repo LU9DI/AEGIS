@@ -443,6 +443,10 @@ class AuthenticatedPirRpcServer:
             nonce = _decode_b64(payload["nonce"], "nonce")
             if len(nonce) != NONCE_BYTES:
                 raise PirRpcProtocolError("nonce has an invalid size")
+            # Require the unique canonical base64 representation. Otherwise the
+            # same 32-byte nonce can have aliases that occupy distinct cache keys.
+            if base64.b64encode(nonce).decode("ascii") != payload["nonce"]:
+                raise PirRpcProtocolError("nonce is not canonically encoded")
             issued_at = payload["issued_at"]
             if not isinstance(issued_at, int) or isinstance(issued_at, bool):
                 raise PirRpcProtocolError("issued_at must be an integer Unix timestamp")
