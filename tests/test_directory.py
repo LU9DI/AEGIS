@@ -452,6 +452,14 @@ class SignedDirectoryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "hard links"):
                 DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
 
+    @unittest.skipUnless(hasattr(os, "symlink"), "symbolic links are unavailable")
+    def test_verifier_rejects_dangling_state_symlink_on_initialization(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "state.json"
+            state_path.symlink_to(Path(directory) / "missing-target.json")
+            with self.assertRaisesRegex(ValueError, "symbolic link"):
+                DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+
     def test_persisted_revocation_snapshot_cannot_be_edited_without_signature(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             state_path = Path(directory) / "state.json"
