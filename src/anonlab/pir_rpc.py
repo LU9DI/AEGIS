@@ -277,7 +277,12 @@ class AuthenticatedPirRpcServer:
         self._request_timeout_seconds = float(request_timeout_seconds)
         self.host = host
         self._replay_capacity = replay_cache_capacity
+        # Replay retention uses monotonic time. Wall-clock discontinuities fail closed
+        # because timestamp validity otherwise could be rolled back after cache expiry.
         self._seen_nonces: OrderedDict[str, float] = OrderedDict()
+        self._clock_last_wall: float | None = None
+        self._clock_last_monotonic: float | None = None
+        self._clock_untrusted = False
         self._active_connections = 0
         self._rate_limiter = _GlobalTokenBucket(float(max_requests_per_second), request_burst)
         self._requests_accepted = 0
@@ -384,13 +389,28 @@ class AuthenticatedPirRpcServer:
 
     def _accept_nonce(self, nonce_text: str, issued_at: int) -> None:
         now = time.time()
+        monotonic_now = time.monotonic()
+        if self._clock_untrusted:
+            raise PirRpcProtocolError("system clock is untrusted; replay admission is disabled")
+        if self._clock_last_wall is not None and self._clock_last_monotonic is not None:
+            wall_elapsed = now - self._clock_last_wall
+            monotonic_elapsed = max(0.0, monotonic_now - self._clock_last_monotonic)
+            # A backward step can make an old signed timestamp valid again; a large
+            # forward step can prematurely expire replay entries. Latch fail-closed
+            # for this process on either discontinuity. Small clock-rate differences
+            # are tolerated up to the existing skew bound.
+            if wall_elapsed < -1.0 or abs(wall_elapsed - monotonic_elapsed) > MAX_CLOCK_SKEW_SECONDS:
+                self._clock_untrusted = True
+                raise PirRpcProtocolError("system clock discontinuity; replay admission is disabled")
+        self._clock_last_wall = now
+        self._clock_last_monotonic = monotonic_now
         if abs(now - issued_at) > MAX_CLOCK_SKEW_SECONDS:
             raise PirRpcProtocolError("request timestamp is outside accepted window")
-        # A request timestamp may be MAX_CLOCK_SKEW_SECONDS in the future.
-        # It remains acceptable until another full skew window after that
-        # timestamp, so retain its nonce for up to two skew windows from receipt.
+        # Retain by elapsed monotonic time, not adjustable wall time. A request
+        # timestamp may be 60 seconds in the future and remain valid for another
+        # 60 seconds; the nonce therefore stays cached for 120 elapsed seconds.
         # Never evict a still-live nonce to make room: that would re-enable replay.
-        cutoff = now - (2 * MAX_CLOCK_SKEW_SECONDS)
+        cutoff = monotonic_now - (2 * MAX_CLOCK_SKEW_SECONDS)
         while self._seen_nonces:
             oldest_nonce, oldest_seen = next(iter(self._seen_nonces.items()))
             if oldest_seen >= cutoff:
@@ -400,7 +420,7 @@ class AuthenticatedPirRpcServer:
             raise PirRpcProtocolError("request replay detected")
         if len(self._seen_nonces) >= self._replay_capacity:
             raise PirRpcProtocolError("replay cache is full")
-        self._seen_nonces[nonce_text] = now
+        self._seen_nonces[nonce_text] = monotonic_now
 
     async def _handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         # Bound concurrent handlers and slow clients. asyncio creates a task per
