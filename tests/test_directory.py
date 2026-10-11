@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import multiprocessing
 import os
 import sqlite3
 from pathlib import Path
@@ -397,6 +398,85 @@ class SignedDirectoryTests(unittest.TestCase):
         self.assertEqual(circuit_descriptor.port, 9001)
         self.assertEqual(circuit_descriptor.identity_digest, verified.identity_digest)
         self.assertEqual(circuit_descriptor.onion_public_key, verified.onion_public_key)
+
+    @unittest.skipUnless(
+        os.name == "posix" and "fork" in multiprocessing.get_all_start_methods(),
+        "POSIX fork and flock are required for durable verifier state",
+    )
+    def test_separate_processes_cannot_overwrite_newer_descriptor_sequence(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "trust-state.json"
+            seed = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+            seed.apply_revocations(self.empty_revocations, now=self.now)
+            rotated = self.issue_descriptor(
+                sequence=2,
+                now=self.now + 2,
+                onion_key=raw_x25519_public(X25519PrivateKey.generate()),
+            )
+            ctx = multiprocessing.get_context("fork")
+            first_ready = ctx.Event()
+            second_ready = ctx.Event()
+            allow_first = ctx.Event()
+            first_sequence_written = ctx.Event()
+            second_sequence_written = ctx.Event()
+            outcomes = ctx.Queue()
+
+            # Both child processes construct their verifier before either writes,
+            # reproducing a genuinely cross-process stale-state race.
+            def worker(role: str) -> None:
+                verifier = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+                if role == "first":
+                    first_ready.set()
+                    if not allow_first.wait(10):
+                        outcomes.put("first process timed out before sequence 1")
+                        return
+                    verifier.verify_descriptor(self.descriptor, now=self.now + 1)
+                    first_sequence_written.set()
+                    if not second_sequence_written.wait(10):
+                        outcomes.put("first process timed out before sequence 2")
+                        return
+                    try:
+                        verifier.verify_descriptor(self.descriptor, now=self.now + 3)
+                    except ValueError as exc:
+                        if "sequence rollback" in str(exc):
+                            outcomes.put("stale sequence rejected")
+                        else:
+                            outcomes.put(f"unexpected first-process error: {exc}")
+                    else:
+                        outcomes.put("stale sequence incorrectly accepted")
+                else:
+                    second_ready.set()
+                    if not first_sequence_written.wait(10):
+                        outcomes.put("second process timed out before sequence 1")
+                        return
+                    verifier.verify_descriptor(rotated, now=self.now + 2)
+                    second_sequence_written.set()
+                    outcomes.put("sequence 2 accepted")
+
+            first = ctx.Process(target=worker, args=("first",))
+            second = ctx.Process(target=worker, args=("second",))
+            first.start()
+            second.start()
+            try:
+                self.assertTrue(first_ready.wait(10), "first process did not initialize")
+                self.assertTrue(second_ready.wait(10), "second process did not initialize")
+                allow_first.set()
+                first.join(15)
+                second.join(15)
+                self.assertFalse(first.is_alive(), "first process hung")
+                self.assertFalse(second.is_alive(), "second process hung")
+                self.assertEqual(first.exitcode, 0)
+                self.assertEqual(second.exitcode, 0)
+                results = {outcomes.get(timeout=2), outcomes.get(timeout=2)}
+                self.assertEqual(results, {"sequence 2 accepted", "stale sequence rejected"})
+            finally:
+                allow_first.set()
+                first_sequence_written.set()
+                second_sequence_written.set()
+                for process in (first, second):
+                    if process.is_alive():
+                        process.terminate()
+                        process.join(5)
 
     @unittest.skipUnless(os.name == "posix", "POSIX flock is required for durable verifier state")
     def test_two_verifiers_reload_state_under_cross_process_lock(self) -> None:
