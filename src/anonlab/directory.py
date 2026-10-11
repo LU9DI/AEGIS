@@ -979,7 +979,7 @@ class DirectoryVerifier:
         max_hops: int = 5,
     ) -> list[Any]:
         """Verify a full route and require a current signed revocation feed."""
-        with self._lock:
+        with self._state_operation():
             current = _now_seconds(now)
             self._ensure_fresh_revocations(current)
             if not isinstance(descriptors, list) or not descriptors:
@@ -1048,13 +1048,13 @@ class DirectoryVerifier:
         The caller should additionally compare the returned identity with the
         identity claimed in the authenticated transport transcript.
         """
-        with self._lock:
+        with self._state_operation():
             current = _now_seconds(now)
             self._ensure_fresh_revocations(current)
             return self.verify_descriptor(descriptor, now=current)
 
     def verify_descriptor(self, descriptor: Mapping[str, Any], *, now: int | None = None) -> VerifiedRelayDescriptor:
-        with self._lock:
+        with self._state_operation():
             if set(descriptor) != _SIGNED_DESCRIPTOR_KEYS:
                 raise ValueError("descriptor must include exactly the relay and authority signatures")
             body = _descriptor_body(descriptor)
