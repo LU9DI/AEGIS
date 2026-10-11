@@ -21,6 +21,7 @@ import hashlib
 import hmac
 import ipaddress
 import json
+import math
 from pathlib import Path
 import secrets
 import ssl
@@ -250,7 +251,7 @@ class AuthenticatedPirRpcServer:
         # is at the future edge of the accepted interval. Reserve enough entries
         # for the configured sustained rate over that retention period plus burst.
         required_replay_capacity = (
-            int((float(max_requests_per_second) * (2 * MAX_CLOCK_SKEW_SECONDS)) + 0.999999999)
+            math.ceil(float(max_requests_per_second) * (2 * MAX_CLOCK_SKEW_SECONDS))
             + request_burst
         )
         if replay_cache_capacity < required_replay_capacity:
