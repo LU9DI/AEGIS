@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 from anonlab.pir_rpc import (
     AuthenticatedPirRpcServer,
+    MAX_SEEN_NONCES,
     PirRpcEndpoint,
     PirRpcError,
     PirRpcProtocolError,
