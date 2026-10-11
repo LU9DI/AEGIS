@@ -57,6 +57,37 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(result.authenticated_messages, 4)
                 self.assertFalse(result.is_production_secure)
 
+    async def test_noncanonical_nonce_encoding_is_rejected_before_cache_admission(self):
+        nonce_bytes = secrets.token_bytes(32)
+        canonical_nonce = base64.b64encode(nonce_bytes).decode("ascii")
+        alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        last_data_index = alphabet.index(canonical_nonce[-2])
+        # For 32-byte inputs, the final base64 symbol carries only two data bits;
+        # changing its four unused low bits preserves the decoded nonce bytes.
+        alias_index = (last_data_index & 0b110000) | ((last_data_index + 1) & 0b001111)
+        alias_nonce = canonical_nonce[:-2] + alphabet[alias_index] + "="
+        self.assertNotEqual(alias_nonce, canonical_nonce)
+        self.assertEqual(base64.b64decode(alias_nonce), nonce_bytes)
+        payload = {
+            "protocol": "AEGIS-PIR-RPC-v1",
+            "server_id": "replica-a",
+            "nonce": alias_nonce,
+            "issued_at": int(time.time()),
+            "query": base64.b64encode(bytes(4)).decode("ascii"),
+        }
+        frame = _signed_envelope(payload, self.key_a, _REQUEST_DOMAIN)
+        writer = None
+        try:
+            reader, writer = await asyncio.open_connection("127.0.0.1", self.server_a.port)
+            writer.write(frame)
+            await writer.drain()
+            self.assertEqual(await asyncio.wait_for(reader.read(1), timeout=2), b"")
+            self.assertNotIn(alias_nonce, self.server_a._seen_nonces)
+        finally:
+            if writer is not None:
+                writer.close()
+                await writer.wait_closed()
+
     async def test_rate_limited_request_does_not_mutate_replay_cache(self):
         nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
         payload = {
