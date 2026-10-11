@@ -511,6 +511,28 @@ class SignedDirectoryTests(unittest.TestCase):
                     verifier.apply_revocations(self.empty_revocations, now=self.now)
             self.assertFalse(state_path.exists())
 
+    @unittest.skipUnless(os.name == "posix", "POSIX lock inode semantics are required")
+    def test_state_lock_rejects_path_replaced_during_acquisition(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state_path = root / "trust-state.json"
+            lock_path = root / "trust-state.json.lock"
+            verifier = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+            import anonlab.directory as directory_module
+            original_flock = directory_module.fcntl.flock
+
+            def replace_lock_after_locking(fd: int, operation: int) -> None:
+                original_flock(fd, operation)
+                if operation == directory_module.fcntl.LOCK_EX:
+                    lock_path.unlink()
+                    lock_path.write_text("replacement inode", encoding="ascii")
+
+            with patch("anonlab.directory.fcntl.flock", side_effect=replace_lock_after_locking):
+                with self.assertRaisesRegex(ValueError, "lock path changed while acquiring lock"):
+                    verifier.apply_revocations(self.empty_revocations, now=self.now)
+            self.assertFalse(state_path.exists())
+            self.assertEqual(lock_path.read_text(encoding="ascii"), "replacement inode")
+
     @unittest.skipUnless(os.name == "posix", "POSIX flock is required for durable verifier state")
     def test_two_verifiers_reload_state_under_cross_process_lock(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
