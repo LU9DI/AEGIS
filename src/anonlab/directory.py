@@ -8,7 +8,8 @@ caller persists it.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 import hashlib
 import hmac
 import ipaddress
@@ -17,11 +18,17 @@ import os
 from pathlib import Path
 import re
 import secrets
+import sqlite3
 import stat
 import tempfile
 import threading
 import time
-from typing import Any, Mapping
+from typing import Any, Iterator, Mapping
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - unavailable on non-POSIX platforms
+    fcntl = None  # type: ignore[assignment]
 
 try:
     from cryptography.exceptions import InvalidSignature
@@ -76,6 +83,21 @@ def _now_seconds(now: int | None) -> int:
     if not isinstance(value, int) or isinstance(value, bool) or value < 0:
         raise ValueError("time must be a non-negative integer Unix timestamp")
     return value
+
+
+def _validate_private_state_parent(path: Path) -> None:
+    """Reject symlinked ancestors and unsafe immediate state directories."""
+    for ancestor in (path.parent, *path.parent.parents):
+        try:
+            info = ancestor.lstat()
+        except FileNotFoundError:
+            continue
+        if stat.S_ISLNK(info.st_mode):
+            raise ValueError("directory state path ancestors must not be symbolic links")
+    if os.name == "posix":
+        parent_info = path.parent.stat()
+        if parent_info.st_uid != os.geteuid() or parent_info.st_mode & (stat.S_IWGRP | stat.S_IWOTH):
+            raise ValueError("directory state directory must be owned by the current user and not group/world-writable")
 
 
 def _public_bytes(key: Ed25519PublicKey) -> bytes:
@@ -225,35 +247,182 @@ def create_relay_descriptor(
 
 @dataclass(slots=True)
 class DirectoryAuthority:
-    """In-memory signer for the local lab's relay directory and revocation feed."""
+    """Signer for the local directory lab.
+
+    Without state_path this is a compatibility-only stateless signer and MUST
+    NOT be used as an authoritative directory. With state_path, SQLite
+    serializes writers across processes and durably reserves each relay sequence
+    and serial before a descriptor is returned. Local storage cannot prevent
+    rollback if an attacker restores an older database backup.
+    """
 
     private_key: Ed25519PrivateKey
+    state_path: str | os.PathLike[str] | None = None
+    _lock: threading.RLock = field(default_factory=threading.RLock, init=False, repr=False)
 
     @classmethod
-    def generate(cls) -> "DirectoryAuthority":
-        return cls(Ed25519PrivateKey.generate())
+    def generate(cls, *, state_path: str | os.PathLike[str] | None = None) -> "DirectoryAuthority":
+        return cls(Ed25519PrivateKey.generate(), state_path=state_path)
 
     @property
     def public_key_bytes(self) -> bytes:
         return _public_bytes(self.private_key.public_key())
+
+    def _connect_state(self) -> sqlite3.Connection:
+        if self.state_path is None:
+            raise ValueError("durable authority state is not configured")
+        path = Path(self.state_path)
+        # Reject pre-existing symlink ancestors before mkdir/stat/open can follow
+        # them. Repeat after creating missing parents to catch static replacement
+        # during setup. This is defense in depth, not a race-free defense against
+        # an attacker who can rename ancestors concurrently under the same UID.
+        for ancestor in (path.parent, *path.parent.parents):
+            try:
+                ancestor_info = ancestor.lstat()
+            except FileNotFoundError:
+                continue
+            if stat.S_ISLNK(ancestor_info.st_mode):
+                raise ValueError("authority state path ancestors must not be symbolic links")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        for ancestor in (path.parent, *path.parent.parents):
+            try:
+                ancestor_info = ancestor.lstat()
+            except FileNotFoundError:
+                continue
+            if stat.S_ISLNK(ancestor_info.st_mode):
+                raise ValueError("authority state path ancestors must not be symbolic links")
+        if os.name == "posix":
+            # A pathname check alone is vulnerable to a symlink/rename race.
+            # Require a private, user-owned parent so another local user cannot
+            # replace the database between validation and SQLite opening it.
+            parent_info = path.parent.stat()
+            if parent_info.st_uid != os.geteuid() or parent_info.st_mode & (stat.S_IWGRP | stat.S_IWOTH):
+                raise ValueError("authority state directory must be owned by the current user and not group/world-writable")
+            flags = os.O_RDWR | os.O_CREAT
+            flags |= getattr(os, "O_CLOEXEC", 0)
+            flags |= getattr(os, "O_NOFOLLOW", 0)
+            try:
+                state_fd = os.open(path, flags, stat.S_IRUSR | stat.S_IWUSR)
+            except OSError as exc:
+                if path.is_symlink():
+                    raise ValueError("authority state path must not be a symbolic link") from exc
+                raise ValueError("authority state path could not be opened safely") from exc
+            try:
+                state_info = os.fstat(state_fd)
+                if not stat.S_ISREG(state_info.st_mode):
+                    raise ValueError("authority state path must be a regular file")
+                if state_info.st_nlink != 1:
+                    raise ValueError("authority state file must not have multiple hard links")
+                os.fchmod(state_fd, stat.S_IRUSR | stat.S_IWUSR)
+            finally:
+                os.close(state_fd)
+            # The private parent directory prevents an untrusted local user
+            # from swapping this validated path before SQLite opens it.
+        else:
+            if path.is_symlink():
+                raise ValueError("authority state path must not be a symbolic link")
+        connection = sqlite3.connect(path, timeout=10.0, isolation_level=None)
+        try:
+            if os.name == "posix":
+                os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+            connection.execute("PRAGMA busy_timeout = 10000")
+            connection.execute("PRAGMA synchronous = FULL")
+            connection.execute("PRAGMA journal_mode = DELETE")
+            # Serialize first-open schema and key binding too, not only issuance.
+            # Otherwise two fresh processes can both observe missing metadata.
+            connection.execute("BEGIN IMMEDIATE")
+            connection.execute("CREATE TABLE IF NOT EXISTS authority_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+            connection.execute("CREATE TABLE IF NOT EXISTS issued_descriptors (relay_id TEXT PRIMARY KEY, sequence INTEGER NOT NULL, descriptor_digest TEXT NOT NULL, serial TEXT NOT NULL UNIQUE)")
+            connection.execute("CREATE TABLE IF NOT EXISTS issued_serials (serial TEXT PRIMARY KEY, relay_id TEXT NOT NULL, sequence INTEGER NOT NULL, descriptor_digest TEXT NOT NULL)")
+            connection.execute("CREATE TABLE IF NOT EXISTS issued_revocation_snapshots (epoch INTEGER PRIMARY KEY, revoked_ids_json TEXT NOT NULL, snapshot_json TEXT NOT NULL, digest TEXT NOT NULL)")
+            fingerprint = hashlib.sha256(self.public_key_bytes).hexdigest()
+            row = connection.execute("SELECT value FROM authority_meta WHERE key='authority_key_fingerprint'").fetchone()
+            if row is None:
+                # Never silently re-bind a populated database to a new key if
+                # metadata was deleted or partially lost. That would let an
+                # attacker with file access reset the authority's trust identity.
+                existing_state = sum(
+                    int(connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
+                    for table in (
+                        "issued_descriptors",
+                        "issued_serials",
+                        "issued_revocation_snapshots",
+                    )
+                )
+                if existing_state:
+                    raise ValueError("authority state is missing its key fingerprint")
+                connection.execute("INSERT INTO authority_meta(key, value) VALUES(?, ?)", ("authority_key_fingerprint", fingerprint))
+            elif not hmac.compare_digest(str(row[0]), fingerprint):
+                raise ValueError("authority state belongs to a different authority key")
+            connection.execute("COMMIT")
+            return connection
+        except Exception:
+            connection.close()
+            raise
 
     def certify(self, relay_signed_descriptor: Mapping[str, Any], *, now: int | None = None) -> dict[str, Any]:
         if set(relay_signed_descriptor) != _UNSIGNED_DESCRIPTOR_KEYS:
             raise ValueError("expected a relay-signed descriptor without authority_signature")
         body = _descriptor_body(relay_signed_descriptor)
         current = _now_seconds(now)
-        _validate_times(
-            body["not_before"], body["expires_at"], current,
-            max_lifetime=MAX_DESCRIPTOR_LIFETIME_SECONDS,
-        )
+        _validate_times(body["not_before"], body["expires_at"], current, max_lifetime=MAX_DESCRIPTOR_LIFETIME_SECONDS)
         identity_public = bytes.fromhex(body["identity_public_key"])
-        _verify_signature(identity_public, relay_signed_descriptor["relay_signature"],
-                          _RELAY_DOMAIN + _canonical(body), "relay")
+        _verify_signature(identity_public, relay_signed_descriptor["relay_signature"], _RELAY_DOMAIN + _canonical(body), "relay")
         to_sign = {**body, "relay_signature": relay_signed_descriptor["relay_signature"]}
-        authority_signature = self.private_key.sign(
-            _AUTHORITY_DOMAIN + _canonical(to_sign)
-        ).hex()
-        return {**to_sign, "authority_signature": authority_signature}
+        authority_signature = self.private_key.sign(_AUTHORITY_DOMAIN + _canonical(to_sign)).hex()
+        certified = {**to_sign, "authority_signature": authority_signature}
+        if self.state_path is None:
+            return certified
+
+        digest = hashlib.sha256(_AUTHORITY_DOMAIN + _canonical(to_sign) + bytes.fromhex(authority_signature)).hexdigest()
+        # BEGIN IMMEDIATE serializes writers across processes. Commit reservation
+        # before returning the certificate; any error rolls back the transaction.
+        with self._lock:
+            connection = self._connect_state()
+            try:
+                connection.execute("BEGIN IMMEDIATE")
+                row = connection.execute(
+                    "SELECT sequence, descriptor_digest, serial FROM issued_descriptors WHERE relay_id=?",
+                    (body["relay_id"],),
+                ).fetchone()
+                if row is not None:
+                    latest_sequence, latest_digest, latest_serial = int(row[0]), str(row[1]), str(row[2])
+                    if body["sequence"] < latest_sequence:
+                        raise ValueError("authority descriptor sequence rollback rejected")
+                    if body["sequence"] == latest_sequence:
+                        if not hmac.compare_digest(digest, latest_digest):
+                            raise ValueError("authority conflicting descriptors share the same sequence")
+                        if body["serial"] != latest_serial:
+                            raise ValueError("authority same-sequence descriptor serial conflict")
+                        connection.execute("COMMIT")
+                        return certified
+                prior_serial = connection.execute(
+                    "SELECT relay_id, sequence, descriptor_digest FROM issued_serials WHERE serial=?",
+                    (body["serial"],),
+                ).fetchone()
+                if prior_serial is not None:
+                    raise ValueError("authority descriptor serial has already been used")
+                connection.execute(
+                    "INSERT INTO issued_serials(serial, relay_id, sequence, descriptor_digest) VALUES(?, ?, ?, ?)",
+                    (body["serial"], body["relay_id"], body["sequence"], digest),
+                )
+                connection.execute(
+                    "INSERT INTO issued_descriptors(relay_id, sequence, descriptor_digest, serial) VALUES(?, ?, ?, ?) "
+                    "ON CONFLICT(relay_id) DO UPDATE SET sequence=excluded.sequence, descriptor_digest=excluded.descriptor_digest, serial=excluded.serial",
+                    (body["relay_id"], body["sequence"], digest, body["serial"]),
+                )
+                connection.execute("COMMIT")
+            except sqlite3.IntegrityError as exc:
+                if connection.in_transaction:
+                    connection.execute("ROLLBACK")
+                raise ValueError("authority state rejected a duplicate issuance record") from exc
+            except Exception:
+                if connection.in_transaction:
+                    connection.execute("ROLLBACK")
+                raise
+            finally:
+                connection.close()
+        return certified
 
     def sign_revocations(
         self,
@@ -276,15 +445,121 @@ class DirectoryAuthority:
         if any(not isinstance(relay_id, str) or not _HEX_40.fullmatch(relay_id) for relay_id in values):
             raise ValueError("revoked relay IDs must be 40 lowercase hexadecimal characters")
         ids = sorted(set(values))
-        body = {
-            "schema_version": SCHEMA_VERSION,
-            "epoch": epoch,
-            "issued_at": current,
-            "expires_at": current + valid_for_seconds,
-            "revoked_relay_ids": ids,
-        }
-        signature = self.private_key.sign(_REVOCATION_DOMAIN + _canonical(body)).hex()
-        return {**body, "authority_signature": signature}
+
+        # Stateless mode remains for compatibility-only local demos.
+        if self.state_path is None:
+            body = {
+                "schema_version": SCHEMA_VERSION,
+                "epoch": epoch,
+                "issued_at": current,
+                "expires_at": current + valid_for_seconds,
+                "revoked_relay_ids": ids,
+            }
+            signature = self.private_key.sign(_REVOCATION_DOMAIN + _canonical(body)).hex()
+            return {**body, "authority_signature": signature}
+
+        # The durable authority keeps one immutable signed snapshot per epoch.
+        # Re-publishing an epoch returns the original bytes; a changed list must
+        # use a higher epoch and include every previously revoked relay.
+        with self._lock:
+            connection = self._connect_state()
+            try:
+                connection.execute("BEGIN IMMEDIATE")
+                row = connection.execute(
+                    "SELECT epoch, revoked_ids_json, snapshot_json, digest FROM issued_revocation_snapshots "
+                    "ORDER BY epoch DESC LIMIT 1"
+                ).fetchone()
+                if row is not None:
+                    latest_epoch = row[0]
+                    if not isinstance(latest_epoch, int) or isinstance(latest_epoch, bool) or latest_epoch < 1:
+                        raise ValueError("authority stored revocation epoch is invalid")
+                    try:
+                        latest_ids = json.loads(str(row[1]))
+                        snapshot = json.loads(str(row[2]))
+                    except (TypeError, json.JSONDecodeError) as exc:
+                        raise ValueError("authority stored revocation snapshot is malformed") from exc
+                    if (
+                        not isinstance(latest_ids, list)
+                        or any(not isinstance(relay_id, str) or not _HEX_40.fullmatch(relay_id) for relay_id in latest_ids)
+                        or latest_ids != sorted(set(latest_ids))
+                    ):
+                        raise ValueError("authority stored revocation IDs are invalid")
+                    if not isinstance(snapshot, dict) or set(snapshot) != _REVOCATION_KEYS:
+                        raise ValueError("authority stored revocation snapshot has invalid fields")
+                    stored_body = {key: snapshot[key] for key in _REVOCATION_BODY_KEYS}
+                    stored_signature = snapshot["authority_signature"]
+                    if (
+                        not isinstance(stored_body["schema_version"], int)
+                        or isinstance(stored_body["schema_version"], bool)
+                        or stored_body["schema_version"] != SCHEMA_VERSION
+                        or not isinstance(stored_body["epoch"], int)
+                        or isinstance(stored_body["epoch"], bool)
+                        or stored_body["epoch"] != latest_epoch
+                        or not isinstance(stored_body["issued_at"], int)
+                        or isinstance(stored_body["issued_at"], bool)
+                        or stored_body["issued_at"] < 0
+                        or not isinstance(stored_body["expires_at"], int)
+                        or isinstance(stored_body["expires_at"], bool)
+                        or stored_body["expires_at"] <= stored_body["issued_at"]
+                        or stored_body["expires_at"] - stored_body["issued_at"] > MAX_REVOCATION_LIFETIME_SECONDS
+                        or stored_body["revoked_relay_ids"] != latest_ids
+                    ):
+                        raise ValueError("authority stored revocation snapshot is inconsistent")
+                    try:
+                        signature_bytes = _hex_field(stored_signature, "authority signature", _HEX_64)
+                        computed_digest = hashlib.sha256(
+                            _REVOCATION_DOMAIN + _canonical(stored_body) + signature_bytes
+                        ).hexdigest()
+                        Ed25519PublicKey.from_public_bytes(self.public_key_bytes).verify(
+                            signature_bytes, _REVOCATION_DOMAIN + _canonical(stored_body)
+                        )
+                    except (ValueError, InvalidSignature) as exc:
+                        raise ValueError("authority stored revocation snapshot signature is invalid") from exc
+                    if (
+                        not isinstance(row[3], str)
+                        or not _HEX_32.fullmatch(row[3])
+                        or not hmac.compare_digest(computed_digest, row[3])
+                    ):
+                        raise ValueError("authority stored revocation snapshot digest is invalid")
+                    if epoch < latest_epoch:
+                        raise ValueError("authority revocation epoch rollback rejected")
+                    if epoch == latest_epoch:
+                        if ids != latest_ids:
+                            raise ValueError("authority conflicting revocation snapshots share the same epoch")
+                        connection.execute("COMMIT")
+                        return snapshot
+                    if not set(latest_ids).issubset(set(ids)):
+                        raise ValueError("authority revocations must be cumulative; relays cannot be un-revoked")
+
+                body = {
+                    "schema_version": SCHEMA_VERSION,
+                    "epoch": epoch,
+                    "issued_at": current,
+                    "expires_at": current + valid_for_seconds,
+                    "revoked_relay_ids": ids,
+                }
+                signature = self.private_key.sign(_REVOCATION_DOMAIN + _canonical(body)).hex()
+                snapshot = {**body, "authority_signature": signature}
+                encoded_ids = json.dumps(ids, sort_keys=True, separators=(",", ":"))
+                encoded_snapshot = _canonical(snapshot).decode("ascii")
+                digest = hashlib.sha256(_REVOCATION_DOMAIN + _canonical(body) + bytes.fromhex(signature)).hexdigest()
+                connection.execute(
+                    "INSERT INTO issued_revocation_snapshots(epoch, revoked_ids_json, snapshot_json, digest) "
+                    "VALUES(?, ?, ?, ?)",
+                    (epoch, encoded_ids, encoded_snapshot, digest),
+                )
+                connection.execute("COMMIT")
+                return snapshot
+            except sqlite3.IntegrityError as exc:
+                if connection.in_transaction:
+                    connection.execute("ROLLBACK")
+                raise ValueError("authority state rejected a duplicate revocation epoch") from exc
+            except Exception:
+                if connection.in_transaction:
+                    connection.execute("ROLLBACK")
+                raise
+            finally:
+                connection.close()
 
 
 @dataclass(frozen=True, slots=True)
@@ -391,6 +666,8 @@ class DirectoryVerifier:
         self._state_path = Path(state_path) if state_path is not None else None
         self._require_persistent_state = require_persistent_state
         self._lock = threading.RLock()
+        self._state_lock_depth = 0
+        self._state_lock_fd: int | None = None
         self._revocation_epoch = 0
         self._revocation_digest: bytes | None = None
         self._revocation_expires_at: int | None = None
@@ -398,7 +675,9 @@ class DirectoryVerifier:
         self._revoked_relay_ids: set[str] = set()
         self._latest_descriptor_sequence: dict[str, int] = {}
         self._descriptor_sequence_digest: dict[tuple[str, int], bytes] = {}
-        if self._state_path is not None and self._state_path.exists():
+        if self._state_path is not None and os.path.lexists(self._state_path):
+            # lexists() also detects dangling symlinks; following exists() would
+            # silently treat one as absent and defer rejection until a write.
             self._load_state()
 
     @property
@@ -456,6 +735,78 @@ class DirectoryVerifier:
             "latest_descriptors": latest_entries,
         }
 
+    @contextmanager
+    def _state_operation(self) -> Iterator[None]:
+        """Serialize durable state operations across threads and processes.
+
+        A stable sidecar lock file is never replaced. After acquiring its
+        advisory exclusive lock, reload the latest state before any decision or
+        write. Platforms without fcntl locking fail closed for durable state.
+        """
+        with self._lock:
+            path = self._state_path
+            if path is None:
+                yield
+                return
+            if fcntl is None:
+                raise ValueError("durable directory state requires a supported cross-process file lock")
+            if self._state_lock_depth:
+                self._state_lock_depth += 1
+                try:
+                    yield
+                finally:
+                    self._state_lock_depth -= 1
+                return
+
+            path.parent.mkdir(parents=True, exist_ok=True)
+            _validate_private_state_parent(path)
+            lock_path = path.with_name(path.name + ".lock")
+            flags = os.O_RDWR | os.O_CREAT | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+            try:
+                lock_fd = os.open(lock_path, flags, stat.S_IRUSR | stat.S_IWUSR)
+            except OSError as exc:
+                raise ValueError("directory state lock file could not be opened safely") from exc
+            locked = False
+            try:
+                lock_info = os.fstat(lock_fd)
+                if not stat.S_ISREG(lock_info.st_mode) or lock_info.st_nlink != 1:
+                    raise ValueError("directory state lock must be a regular file without hard links")
+                if os.name == "posix" and lock_info.st_uid != os.geteuid():
+                    raise ValueError("directory state lock must be owned by the current user")
+                if os.name == "posix":
+                    os.fchmod(lock_fd, stat.S_IRUSR | stat.S_IWUSR)
+                fcntl.flock(lock_fd, fcntl.LOCK_EX)
+                locked = True
+                # Detect a lock pathname that was swapped while this process
+                # waited for the inode it originally opened. This narrows the
+                # split-lock window; it cannot defeat a same-UID attacker that
+                # can rename the pathname again after this check.
+                try:
+                    current_lock_info = os.stat(lock_path, follow_symlinks=False)
+                except OSError as exc:
+                    raise ValueError("directory state lock path changed while acquiring lock") from exc
+                if (current_lock_info.st_dev, current_lock_info.st_ino) != (lock_info.st_dev, lock_info.st_ino):
+                    raise ValueError("directory state lock path changed while acquiring lock")
+                self._state_lock_fd = lock_fd
+                self._state_lock_depth = 1
+                if os.path.lexists(path):
+                    self._load_state()
+                elif (
+                    self._revocation_epoch
+                    or self._latest_descriptor_sequence
+                    or self._revocation_snapshot is not None
+                ):
+                    raise ValueError("persistent directory state disappeared while verifier was active")
+                yield
+            finally:
+                self._state_lock_depth = 0
+                self._state_lock_fd = None
+                try:
+                    if locked:
+                        fcntl.flock(lock_fd, fcntl.LOCK_UN)
+                finally:
+                    os.close(lock_fd)
+
     def _persist_candidate(self, state: Mapping[str, Any]) -> None:
         path = self._state_path
         if path is None:
@@ -463,6 +814,7 @@ class DirectoryVerifier:
                 raise ValueError("persistent directory state is required")
             return
         path.parent.mkdir(parents=True, exist_ok=True)
+        _validate_private_state_parent(path)
         if path.is_symlink():
             raise ValueError("directory state path must not be a symbolic link")
         encoded = _canonical(state)
@@ -499,20 +851,32 @@ class DirectoryVerifier:
     def _load_state(self) -> None:
         assert self._state_path is not None
         path = self._state_path
-        if path.is_symlink() or not path.is_file():
+        _validate_private_state_parent(path)
+        if path.is_symlink():
             raise ValueError("directory state must be a regular non-symlink file")
-        metadata = path.stat()
-        if metadata.st_size > MAX_STATE_BYTES:
-            raise ValueError("directory state exceeds the configured size limit")
-        if os.name == "posix" and metadata.st_mode & (stat.S_IRWXG | stat.S_IRWXO):
-            raise ValueError("directory state permissions are too broad; require mode 0600")
-        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
-        fd = os.open(path, flags)
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
         try:
+            fd = os.open(path, flags)
+        except OSError as exc:
+            raise ValueError("directory state must be a regular non-symlink file") from exc
+        try:
+            metadata = os.fstat(fd)
+            if not stat.S_ISREG(metadata.st_mode):
+                raise ValueError("directory state must be a regular non-symlink file")
+            if metadata.st_nlink != 1:
+                raise ValueError("directory state file must not have multiple hard links")
+            if os.name == "posix" and metadata.st_uid != os.geteuid():
+                raise ValueError("directory state file must be owned by the current user")
+            if metadata.st_size > MAX_STATE_BYTES:
+                raise ValueError("directory state exceeds the configured size limit")
+            if os.name == "posix" and metadata.st_mode & (stat.S_IRWXG | stat.S_IRWXO):
+                raise ValueError("directory state permissions are too broad; require mode 0600")
             with os.fdopen(fd, "rb", closefd=True) as stream:
+                fd = -1
                 raw = stream.read(MAX_STATE_BYTES + 1)
-        except Exception:
-            raise
+        finally:
+            if fd >= 0:
+                os.close(fd)
         if len(raw) > MAX_STATE_BYTES:
             raise ValueError("directory state exceeds the configured size limit")
         def strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -631,7 +995,7 @@ class DirectoryVerifier:
             raise ValueError("revocation snapshot expired; refresh directory and revocations")
 
     def apply_revocations(self, snapshot: Mapping[str, Any], *, now: int | None = None) -> None:
-        with self._lock:
+        with self._state_operation():
             if set(snapshot) != _REVOCATION_KEYS:
                 raise ValueError("revocation snapshot has missing or unknown fields")
             body = {key: snapshot[key] for key in _REVOCATION_BODY_KEYS}
@@ -695,7 +1059,7 @@ class DirectoryVerifier:
         max_hops: int = 5,
     ) -> list[Any]:
         """Verify a full route and require a current signed revocation feed."""
-        with self._lock:
+        with self._state_operation():
             current = _now_seconds(now)
             self._ensure_fresh_revocations(current)
             if not isinstance(descriptors, list) or not descriptors:
@@ -722,7 +1086,7 @@ class DirectoryVerifier:
         max_hops: int = 5,
     ) -> VerifiedCircuitRoute:
         """Return a short-lived route object for the high-level client API."""
-        with self._lock:
+        with self._state_operation():
             if self._state_path is None:
                 raise ValueError("persistent directory state is required to issue a verified circuit route")
             current = _now_seconds(now)
@@ -741,7 +1105,7 @@ class DirectoryVerifier:
             )
 
     def _assert_route_current(self, route: VerifiedCircuitRoute, now: int) -> None:
-        with self._lock:
+        with self._state_operation():
             self._ensure_fresh_revocations(now)
             if route.authority_key_fingerprint != self._authority_fingerprint:
                 raise ValueError("verified route trust anchor no longer matches")
@@ -764,13 +1128,13 @@ class DirectoryVerifier:
         The caller should additionally compare the returned identity with the
         identity claimed in the authenticated transport transcript.
         """
-        with self._lock:
+        with self._state_operation():
             current = _now_seconds(now)
             self._ensure_fresh_revocations(current)
             return self.verify_descriptor(descriptor, now=current)
 
     def verify_descriptor(self, descriptor: Mapping[str, Any], *, now: int | None = None) -> VerifiedRelayDescriptor:
-        with self._lock:
+        with self._state_operation():
             if set(descriptor) != _SIGNED_DESCRIPTOR_KEYS:
                 raise ValueError("descriptor must include exactly the relay and authority signatures")
             body = _descriptor_body(descriptor)

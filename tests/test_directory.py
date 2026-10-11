@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import copy
 import json
+import multiprocessing
 import os
+import sqlite3
 from pathlib import Path
 import tempfile
 import unittest
@@ -54,6 +56,204 @@ class SignedDirectoryTests(unittest.TestCase):
             sequence=sequence,
         )
         return self.authority.certify(unsigned, now=current)
+
+    def test_durable_authority_rejects_conflicting_sequence_after_restart(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "authority.sqlite3"
+            authority = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            first = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="a" * 32,
+            )
+            first_certified = authority.certify(first, now=self.now)
+            restarted = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            self.assertEqual(first_certified, restarted.certify(first, now=self.now))
+            conflict = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(X25519PrivateKey.generate()), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="b" * 32,
+            )
+            with self.assertRaisesRegex(ValueError, "conflicting descriptors share the same sequence"):
+                restarted.certify(conflict, now=self.now)
+            next_sequence = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=2, serial="c" * 32,
+            )
+            restarted.certify(next_sequence, now=self.now)
+            with self.assertRaisesRegex(ValueError, "sequence rollback"):
+                restarted.certify(first, now=self.now)
+
+    def test_durable_authority_rejects_serial_reuse(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            authority = DirectoryAuthority(self.authority.private_key, state_path=Path(directory) / "authority.sqlite3")
+            first = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="d" * 32,
+            )
+            authority.certify(first, now=self.now)
+            other_identity = Ed25519PrivateKey.generate()
+            second = create_relay_descriptor(
+                other_identity, raw_x25519_public(X25519PrivateKey.generate()), "127.0.0.1", 9002,
+                now=self.now, sequence=1, serial="d" * 32,
+            )
+            with self.assertRaisesRegex(ValueError, "already been used"):
+                authority.certify(second, now=self.now)
+
+    def test_durable_authority_concurrent_identical_issuance_is_idempotent(self) -> None:
+        from concurrent.futures import ThreadPoolExecutor
+
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "authority.sqlite3"
+            descriptor = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="e" * 32,
+            )
+            authorities = [
+                DirectoryAuthority(self.authority.private_key, state_path=state_path)
+                for _ in range(8)
+            ]
+            with ThreadPoolExecutor(max_workers=len(authorities)) as executor:
+                results = list(executor.map(
+                    lambda authority: authority.certify(descriptor, now=self.now),
+                    authorities,
+                ))
+            self.assertTrue(all(result == results[0] for result in results))
+
+    def test_durable_authority_fails_closed_if_key_fingerprint_is_deleted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "authority.sqlite3"
+            authority = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            descriptor = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="9" * 32,
+            )
+            authority.certify(descriptor, now=self.now)
+            with sqlite3.connect(state_path) as connection:
+                connection.execute("DELETE FROM authority_meta WHERE key='authority_key_fingerprint'")
+                connection.commit()
+
+            replacement_authority = DirectoryAuthority(Ed25519PrivateKey.generate(), state_path=state_path)
+            with self.assertRaisesRegex(ValueError, "missing its key fingerprint"):
+                replacement_authority.certify(descriptor, now=self.now)
+
+    def test_durable_authority_state_is_bound_to_authority_key(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "authority.sqlite3"
+            first = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            descriptor = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="f" * 32,
+            )
+            first.certify(descriptor, now=self.now)
+            other = DirectoryAuthority(Ed25519PrivateKey.generate(), state_path=state_path)
+            with self.assertRaisesRegex(ValueError, "different authority key"):
+                other.certify(descriptor, now=self.now)
+
+    @unittest.skipUnless(hasattr(os, "symlink"), "symbolic links are unavailable")
+    def test_durable_authority_rejects_symlink_state_path(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "real.sqlite3"
+            link = Path(directory) / "authority.sqlite3"
+            target.touch()
+            try:
+                link.symlink_to(target)
+            except (OSError, NotImplementedError):
+                self.skipTest("symbolic-link creation is not permitted")
+            authority = DirectoryAuthority(self.authority.private_key, state_path=link)
+            descriptor = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="1" * 32,
+            )
+            with self.assertRaisesRegex(ValueError, "symbolic link"):
+                authority.certify(descriptor, now=self.now)
+
+    @unittest.skipUnless(hasattr(os, "symlink"), "symbolic links are unavailable")
+    def test_durable_authority_rejects_symlinked_parent_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            real_parent = root / "private"
+            real_parent.mkdir(mode=0o700)
+            link_parent = root / "redirect"
+            try:
+                link_parent.symlink_to(real_parent, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("symbolic-link creation is not permitted")
+            state_path = link_parent / "authority.sqlite3"
+            authority = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            descriptor = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="3" * 32,
+            )
+            with self.assertRaisesRegex(ValueError, "ancestors must not be symbolic links"):
+                authority.certify(descriptor, now=self.now)
+            self.assertFalse((real_parent / "authority.sqlite3").exists())
+
+    @unittest.skipUnless(os.name == "posix", "POSIX directory permissions are required")
+    def test_durable_authority_rejects_group_or_world_writable_state_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory) / "unsafe"
+            parent.mkdir()
+            state_path = parent / "authority.sqlite3"
+            parent.chmod(0o777)
+            try:
+                authority = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+                descriptor = create_relay_descriptor(
+                    self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                    now=self.now, sequence=1, serial="2" * 32,
+                )
+                with self.assertRaisesRegex(ValueError, "directory must be owned by the current user"):
+                    authority.certify(descriptor, now=self.now)
+                self.assertFalse(state_path.exists())
+            finally:
+                parent.chmod(0o700)
+
+    @unittest.skipUnless(os.name == "posix" and hasattr(os, "link"), "POSIX hard links are required")
+    def test_durable_authority_rejects_hard_linked_state_file(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            target = parent / "other.sqlite3"
+            state_path = parent / "authority.sqlite3"
+            target.write_bytes(b"do not modify")
+            os.link(target, state_path)
+            authority = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            descriptor = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="3" * 32,
+            )
+            with self.assertRaisesRegex(ValueError, "multiple hard links"):
+                authority.certify(descriptor, now=self.now)
+            self.assertEqual(target.read_bytes(), b"do not modify")
+
+    def test_durable_authority_revocation_epochs_survive_restart(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "authority.sqlite3"
+            authority = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            revoked = "a" * 40
+            first = authority.sign_revocations([revoked], epoch=1, now=self.now)
+            # Same epoch is immutable and idempotent, even if called later.
+            repeated = authority.sign_revocations([revoked], epoch=1, now=self.now + 10)
+            self.assertEqual(repeated, first)
+            second_id = "b" * 40
+            next_snapshot = authority.sign_revocations([revoked, second_id], epoch=2, now=self.now + 20)
+            restarted = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            self.assertEqual(
+                restarted.sign_revocations([revoked, second_id], epoch=2, now=self.now + 30),
+                next_snapshot,
+            )
+
+    def test_durable_authority_rejects_revocation_rollback_and_equivocation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            authority = DirectoryAuthority(
+                self.authority.private_key, state_path=Path(directory) / "authority.sqlite3"
+            )
+            first_id = "a" * 40
+            second_id = "b" * 40
+            authority.sign_revocations([first_id], epoch=4, now=self.now)
+            with self.assertRaisesRegex(ValueError, "epoch rollback"):
+                authority.sign_revocations([first_id], epoch=3, now=self.now + 1)
+            with self.assertRaisesRegex(ValueError, "same epoch"):
+                authority.sign_revocations([second_id], epoch=4, now=self.now + 1)
+            with self.assertRaisesRegex(ValueError, "cumulative"):
+                authority.sign_revocations([], epoch=5, now=self.now + 2)
 
     def test_valid_descriptor_round_trips_and_verifies(self) -> None:
         encoded = descriptor_to_json(self.descriptor)
@@ -199,6 +399,171 @@ class SignedDirectoryTests(unittest.TestCase):
         self.assertEqual(circuit_descriptor.identity_digest, verified.identity_digest)
         self.assertEqual(circuit_descriptor.onion_public_key, verified.onion_public_key)
 
+    @unittest.skipUnless(
+        os.name == "posix" and "fork" in multiprocessing.get_all_start_methods(),
+        "POSIX fork and flock are required for durable verifier state",
+    )
+    def test_separate_processes_cannot_overwrite_newer_descriptor_sequence(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "trust-state.json"
+            seed = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+            seed.apply_revocations(self.empty_revocations, now=self.now)
+            rotated = self.issue_descriptor(
+                sequence=2,
+                now=self.now + 2,
+                onion_key=raw_x25519_public(X25519PrivateKey.generate()),
+            )
+            ctx = multiprocessing.get_context("fork")
+            first_ready = ctx.Event()
+            second_ready = ctx.Event()
+            allow_first = ctx.Event()
+            first_sequence_written = ctx.Event()
+            second_sequence_written = ctx.Event()
+            outcomes = ctx.Queue()
+
+            # Both child processes construct their verifier before either writes,
+            # reproducing a genuinely cross-process stale-state race.
+            def worker(role: str) -> None:
+                verifier = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+                if role == "first":
+                    first_ready.set()
+                    if not allow_first.wait(10):
+                        outcomes.put("first process timed out before sequence 1")
+                        return
+                    verifier.verify_descriptor(self.descriptor, now=self.now + 1)
+                    first_sequence_written.set()
+                    if not second_sequence_written.wait(10):
+                        outcomes.put("first process timed out before sequence 2")
+                        return
+                    try:
+                        verifier.verify_descriptor(self.descriptor, now=self.now + 3)
+                    except ValueError as exc:
+                        if "sequence rollback" in str(exc):
+                            outcomes.put("stale sequence rejected")
+                        else:
+                            outcomes.put(f"unexpected first-process error: {exc}")
+                    else:
+                        outcomes.put("stale sequence incorrectly accepted")
+                else:
+                    second_ready.set()
+                    if not first_sequence_written.wait(10):
+                        outcomes.put("second process timed out before sequence 1")
+                        return
+                    verifier.verify_descriptor(rotated, now=self.now + 2)
+                    second_sequence_written.set()
+                    outcomes.put("sequence 2 accepted")
+
+            first = ctx.Process(target=worker, args=("first",))
+            second = ctx.Process(target=worker, args=("second",))
+            first.start()
+            second.start()
+            try:
+                self.assertTrue(first_ready.wait(10), "first process did not initialize")
+                self.assertTrue(second_ready.wait(10), "second process did not initialize")
+                allow_first.set()
+                first.join(15)
+                second.join(15)
+                self.assertFalse(first.is_alive(), "first process hung")
+                self.assertFalse(second.is_alive(), "second process hung")
+                self.assertEqual(first.exitcode, 0)
+                self.assertEqual(second.exitcode, 0)
+                results = {outcomes.get(timeout=2), outcomes.get(timeout=2)}
+                self.assertEqual(results, {"sequence 2 accepted", "stale sequence rejected"})
+            finally:
+                allow_first.set()
+                first_sequence_written.set()
+                second_sequence_written.set()
+                for process in (first, second):
+                    if process.is_alive():
+                        process.terminate()
+                        process.join(5)
+
+    @unittest.skipUnless(os.name == "posix", "POSIX file semantics are required")
+    def test_state_lock_rejects_symlinks_and_hard_links(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state_path = root / "trust-state.json"
+            lock_path = root / "trust-state.json.lock"
+            target = root / "unrelated"
+            target.write_text("do not modify", encoding="ascii")
+            verifier = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+
+            lock_path.symlink_to(target)
+            with self.assertRaisesRegex(ValueError, "lock file could not be opened safely"):
+                verifier.apply_revocations(self.empty_revocations, now=self.now)
+            self.assertEqual(target.read_text(encoding="ascii"), "do not modify")
+            lock_path.unlink()
+
+            lock_path.write_text("", encoding="ascii")
+            alias_path = root / "lock-alias"
+            os.link(lock_path, alias_path)
+            with self.assertRaisesRegex(ValueError, "without hard links"):
+                verifier.apply_revocations(self.empty_revocations, now=self.now)
+            self.assertFalse(state_path.exists())
+            self.assertEqual(lock_path.stat().st_nlink, 2)
+
+    def test_durable_state_fails_closed_without_cross_process_locking(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "trust-state.json"
+            verifier = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+            with patch("anonlab.directory.fcntl", None):
+                with self.assertRaisesRegex(ValueError, "requires a supported cross-process file lock"):
+                    verifier.apply_revocations(self.empty_revocations, now=self.now)
+            self.assertFalse(state_path.exists())
+
+    @unittest.skipUnless(os.name == "posix", "POSIX lock inode semantics are required")
+    def test_state_lock_rejects_path_replaced_during_acquisition(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state_path = root / "trust-state.json"
+            lock_path = root / "trust-state.json.lock"
+            verifier = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+            import anonlab.directory as directory_module
+            original_flock = directory_module.fcntl.flock
+
+            def replace_lock_after_locking(fd: int, operation: int) -> None:
+                original_flock(fd, operation)
+                if operation == directory_module.fcntl.LOCK_EX:
+                    lock_path.unlink()
+                    lock_path.write_text("replacement inode", encoding="ascii")
+
+            with patch("anonlab.directory.fcntl.flock", side_effect=replace_lock_after_locking):
+                with self.assertRaisesRegex(ValueError, "lock path changed while acquiring lock"):
+                    verifier.apply_revocations(self.empty_revocations, now=self.now)
+            self.assertFalse(state_path.exists())
+            self.assertEqual(lock_path.read_text(encoding="ascii"), "replacement inode")
+
+    @unittest.skipUnless(os.name == "posix", "POSIX flock is required for durable verifier state")
+    def test_two_verifiers_reload_state_under_cross_process_lock(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "trust-state.json"
+            # Both instances start from the same empty state to reproduce the
+            # stale-reader scenario before either writes to disk.
+            first = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+            second = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+            first.apply_revocations(self.empty_revocations, now=self.now)
+            second.apply_revocations(self.empty_revocations, now=self.now)
+
+            first.verify_descriptor(self.descriptor, now=self.now + 1)
+            rotated = self.issue_descriptor(
+                sequence=2, now=self.now + 2,
+                onion_key=raw_x25519_public(X25519PrivateKey.generate()),
+            )
+            second.verify_descriptor(rotated, now=self.now + 2)
+
+            # The first object was initialized before sequence 2 existed. It
+            # must reload while holding the shared lock instead of replacing
+            # the file with its stale sequence-1 view.
+            with self.assertRaisesRegex(ValueError, "sequence rollback"):
+                first.verify_descriptor(self.descriptor, now=self.now + 3)
+            restarted = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+            with self.assertRaisesRegex(ValueError, "sequence rollback"):
+                restarted.verify_descriptor(self.descriptor, now=self.now + 3)
+            self.assertEqual(restarted.verify_descriptor(rotated, now=self.now + 3).sequence, 2)
+            lock_path = state_path.with_name(state_path.name + ".lock")
+            self.assertTrue(lock_path.is_file())
+            self.assertEqual(lock_path.stat().st_mode & 0o777, 0o600)
+
     def test_persistent_state_survives_restart_and_rejects_descriptor_rollback(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             state_path = Path(directory) / "trust-state.json"
@@ -240,6 +605,26 @@ class SignedDirectoryTests(unittest.TestCase):
                 state_path.chmod(0o644)
                 with self.assertRaisesRegex(ValueError, "permissions are too broad"):
                     DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+
+    @unittest.skipUnless(os.name == "posix", "POSIX filesystem ownership is required")
+    def test_verifier_state_rejects_hard_linked_file(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state_path = root / "state.json"
+            alias_path = root / "alias.json"
+            verifier = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+            verifier.apply_revocations(self.empty_revocations, now=self.now)
+            os.link(state_path, alias_path)
+            with self.assertRaisesRegex(ValueError, "hard links"):
+                DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+
+    @unittest.skipUnless(hasattr(os, "symlink"), "symbolic links are unavailable")
+    def test_verifier_rejects_dangling_state_symlink_on_initialization(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "state.json"
+            state_path.symlink_to(Path(directory) / "missing-target.json")
+            with self.assertRaisesRegex(ValueError, "non-symlink"):
+                DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
 
     def test_persisted_revocation_snapshot_cannot_be_edited_without_signature(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -380,6 +765,64 @@ class SignedDirectoryTests(unittest.TestCase):
         descriptors = [self.descriptor]
         with self.assertRaisesRegex(ValueError, "maximum hop count"):
             self.verifier.verify_circuit_descriptors(descriptors * 2, now=self.now + 1, max_hops=1)
+
+
+    def test_durable_authority_preserves_historical_serials_after_rotation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            authority = DirectoryAuthority(
+                self.authority.private_key, state_path=Path(directory) / "authority.sqlite3"
+            )
+            first = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="9" * 32,
+            )
+            authority.certify(first, now=self.now)
+            rotated = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(X25519PrivateKey.generate()), "127.0.0.1", 9001,
+                now=self.now + 1, sequence=2, serial="8" * 32,
+            )
+            authority.certify(rotated, now=self.now + 1)
+            another_identity = Ed25519PrivateKey.generate()
+            reused = create_relay_descriptor(
+                another_identity, raw_x25519_public(X25519PrivateKey.generate()), "127.0.0.1", 9002,
+                now=self.now + 1, sequence=1, serial="9" * 32,
+            )
+            with self.assertRaisesRegex(ValueError, "already been used"):
+                authority.certify(reused, now=self.now + 1)
+
+    def test_durable_authority_validates_persisted_revocation_snapshot_before_reuse(self) -> None:
+        mutations = (
+            ("snapshot_json", json.dumps({"epoch": 1})),
+            ("digest", "0" * 64),
+            ("revoked_ids_json", json.dumps(["z" * 40])),
+        )
+        for column, replacement in mutations:
+            with self.subTest(column=column), tempfile.TemporaryDirectory() as directory:
+                state_path = Path(directory) / "authority.sqlite3"
+                authority = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+                original = authority.sign_revocations(["a" * 40], epoch=1, now=self.now)
+                with sqlite3.connect(state_path) as connection:
+                    connection.execute(
+                        f"UPDATE issued_revocation_snapshots SET {column}=? WHERE epoch=1",
+                        (replacement,),
+                    )
+                with self.assertRaisesRegex(ValueError, "stored revocation"):
+                    authority.sign_revocations(["a" * 40], epoch=1, now=self.now + 1)
+
+    def test_durable_authority_fails_closed_on_corrupt_database(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "authority.sqlite3"
+            state_path.write_bytes(b"not a sqlite database")
+            if os.name == "posix":
+                state_path.chmod(0o600)
+            authority = DirectoryAuthority(self.authority.private_key, state_path=state_path)
+            descriptor = create_relay_descriptor(
+                self.identity_private, raw_x25519_public(self.onion_private), "127.0.0.1", 9001,
+                now=self.now, sequence=1, serial="7" * 32,
+            )
+            with self.assertRaises(sqlite3.DatabaseError):
+                authority.certify(descriptor, now=self.now)
+            self.assertEqual(state_path.read_bytes(), b"not a sqlite database")
 
 
 if __name__ == "__main__":

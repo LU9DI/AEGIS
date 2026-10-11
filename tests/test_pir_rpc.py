@@ -6,6 +6,7 @@ import json
 import secrets
 import time
 import unittest
+from unittest.mock import patch
 
 from anonlab.pir_rpc import (
     AuthenticatedPirRpcServer,
@@ -13,7 +14,12 @@ from anonlab.pir_rpc import (
     PirRpcError,
     PirRpcProtocolError,
     _REQUEST_DOMAIN,
+    _decode_b64,
     _RESPONSE_DOMAIN,
+    _query_endpoint,
+    _mac,
+    _strict_json_loads,
+    _verify_transport_envelope,
     _signed_envelope,
     _verify_envelope,
     recover_colluded_index,
@@ -54,6 +60,11 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(result.response_bytes_per_server, len(expected))
                 self.assertEqual(result.authenticated_messages, 4)
                 self.assertFalse(result.is_production_secure)
+
+    async def test_base64_wire_fields_must_have_canonical_encoding(self):
+        self.assertEqual(_decode_b64("/w==", "nonce"), bytes([255]))
+        with self.assertRaisesRegex(PirRpcProtocolError, "canonical base64"):
+            _decode_b64("/x==", "nonce")
 
     async def test_query_wire_schema_contains_mask_but_never_selected_index(self):
         query_a, query_b = make_query_pair(len(self.records), 19)
@@ -131,12 +142,109 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
                 writer.close()
                 await writer.wait_closed()
 
-        first = await submit()
-        second = await submit()
+        original_acquire = self.server_a._rate_limiter.acquire
+        acquire_calls = 0
+
+        def count_acquire():
+            nonlocal acquire_calls
+            acquire_calls += 1
+            return original_acquire()
+
+        self.server_a._rate_limiter.acquire = count_acquire
+        try:
+            first = await submit()
+            second = await submit()
+        finally:
+            self.server_a._rate_limiter.acquire = original_acquire
         self.assertTrue(first)  # accepted query receives an authenticated response
         self.assertEqual(second, b"")  # same nonce is rejected without protocol detail
+        self.assertEqual(acquire_calls, 1)  # replay rejection happens before admission control
         response = _verify_envelope(first[4:], self.key_a, _RESPONSE_DOMAIN)
         self.assertEqual(response["nonce"], nonce)
+
+    async def test_future_dated_nonce_remains_cached_for_full_freshness_window(self):
+        nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+        now = 1_800_000_000.0
+        self.server_a._seen_nonces.clear()
+        with patch("anonlab.pir_rpc.time.time", return_value=now):
+            self.server_a._remember_nonce(nonce)
+        # The request was accepted with issued_at at the future edge of the
+        # permitted skew. 61 seconds later it is still timestamp-valid, so its
+        # nonce must not have expired from the replay cache.
+        with patch("anonlab.pir_rpc.time.time", return_value=now + 61):
+            with self.assertRaisesRegex(PirRpcProtocolError, "replay detected"):
+                self.server_a._validate_nonce(nonce, int(now + 60))
+
+    async def test_saturated_replay_cache_preserves_live_nonces_and_fails_closed(self):
+        # A full bounded cache must not evict a still-fresh nonce, otherwise a
+        # captured request could be replayed before its timestamp expires.
+        self.server_a._replay_capacity = 1
+        first_nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+        first_payload = {
+            "protocol": "AEGIS-PIR-RPC-v1",
+            "server_id": "replica-a",
+            "nonce": first_nonce,
+            "issued_at": int(time.time()),
+            "query": base64.b64encode(bytes(4)).decode("ascii"),
+        }
+        first_frame = _signed_envelope(first_payload, self.key_a, _REQUEST_DOMAIN)
+
+        async def submit(frame):
+            reader, writer = await asyncio.open_connection("127.0.0.1", self.server_a.port)
+            try:
+                writer.write(frame)
+                await writer.drain()
+                return await asyncio.wait_for(reader.read(1024), timeout=2)
+            finally:
+                writer.close()
+                await writer.wait_closed()
+
+        self.assertTrue(await submit(first_frame))
+        self.assertIn(first_nonce, self.server_a._seen_nonces)
+        second_payload = dict(first_payload)
+        second_payload["nonce"] = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+        second_frame = _signed_envelope(second_payload, self.key_a, _REQUEST_DOMAIN)
+        original_acquire = self.server_a._rate_limiter.acquire
+        acquire_calls = 0
+
+        def count_acquire():
+            nonlocal acquire_calls
+            acquire_calls += 1
+            return original_acquire()
+
+        self.server_a._rate_limiter.acquire = count_acquire
+        try:
+            self.assertEqual(await submit(second_frame), b"")
+        finally:
+            self.server_a._rate_limiter.acquire = original_acquire
+        self.assertEqual(acquire_calls, 0)
+        self.assertEqual(list(self.server_a._seen_nonces), [first_nonce])
+
+    async def test_rate_limited_request_does_not_mutate_replay_cache(self):
+        nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+        payload = {
+            "protocol": "AEGIS-PIR-RPC-v1",
+            "server_id": "replica-a",
+            "nonce": nonce,
+            "issued_at": int(time.time()),
+            "query": base64.b64encode(b"\\x00" * 4).decode("ascii"),
+        }
+        frame = _signed_envelope(payload, self.key_a, _REQUEST_DOMAIN)
+        original_acquire = self.server_a._rate_limiter.acquire
+        self.server_a._rate_limiter.acquire = lambda: False
+        writer = None
+        try:
+            reader, writer = await asyncio.open_connection("127.0.0.1", self.server_a.port)
+            writer.write(frame)
+            await writer.drain()
+            self.assertEqual(await asyncio.wait_for(reader.read(1), timeout=2), b"")
+            self.assertNotIn(nonce, self.server_a._seen_nonces)
+            self.assertEqual(self.server_a.aggregate_stats["requests_rate_limited"], 1)
+        finally:
+            self.server_a._rate_limiter.acquire = original_acquire
+            if writer is not None:
+                writer.close()
+                await writer.wait_closed()
 
     async def test_response_mac_tampering_is_detected(self):
         payload = {"protocol": "AEGIS-PIR-RPC-v1", "server_id": "replica-a", "nonce": "n", "answer": "AA=="}
@@ -169,6 +277,49 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
             AuthenticatedPirRpcServer(self.records, server_id="bad", shared_key=b"short")
         with self.assertRaises(ValueError):
             PirRpcEndpoint("remote", "192.0.2.1", 1234, secrets.token_bytes(32))
+
+    async def test_remote_tls_pir_fails_closed_even_with_legacy_override(self):
+        # The legacy override is intentionally ignored. A remote endpoint must not
+        # be queried until a real privacy-preserving proof of computation exists.
+        import ssl
+
+        context = ssl.create_default_context()
+        remote_a = PirRpcEndpoint(
+            "remote-a", "192.0.2.10", 1234, None, ssl_context=context,
+        )
+        remote_b = PirRpcEndpoint(
+            "remote-b", "192.0.2.11", 1235, None, ssl_context=context,
+        )
+        for allow_override in (False, True):
+            with self.subTest(allow_unverified_remote=allow_override):
+                with self.assertRaisesRegex(PirRpcProtocolError, "remote PIR computation is disabled"):
+                    await retrieve_two_server_pir_rpc(
+                        (remote_a, remote_b), len(self.records), 3,
+                        record_bytes=4, timeout_seconds=0.1,
+                        allow_unverified_remote=allow_override,
+                    )
+
+    async def test_four_server_remote_tls_pir_fails_closed_even_with_legacy_override(self):
+        # The four-server fault detector is not a proof system and must share the
+        # same remote safety boundary as the two-server client.
+        import ssl
+
+        context = ssl.create_default_context()
+        endpoints = tuple(
+            PirRpcEndpoint(
+                f"remote-{index}", f"192.0.2.{10 + index}", 1234 + index,
+                None, ssl_context=context,
+            )
+            for index in range(4)
+        )
+        for allow_override in (False, True):
+            with self.subTest(allow_unverified_remote=allow_override):
+                with self.assertRaisesRegex(PirRpcProtocolError, "remote PIR computation is disabled"):
+                    await retrieve_four_server_pir_rpc_checked(
+                        endpoints, len(self.records), 3, record_bytes=4,
+                        timeout_seconds=0.1,
+                        allow_unverified_remote=allow_override,
+                    )
 
     async def test_mismatched_replica_shape_is_rejected(self):
         different_records = self.records[:-1]
@@ -303,6 +454,83 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
                 )
         finally:
             await third.close()
+
+
+    async def test_boolean_response_dimensions_are_rejected_as_malformed_json_types(self):
+        # In Python, bool subclasses int and True == 1. JSON peers must not be
+        # allowed to smuggle booleans into integer protocol fields.
+        for malformed_field in ("item_count", "record_bytes"):
+            key = secrets.token_bytes(32)
+
+            async def handle(reader, writer, field=malformed_field, shared_key=key):
+                try:
+                    header = await reader.readexactly(4)
+                    length = int.from_bytes(header, "big")
+                    request_raw = await reader.readexactly(length)
+                    request = _verify_envelope(request_raw, shared_key, _REQUEST_DOMAIN)
+                    response = {
+                        "protocol": "AEGIS-PIR-RPC-v1",
+                        "server_id": request["server_id"],
+                        "nonce": request["nonce"],
+                        "answer": base64.b64encode(b"X").decode("ascii"),
+                        "item_count": 1,
+                        "record_bytes": 1,
+                        "snapshot_sha256": "a" * 64,
+                    }
+                    response[field] = True
+                    writer.write(_signed_envelope(response, shared_key, _RESPONSE_DOMAIN))
+                    await writer.drain()
+                finally:
+                    writer.close()
+                    await writer.wait_closed()
+
+            server = await asyncio.start_server(handle, "127.0.0.1", 0)
+            try:
+                port = server.sockets[0].getsockname()[1]
+                endpoint = PirRpcEndpoint("malformed-peer", "127.0.0.1", port, key)
+                with self.subTest(field=malformed_field):
+                    with self.assertRaisesRegex(PirRpcProtocolError, "dimensions do not match"):
+                        await _query_endpoint(
+                            endpoint, b"\\x00", 1, 1, timeout_seconds=1.0,
+                        )
+            finally:
+                server.close()
+                await server.wait_closed()
+
+
+class StrictJsonEnvelopeTests(unittest.TestCase):
+    def test_duplicate_json_keys_are_rejected(self):
+        with self.assertRaisesRegex(PirRpcProtocolError, "duplicate key"):
+            _strict_json_loads(b'{"payload":{"server_id":"good","server_id":"evil"}}')
+
+    def test_nonstandard_json_numeric_constants_are_rejected(self):
+        for constant in (b"NaN", b"Infinity", b"-Infinity"):
+            with self.subTest(constant=constant):
+                with self.assertRaisesRegex(PirRpcProtocolError, "non-standard numeric constant"):
+                    _strict_json_loads(b'{"value":' + constant + b"}")
+
+    def test_duplicate_envelope_key_is_rejected_even_if_mac_matches_parsed_payload(self):
+        key = secrets.token_bytes(32)
+        payload = {"protocol": "AEGIS-PIR-RPC-v1"}
+        mac = _mac(payload, key, _REQUEST_DOMAIN)
+        payload_json = json.dumps(payload, separators=(",", ":"))
+        raw = (
+            '{"payload":' + payload_json
+            + ',"payload":' + payload_json
+            + ',"mac":' + json.dumps(mac) + '}'
+        ).encode("ascii")
+        with self.assertRaisesRegex(PirRpcProtocolError, "duplicate key"):
+            _verify_envelope(raw, key, _REQUEST_DOMAIN)
+
+    def test_tls_envelope_rejects_duplicate_nested_payload_key(self):
+        raw = b'{"payload":{"protocol":"AEGIS-PIR-RPC-v1","protocol":"evil"}}'
+        with self.assertRaisesRegex(PirRpcProtocolError, "duplicate key"):
+            _verify_transport_envelope(raw, None, _RESPONSE_DOMAIN)
+
+    def test_tls_envelope_rejects_non_utf8_json_encoding(self):
+        raw = '{"payload":{"protocol":"AEGIS-PIR-RPC-v1"}}'.encode("utf-16")
+        with self.assertRaises((PirRpcProtocolError, UnicodeDecodeError)):
+            _verify_transport_envelope(raw, None, _RESPONSE_DOMAIN)
 
 
 if __name__ == "__main__":

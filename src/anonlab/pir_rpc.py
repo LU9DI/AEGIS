@@ -57,6 +57,32 @@ def _canonical_json(value: object) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")
 
 
+def _reject_duplicate_json_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Reject ambiguous JSON objects instead of silently accepting the last duplicate."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise PirRpcProtocolError("JSON object contains a duplicate key")
+        result[key] = value
+    return result
+
+
+def _reject_nonfinite_json_constant(value: str) -> object:
+    """Python's JSON decoder accepts NaN/Infinity extensions; this protocol does not."""
+    raise PirRpcProtocolError(f"JSON contains a non-standard numeric constant: {value}")
+
+
+def _strict_json_loads(raw: bytes) -> object:
+    # The wire protocol emits canonical ASCII JSON. Decode explicitly as UTF-8
+    # so Python's bytes-aware JSON decoder cannot silently accept UTF-16/UTF-32.
+    text = raw.decode("utf-8", errors="strict")
+    return json.loads(
+        text,
+        object_pairs_hook=_reject_duplicate_json_keys,
+        parse_constant=_reject_nonfinite_json_constant,
+    )
+
+
 def _mac(payload: dict[str, object], key: bytes, domain: bytes) -> str:
     return hmac.new(key, domain + _canonical_json(payload), hashlib.sha256).hexdigest()
 
@@ -71,7 +97,7 @@ def _signed_envelope(payload: dict[str, object], key: bytes, domain: bytes) -> b
 
 def _verify_envelope(raw: bytes, key: bytes, domain: bytes) -> dict[str, object]:
     try:
-        envelope = json.loads(raw)
+        envelope = _strict_json_loads(raw)
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise PirRpcProtocolError("message is not valid JSON") from exc
     if not isinstance(envelope, dict) or set(envelope) != {"payload", "mac"}:
@@ -99,7 +125,7 @@ def _verify_transport_envelope(raw: bytes, key: bytes | None, domain: bytes) -> 
     if key is not None:
         return _verify_envelope(raw, key, domain)
     try:
-        envelope = json.loads(raw)
+        envelope = _strict_json_loads(raw)
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise PirRpcProtocolError("message is not valid JSON") from exc
     # This unsigned form is accepted only on a stream already protected by TLS.
@@ -149,9 +175,14 @@ def _decode_b64(value: object, field_name: str) -> bytes:
     if not isinstance(value, str):
         raise PirRpcProtocolError(f"{field_name} must be base64 text")
     try:
-        decoded = base64.b64decode(value.encode("ascii"), validate=True)
+        encoded = value.encode("ascii")
+        decoded = base64.b64decode(encoded, validate=True)
     except (ValueError, UnicodeEncodeError) as exc:
         raise PirRpcProtocolError(f"{field_name} is not valid base64") from exc
+    # Reject alternate spellings (for example, non-zero unused padding bits).
+    # Canonical encodings give each nonce byte string exactly one cache identity.
+    if base64.b64encode(decoded) != encoded:
+        raise PirRpcProtocolError(f"{field_name} is not canonical base64")
     return decoded
 
 
@@ -368,12 +399,17 @@ class AuthenticatedPirRpcServer:
     async def __aexit__(self, exc_type, exc, tb) -> None:
         await self.close()
 
-    def _accept_nonce(self, nonce_text: str, issued_at: int) -> None:
+    def _validate_nonce(self, nonce_text: str, issued_at: int) -> None:
+        """Validate freshness/replay without reserving cache capacity for rejected work."""
         now = time.time()
         if abs(now - issued_at) > MAX_CLOCK_SKEW_SECONDS:
             raise PirRpcProtocolError("request timestamp is outside accepted window")
-        # Expire old entries before inserting. Cache is bounded to avoid unbounded memory use.
-        cutoff = now - MAX_CLOCK_SKEW_SECONDS
+        # Expire old entries before checking. Cache is bounded; removing expired
+        # entries is safe even when the current request is subsequently rate-limited.
+        # A request timestamp may be up to one skew window in the future.
+        # Keep its nonce for two skew windows from first-seen time so it cannot
+        # be replayed after cache expiry while its issued_at is still acceptable.
+        cutoff = now - (2 * MAX_CLOCK_SKEW_SECONDS)
         while self._seen_nonces:
             oldest_nonce, oldest_seen = next(iter(self._seen_nonces.items()))
             if oldest_seen >= cutoff:
@@ -381,9 +417,18 @@ class AuthenticatedPirRpcServer:
             self._seen_nonces.pop(oldest_nonce, None)
         if nonce_text in self._seen_nonces:
             raise PirRpcProtocolError("request replay detected")
-        self._seen_nonces[nonce_text] = now
-        while len(self._seen_nonces) > self._replay_capacity:
-            self._seen_nonces.popitem(last=False)
+        # Never evict a still-live nonce to admit new work: doing so would let
+        # an observed request become replayable before its timestamp expires.
+        # When the bounded cache is saturated, fail closed until entries expire.
+        if len(self._seen_nonces) >= self._replay_capacity:
+            raise PirRpcProtocolError("replay cache capacity exhausted")
+
+    def _remember_nonce(self, nonce_text: str) -> None:
+        """Reserve a nonce only after validation and admission control."""
+        # _validate_nonce checks capacity first; no live entry is evicted here.
+        if len(self._seen_nonces) >= self._replay_capacity:
+            raise PirRpcProtocolError("replay cache capacity exhausted")
+        self._seen_nonces[nonce_text] = time.time()
 
     async def _handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         # Bound concurrent handlers and slow clients. asyncio creates a task per
@@ -410,13 +455,15 @@ class AuthenticatedPirRpcServer:
             if not isinstance(issued_at, int) or isinstance(issued_at, bool):
                 raise PirRpcProtocolError("issued_at must be an integer Unix timestamp")
             nonce_text = payload["nonce"]
-            self._accept_nonce(nonce_text, issued_at)
             query = _decode_b64(payload["query"], "query")
-            # An aggregate token bucket limits total endpoint work without storing
-            # per-client identifiers, which could become an anonymity side channel.
+            # Check replays before rate limiting so a captured/replayed request
+            # cannot drain the shared token bucket. Reserve cache capacity only
+            # after admission, so rejected fresh requests cannot churn the cache.
+            self._validate_nonce(nonce_text, issued_at)
             if not self._rate_limiter.acquire():
                 self._requests_rate_limited += 1
                 return
+            self._remember_nonce(nonce_text)
             answer = self._reference.answer(query)
             self._requests_accepted += 1
             response = {
@@ -554,7 +601,15 @@ async def _query_endpoint(
         raise PirRpcProtocolError("response identity or protocol mismatch")
     if response["nonce"] != nonce_text:
         raise PirRpcProtocolError("response nonce does not match the request")
-    if response["item_count"] != expected_item_count or response["record_bytes"] != expected_record_bytes:
+    # bool is a subclass of int in Python (True == 1), but it is not a
+    # valid wire-format integer for protocol dimensions. Require exact JSON integer
+    # types before comparing values so malformed authenticated peers fail closed.
+    if (
+        type(response["item_count"]) is not int
+        or type(response["record_bytes"]) is not int
+        or response["item_count"] != expected_item_count
+        or response["record_bytes"] != expected_record_bytes
+    ):
         raise PirRpcProtocolError("replica database dimensions do not match the client manifest")
     snapshot_sha256 = response["snapshot_sha256"]
     if not isinstance(snapshot_sha256, str) or len(snapshot_sha256) != 64 or any(ch not in "0123456789abcdef" for ch in snapshot_sha256):

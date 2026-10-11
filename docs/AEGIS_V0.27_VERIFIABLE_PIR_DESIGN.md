@@ -74,3 +74,8 @@ Measure proof-generation latency and peak memory at several database sizes, veri
 ## 9. Release gate
 
 Do not call the feature “verifiable PIR” until a reviewed construction is selected, the proof statement and assumptions are documented, a real cryptographic implementation is integrated, tampering tests pass, and performance costs are reported. Until then, v0.26.0 remains the last validated implementation release and this note is a design artifact only.
+
+
+## Revisão de construções — 2026-10-10
+
+A comparação preliminar de famílias de construção, critérios eliminatórios, relação a provar, plano de benchmarks e testes adversariais está em [AEGIS_V0.27_VERIFIABLE_PIR_CONSTRUCTION_REVIEW.md](AEGIS_V0.27_VERIFIABLE_PIR_CONSTRUCTION_REVIEW.md). É um artefato de decisão de pesquisa, não implementação nem mudança da classificação de segurança. O PIR continua experimental e não verificável até existir uma construção criptográfica real, testes contra adulteração, benchmarks e revisão independente.
