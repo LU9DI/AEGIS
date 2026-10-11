@@ -220,6 +220,78 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(acquire_calls, 0)
         self.assertEqual(list(self.server_a._seen_nonces), [first_nonce])
 
+    async def test_malformed_query_does_not_mutate_replay_cache_or_rate_limiter(self):
+        # A fresh, authenticated request with an invalid query must be rejected
+        # before consuming a token or reserving its nonce.
+        nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+        payload = {
+            "protocol": "AEGIS-PIR-RPC-v1",
+            "server_id": "replica-a",
+            "nonce": nonce,
+            "issued_at": int(time.time()),
+            "query": base64.b64encode(b"\\x00").decode("ascii"),
+        }
+        frame = _signed_envelope(payload, self.key_a, _REQUEST_DOMAIN)
+        original_acquire = self.server_a._rate_limiter.acquire
+        acquire_calls = 0
+
+        def count_acquire():
+            nonlocal acquire_calls
+            acquire_calls += 1
+            return original_acquire()
+
+        self.server_a._rate_limiter.acquire = count_acquire
+        writer = None
+        try:
+            reader, writer = await asyncio.open_connection("127.0.0.1", self.server_a.port)
+            writer.write(frame)
+            await writer.drain()
+            self.assertEqual(await asyncio.wait_for(reader.read(1), timeout=2), b"")
+            self.assertNotIn(nonce, self.server_a._seen_nonces)
+            self.assertEqual(acquire_calls, 0)
+        finally:
+            self.server_a._rate_limiter.acquire = original_acquire
+            if writer is not None:
+                writer.close()
+                await writer.wait_closed()
+
+    async def test_query_mask_with_out_of_range_trailing_bits_is_rejected_before_admission(self):
+        records = self.records[:10]
+        key = secrets.token_bytes(32)
+        server = await AuthenticatedPirRpcServer(records, server_id="ten-records", shared_key=key).start()
+        nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+        payload = {
+            "protocol": "AEGIS-PIR-RPC-v1",
+            "server_id": "ten-records",
+            "nonce": nonce,
+            "issued_at": int(time.time()),
+            "query": base64.b64encode(bytes([0, 0x80])).decode("ascii"),
+        }
+        frame = _signed_envelope(payload, key, _REQUEST_DOMAIN)
+        original_acquire = server._rate_limiter.acquire
+        acquire_calls = 0
+
+        def count_acquire():
+            nonlocal acquire_calls
+            acquire_calls += 1
+            return original_acquire()
+
+        server._rate_limiter.acquire = count_acquire
+        writer = None
+        try:
+            reader, writer = await asyncio.open_connection("127.0.0.1", server.port)
+            writer.write(frame)
+            await writer.drain()
+            self.assertEqual(await asyncio.wait_for(reader.read(1), timeout=2), b"")
+            self.assertNotIn(nonce, server._seen_nonces)
+            self.assertEqual(acquire_calls, 0)
+        finally:
+            server._rate_limiter.acquire = original_acquire
+            if writer is not None:
+                writer.close()
+                await writer.wait_closed()
+            await server.close()
+
     async def test_rate_limited_request_does_not_mutate_replay_cache(self):
         nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
         payload = {
