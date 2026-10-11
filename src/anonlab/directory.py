@@ -777,6 +777,16 @@ class DirectoryVerifier:
                     os.fchmod(lock_fd, stat.S_IRUSR | stat.S_IWUSR)
                 fcntl.flock(lock_fd, fcntl.LOCK_EX)
                 locked = True
+                # Detect a lock pathname that was swapped while this process
+                # waited for the inode it originally opened. This narrows the
+                # split-lock window; it cannot defeat a same-UID attacker that
+                # can rename the pathname again after this check.
+                try:
+                    current_lock_info = os.stat(lock_path, follow_symlinks=False)
+                except OSError as exc:
+                    raise ValueError("directory state lock path changed while acquiring lock") from exc
+                if (current_lock_info.st_dev, current_lock_info.st_ino) != (lock_info.st_dev, lock_info.st_ino):
+                    raise ValueError("directory state lock path changed while acquiring lock")
                 self._state_lock_fd = lock_fd
                 self._state_lock_depth = 1
                 if os.path.lexists(path):
