@@ -372,8 +372,11 @@ class AuthenticatedPirRpcServer:
         now = time.time()
         if abs(now - issued_at) > MAX_CLOCK_SKEW_SECONDS:
             raise PirRpcProtocolError("request timestamp is outside accepted window")
-        # Expire old entries before inserting. Cache is bounded to avoid unbounded memory use.
-        cutoff = now - MAX_CLOCK_SKEW_SECONDS
+        # A request timestamp may be MAX_CLOCK_SKEW_SECONDS in the future.
+        # It remains acceptable until another full skew window after that
+        # timestamp, so retain its nonce for up to two skew windows from receipt.
+        # Never evict a still-live nonce to make room: that would re-enable replay.
+        cutoff = now - (2 * MAX_CLOCK_SKEW_SECONDS)
         while self._seen_nonces:
             oldest_nonce, oldest_seen = next(iter(self._seen_nonces.items()))
             if oldest_seen >= cutoff:
@@ -381,9 +384,9 @@ class AuthenticatedPirRpcServer:
             self._seen_nonces.pop(oldest_nonce, None)
         if nonce_text in self._seen_nonces:
             raise PirRpcProtocolError("request replay detected")
+        if len(self._seen_nonces) >= self._replay_capacity:
+            raise PirRpcProtocolError("replay cache is full")
         self._seen_nonces[nonce_text] = now
-        while len(self._seen_nonces) > self._replay_capacity:
-            self._seen_nonces.popitem(last=False)
 
     async def _handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         # Bound concurrent handlers and slow clients. asyncio creates a task per
