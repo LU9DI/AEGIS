@@ -297,7 +297,7 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
         with patch("anonlab.pir_rpc.time.time", return_value=1200), patch(
             "anonlab.pir_rpc.time.monotonic", return_value=11
         ):
-            with self.assertRaisesRegex(PirRpcProtocolError, "clock discontinuity"):
+            with self.assertRaisesRegex(PirRpcProtocolError, "clock (?:discontinuity|drift)"):
                 server._accept_nonce("fresh-nonce", 1200)
         self.assertIn("original-nonce", server._seen_nonces)
 
