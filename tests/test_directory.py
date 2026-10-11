@@ -457,7 +457,7 @@ class SignedDirectoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             state_path = Path(directory) / "state.json"
             state_path.symlink_to(Path(directory) / "missing-target.json")
-            with self.assertRaisesRegex(ValueError, "symbolic link"):
+            with self.assertRaisesRegex(ValueError, "non-symlink"):
                 DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
 
     def test_persisted_revocation_snapshot_cannot_be_edited_without_signature(self) -> None:
