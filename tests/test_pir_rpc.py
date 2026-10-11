@@ -210,6 +210,14 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
         response = _verify_envelope(first[4:], self.key_a, _RESPONSE_DOMAIN)
         self.assertEqual(response["nonce"], nonce)
 
+    def test_rate_and_burst_cannot_exceed_replay_cache_budget(self):
+        with self.assertRaisesRegex(ValueError, "replay_cache_capacity must be at least"):
+            AuthenticatedPirRpcServer(
+                self.records, server_id="unsafe-budget", shared_key=secrets.token_bytes(32),
+                replay_cache_capacity=MAX_SEEN_NONCES,
+                max_requests_per_second=10_000, request_burst=10_000,
+            )
+
     def test_future_dated_nonce_is_retained_for_full_validity_window(self):
         server = AuthenticatedPirRpcServer(
             self.records, server_id="future-nonce", shared_key=secrets.token_bytes(32),
