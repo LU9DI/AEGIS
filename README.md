@@ -38,6 +38,19 @@ The full-history archive contains 458 ZIP entries, including 246 current-source 
 
 See [the GitHub/recovery audit](recovery/AEGIS-GITHUB-AUDIT-2026-10-10.md) for the latest verification, test results, gaps and security findings.
 
+## Privacy and low-latency architecture guide
+
+The new [didactic architecture roadmap](docs/architecture/PRIVACY-PERFORMANCE-ROADMAP.md) consolidates the privacy and performance proposals into one navigable guide. It explains core concepts, separates complementary controls from competing architecture choices, records the threat-model caveats, defines benchmark requirements, and gives a staged implementation sequence.
+
+The guide covers:
+- PIR, multi-server MPC, lattice-PIR candidates, and the separate problem of verifiable answers;
+- prefetching, local indexes, OHTTP relay/gateway separation, blind tokens, and application-layer E2EE;
+- QUIC/HTTP/3, the need to verify actual Multipath QUIC support, and optional fountain/erasure coding;
+- content-addressed DHT storage, WireGuard/Tailscale, reverse proxies and edge platforms;
+- TEEs, hardware acceleration, data minimization, and asynchronous UX.
+
+**Documentation is not implementation.** These are research and planning tracks; do not assume a feature is integrated, benchmarked, independently audited, or enabled in the default path. The guide links to the associated GitHub issues and preserves the repository's research-prototype security warning.
+
 ## Tracked work and CI status
 
 The remaining blockers are tracked explicitly:
