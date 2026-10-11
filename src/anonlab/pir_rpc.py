@@ -428,14 +428,16 @@ class AuthenticatedPirRpcServer:
                 raise PirRpcProtocolError("issued_at must be an integer Unix timestamp")
             nonce_text = payload["nonce"]
             query = _decode_b64(payload["query"], "query")
-            # Reject malformed masks before replay-cache mutation or rate limiting.
+            # Reject malformed masks before consuming rate-limit budget or
+            # mutating replay state.
             self._reference.validate_query_mask(query)
-            self._accept_nonce(nonce_text, issued_at)
-            # An aggregate token bucket limits total endpoint work without storing
-            # per-client identifiers, which could become an anonymity side channel.
+            # Apply the aggregate budget before recording the nonce. Otherwise,
+            # authenticated requests rejected by the rate limiter can still fill
+            # the replay cache without consuming tokens.
             if not self._rate_limiter.acquire():
                 self._requests_rate_limited += 1
                 return
+            self._accept_nonce(nonce_text, issued_at)
             answer = self._reference.answer(query)
             self._requests_accepted += 1
             response = {

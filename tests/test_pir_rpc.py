@@ -57,6 +57,30 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(result.authenticated_messages, 4)
                 self.assertFalse(result.is_production_secure)
 
+    async def test_rate_limited_request_does_not_mutate_replay_cache(self):
+        nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+        payload = {
+            "protocol": "AEGIS-PIR-RPC-v1",
+            "server_id": "replica-a",
+            "nonce": nonce,
+            "issued_at": int(time.time()),
+            "query": base64.b64encode(bytes(4)).decode("ascii"),
+        }
+        frame = _signed_envelope(payload, self.key_a, _REQUEST_DOMAIN)
+        self.server_a._rate_limiter.tokens = 0.0
+        writer = None
+        try:
+            reader, writer = await asyncio.open_connection("127.0.0.1", self.server_a.port)
+            writer.write(frame)
+            await writer.drain()
+            self.assertEqual(await asyncio.wait_for(reader.read(1), timeout=2), b"")
+            self.assertNotIn(nonce, self.server_a._seen_nonces)
+            self.assertEqual(self.server_a.aggregate_stats["requests_rate_limited"], 1)
+        finally:
+            if writer is not None:
+                writer.close()
+                await writer.wait_closed()
+
     async def test_malformed_query_is_rejected_before_nonce_cache_and_rate_limit(self):
         nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
         payload = {
