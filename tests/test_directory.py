@@ -398,6 +398,37 @@ class SignedDirectoryTests(unittest.TestCase):
         self.assertEqual(circuit_descriptor.identity_digest, verified.identity_digest)
         self.assertEqual(circuit_descriptor.onion_public_key, verified.onion_public_key)
 
+    @unittest.skipUnless(os.name == "posix", "POSIX flock is required for durable verifier state")
+    def test_two_verifiers_reload_state_under_cross_process_lock(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "trust-state.json"
+            # Both instances start from the same empty state to reproduce the
+            # stale-reader scenario before either writes to disk.
+            first = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+            second = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+            first.apply_revocations(self.empty_revocations, now=self.now)
+            second.apply_revocations(self.empty_revocations, now=self.now)
+
+            first.verify_descriptor(self.descriptor, now=self.now + 1)
+            rotated = self.issue_descriptor(
+                sequence=2, now=self.now + 2,
+                onion_key=raw_x25519_public(X25519PrivateKey.generate()),
+            )
+            second.verify_descriptor(rotated, now=self.now + 2)
+
+            # The first object was initialized before sequence 2 existed. It
+            # must reload while holding the shared lock instead of replacing
+            # the file with its stale sequence-1 view.
+            with self.assertRaisesRegex(ValueError, "sequence rollback"):
+                first.verify_descriptor(self.descriptor, now=self.now + 3)
+            restarted = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+            with self.assertRaisesRegex(ValueError, "sequence rollback"):
+                restarted.verify_descriptor(self.descriptor, now=self.now + 3)
+            self.assertEqual(restarted.verify_descriptor(rotated, now=self.now + 3).sequence, 2)
+            lock_path = state_path.with_name(state_path.name + ".lock")
+            self.assertTrue(lock_path.is_file())
+            self.assertEqual(lock_path.stat().st_mode & 0o777, 0o600)
+
     def test_persistent_state_survives_restart_and_rejects_descriptor_rollback(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             state_path = Path(directory) / "trust-state.json"
