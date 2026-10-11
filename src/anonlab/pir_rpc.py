@@ -456,6 +456,9 @@ class AuthenticatedPirRpcServer:
                 raise PirRpcProtocolError("issued_at must be an integer Unix timestamp")
             nonce_text = payload["nonce"]
             query = _decode_b64(payload["query"], "query")
+            # Validate query shape before replay-cache reservation or rate-token
+            # consumption. Malformed fresh requests must not consume admission state.
+            self._reference.validate_query_mask(query)
             # Check replays before rate limiting so a captured/replayed request
             # cannot drain the shared token bucket. Reserve cache capacity only
             # after admission, so rejected fresh requests cannot churn the cache.
