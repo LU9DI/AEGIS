@@ -99,6 +99,9 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
         }
         frame = _signed_envelope(payload, self.key_a, _REQUEST_DOMAIN)
         self.server_a._rate_limiter.tokens = 0.0
+        # Prevent the default 100-token/s bucket from refilling during test setup.
+        self.server_a._rate_limiter.rate = 0.1
+        self.server_a._rate_limiter.updated_at = time.monotonic()
         writer = None
         try:
             reader, writer = await asyncio.open_connection("127.0.0.1", self.server_a.port)
