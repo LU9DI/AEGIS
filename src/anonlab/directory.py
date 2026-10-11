@@ -985,7 +985,7 @@ class DirectoryVerifier:
             raise ValueError("revocation snapshot expired; refresh directory and revocations")
 
     def apply_revocations(self, snapshot: Mapping[str, Any], *, now: int | None = None) -> None:
-        with self._lock:
+        with self._state_operation():
             if set(snapshot) != _REVOCATION_KEYS:
                 raise ValueError("revocation snapshot has missing or unknown fields")
             body = {key: snapshot[key] for key in _REVOCATION_BODY_KEYS}
@@ -1076,7 +1076,7 @@ class DirectoryVerifier:
         max_hops: int = 5,
     ) -> VerifiedCircuitRoute:
         """Return a short-lived route object for the high-level client API."""
-        with self._lock:
+        with self._state_operation():
             if self._state_path is None:
                 raise ValueError("persistent directory state is required to issue a verified circuit route")
             current = _now_seconds(now)
@@ -1095,7 +1095,7 @@ class DirectoryVerifier:
             )
 
     def _assert_route_current(self, route: VerifiedCircuitRoute, now: int) -> None:
-        with self._lock:
+        with self._state_operation():
             self._ensure_fresh_revocations(now)
             if route.authority_key_fingerprint != self._authority_fingerprint:
                 raise ValueError("verified route trust anchor no longer matches")
