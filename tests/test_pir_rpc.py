@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 from anonlab.pir_rpc import (
     AuthenticatedPirRpcServer,
+    MAX_SEEN_NONCES,
     PirRpcEndpoint,
     PirRpcError,
     PirRpcProtocolError,
@@ -210,10 +211,20 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
         response = _verify_envelope(first[4:], self.key_a, _RESPONSE_DOMAIN)
         self.assertEqual(response["nonce"], nonce)
 
+    def test_rate_and_burst_cannot_exceed_replay_cache_budget(self):
+        with self.assertRaisesRegex(ValueError, "replay_cache_capacity must be at least"):
+            AuthenticatedPirRpcServer(
+                self.records, server_id="unsafe-budget", shared_key=secrets.token_bytes(32),
+                replay_cache_capacity=MAX_SEEN_NONCES,
+                max_requests_per_second=10_000, request_burst=10_000,
+            )
+
     def test_future_dated_nonce_is_retained_for_full_validity_window(self):
         server = AuthenticatedPirRpcServer(
             self.records, server_id="future-nonce", shared_key=secrets.token_bytes(32),
-            replay_cache_capacity=2,
+            replay_cache_capacity=13,
+            max_requests_per_second=0.1,
+            request_burst=1,
         )
         with patch("anonlab.pir_rpc.time.time", return_value=1000):
             server._accept_nonce("future-nonce", 1060)
@@ -225,20 +236,20 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
     def test_full_replay_cache_rejects_without_evicting_live_nonces(self):
         server = AuthenticatedPirRpcServer(
             self.records, server_id="small-cache", shared_key=secrets.token_bytes(32),
-            replay_cache_capacity=2,
+            replay_cache_capacity=13, max_requests_per_second=0.1, request_burst=1,
         )
         with patch("anonlab.pir_rpc.time.time", return_value=1000):
-            server._accept_nonce("nonce-a", 1000)
-            server._accept_nonce("nonce-b", 1000)
+            for index in range(13):
+                server._accept_nonce(f"nonce-{index}", 1000)
             with self.assertRaisesRegex(PirRpcProtocolError, "cache is full"):
-                server._accept_nonce("nonce-c", 1000)
-            self.assertEqual(set(server._seen_nonces), {"nonce-a", "nonce-b"})
+                server._accept_nonce("nonce-overflow", 1000)
+            self.assertEqual(set(server._seen_nonces), {f"nonce-{i}" for i in range(13)})
             with self.assertRaisesRegex(PirRpcProtocolError, "replay"):
-                server._accept_nonce("nonce-a", 1000)
+                server._accept_nonce("nonce-0", 1000)
         # After the complete validity window, old entries expire and admission recovers.
         with patch("anonlab.pir_rpc.time.time", return_value=1121):
-            server._accept_nonce("nonce-c", 1121)
-            self.assertEqual(set(server._seen_nonces), {"nonce-c"})
+            server._accept_nonce("nonce-recovered", 1121)
+            self.assertEqual(set(server._seen_nonces), {"nonce-recovered"})
 
     async def test_response_mac_tampering_is_detected(self):
         payload = {"protocol": "AEGIS-PIR-RPC-v1", "server_id": "replica-a", "nonce": "n", "answer": "AA=="}
