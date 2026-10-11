@@ -1,0 +1,39 @@
+name: PIR RPC regression tests
+
+on:
+  pull_request:
+    paths:
+      - "src/anonlab/pir_rpc.py"
+      - "src/anonlab/pir_two_server.py"
+      - "tests/test_pir_rpc.py"
+      - "pyproject.toml"
+      - ".github/workflows/pir-rpc-tests.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "src/anonlab/pir_rpc.py"
+      - "src/anonlab/pir_two_server.py"
+      - "tests/test_pir_rpc.py"
+      - "pyproject.toml"
+      - ".github/workflows/pir-rpc-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  pir-rpc-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install package
+        run: python -m pip install --upgrade pip && python -m pip install -e .
+      - name: Run PIR RPC tests
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p "test_pir_rpc.py" -v
