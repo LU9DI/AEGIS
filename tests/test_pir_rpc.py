@@ -327,10 +327,11 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
                 "anonlab.pir_rpc.time.monotonic", return_value=10 + (2 * step)
             ):
                 if step < 61:
-                    server._accept_nonce(f"nonce-{step}", 1000 + step)
+                    with self.assertRaisesRegex(PirRpcProtocolError, "replay"):
+                        server._accept_nonce("original-nonce", 1000 + step)
                 else:
                     with self.assertRaisesRegex(PirRpcProtocolError, "clock drift"):
-                        server._accept_nonce(f"nonce-{step}", 1000 + step)
+                        server._accept_nonce("original-nonce", 1000 + step)
         self.assertIn("original-nonce", server._seen_nonces)
         with patch("anonlab.pir_rpc.time.time", return_value=1061), patch(
             "anonlab.pir_rpc.time.monotonic", return_value=132
