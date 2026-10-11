@@ -250,8 +250,11 @@ class AuthenticatedPirRpcServer:
         # A nonce can remain valid for two clock-skew windows when its timestamp
         # is at the future edge of the accepted interval. Reserve enough entries
         # for the configured sustained rate over that retention period plus burst.
+        # Gradual clock drift is detected against a fixed wall/monotonic offset.
+        # Retain for three skew windows: timestamp validity (120s) plus up to 60s
+        # cumulative drift tolerated before admission fails closed.
         required_replay_capacity = (
-            math.ceil(float(max_requests_per_second) * (2 * MAX_CLOCK_SKEW_SECONDS))
+            math.ceil(float(max_requests_per_second) * (3 * MAX_CLOCK_SKEW_SECONDS))
             + request_burst
         )
         if replay_cache_capacity < required_replay_capacity:
@@ -282,6 +285,7 @@ class AuthenticatedPirRpcServer:
         self._seen_nonces: OrderedDict[str, float] = OrderedDict()
         self._clock_last_wall: float | None = None
         self._clock_last_monotonic: float | None = None
+        self._clock_origin_offset: float | None = None
         self._clock_untrusted = False
         self._active_connections = 0
         self._rate_limiter = _GlobalTokenBucket(float(max_requests_per_second), request_burst)
@@ -392,13 +396,20 @@ class AuthenticatedPirRpcServer:
         monotonic_now = time.monotonic()
         if self._clock_untrusted:
             raise PirRpcProtocolError("system clock is untrusted; replay admission is disabled")
+        clock_offset = now - monotonic_now
+        if self._clock_origin_offset is None:
+            self._clock_origin_offset = clock_offset
+        elif abs(clock_offset - self._clock_origin_offset) > MAX_CLOCK_SKEW_SECONDS:
+            # Per-call comparisons miss clocks that drift slowly or stall: each small
+            # discrepancy can accumulate until replay entries expire while timestamps
+            # remain valid. Compare against a fixed origin and latch on excess drift.
+            self._clock_untrusted = True
+            raise PirRpcProtocolError("system clock drift exceeded the accepted bound; replay admission is disabled")
         if self._clock_last_wall is not None and self._clock_last_monotonic is not None:
             wall_elapsed = now - self._clock_last_wall
             monotonic_elapsed = max(0.0, monotonic_now - self._clock_last_monotonic)
-            # A backward step can make an old signed timestamp valid again; a large
-            # forward step can prematurely expire replay entries. Latch fail-closed
-            # for this process on either discontinuity. Small clock-rate differences
-            # are tolerated up to the existing skew bound.
+            # Catch abrupt backward/forward steps immediately; the fixed-origin check
+            # above also catches cumulative drift spread across many small adjustments.
             if wall_elapsed < -1.0 or abs(wall_elapsed - monotonic_elapsed) > MAX_CLOCK_SKEW_SECONDS:
                 self._clock_untrusted = True
                 raise PirRpcProtocolError("system clock discontinuity; replay admission is disabled")
@@ -408,9 +419,10 @@ class AuthenticatedPirRpcServer:
             raise PirRpcProtocolError("request timestamp is outside accepted window")
         # Retain by elapsed monotonic time, not adjustable wall time. A request
         # timestamp may be 60 seconds in the future and remain valid for another
-        # 60 seconds; the nonce therefore stays cached for 120 elapsed seconds.
+        # 60 seconds; allow up to 60 seconds of cumulative clock drift before the
+        # fixed-origin detector latches, so retain for three skew windows (180 sec).
         # Never evict a still-live nonce to make room: that would re-enable replay.
-        cutoff = monotonic_now - (2 * MAX_CLOCK_SKEW_SECONDS)
+        cutoff = monotonic_now - (3 * MAX_CLOCK_SKEW_SECONDS)
         while self._seen_nonces:
             oldest_nonce, oldest_seen = next(iter(self._seen_nonces.items()))
             if oldest_seen >= cutoff:

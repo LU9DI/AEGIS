@@ -246,7 +246,7 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
     def test_future_dated_nonce_is_retained_for_full_validity_window(self):
         server = AuthenticatedPirRpcServer(
             self.records, server_id="future-nonce", shared_key=secrets.token_bytes(32),
-            replay_cache_capacity=13,
+            replay_cache_capacity=19,
             max_requests_per_second=0.1,
             request_burst=1,
         )
@@ -264,29 +264,29 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
     def test_full_replay_cache_rejects_without_evicting_live_nonces(self):
         server = AuthenticatedPirRpcServer(
             self.records, server_id="small-cache", shared_key=secrets.token_bytes(32),
-            replay_cache_capacity=13, max_requests_per_second=0.1, request_burst=1,
+            replay_cache_capacity=19, max_requests_per_second=0.1, request_burst=1,
         )
         with patch("anonlab.pir_rpc.time.time", return_value=1000), patch(
             "anonlab.pir_rpc.time.monotonic", return_value=1000
         ):
-            for index in range(13):
+            for index in range(19):
                 server._accept_nonce(f"nonce-{index}", 1000)
             with self.assertRaisesRegex(PirRpcProtocolError, "cache is full"):
                 server._accept_nonce("nonce-overflow", 1000)
-            self.assertEqual(set(server._seen_nonces), {f"nonce-{i}" for i in range(13)})
+            self.assertEqual(set(server._seen_nonces), {f"nonce-{i}" for i in range(19)})
             with self.assertRaisesRegex(PirRpcProtocolError, "replay"):
                 server._accept_nonce("nonce-0", 1000)
-        # After the complete monotonic validity window, old entries expire and admission recovers.
-        with patch("anonlab.pir_rpc.time.time", return_value=1121), patch(
-            "anonlab.pir_rpc.time.monotonic", return_value=1121
+        # After the full 180-second retention window, old entries expire and admission recovers.
+        with patch("anonlab.pir_rpc.time.time", return_value=1181), patch(
+            "anonlab.pir_rpc.time.monotonic", return_value=1181
         ):
-            server._accept_nonce("nonce-recovered", 1121)
+            server._accept_nonce("nonce-recovered", 1181)
             self.assertEqual(set(server._seen_nonces), {"nonce-recovered"})
 
     def test_wall_clock_jump_forward_then_backward_fails_closed_before_cache_eviction(self):
         server = AuthenticatedPirRpcServer(
             self.records, server_id="clock-jump", shared_key=secrets.token_bytes(32),
-            replay_cache_capacity=13, max_requests_per_second=0.1, request_burst=1,
+            replay_cache_capacity=19, max_requests_per_second=0.1, request_burst=1,
         )
         with patch("anonlab.pir_rpc.time.time", return_value=1000), patch(
             "anonlab.pir_rpc.time.monotonic", return_value=10
@@ -297,7 +297,7 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
         with patch("anonlab.pir_rpc.time.time", return_value=1200), patch(
             "anonlab.pir_rpc.time.monotonic", return_value=11
         ):
-            with self.assertRaisesRegex(PirRpcProtocolError, "clock discontinuity"):
+            with self.assertRaisesRegex(PirRpcProtocolError, "clock (?:discontinuity|drift)"):
                 server._accept_nonce("fresh-nonce", 1200)
         self.assertIn("original-nonce", server._seen_nonces)
 
@@ -307,6 +307,37 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
         ):
             with self.assertRaisesRegex(PirRpcProtocolError, "clock is untrusted"):
                 server._accept_nonce("original-nonce", 1000)
+        self.assertIn("original-nonce", server._seen_nonces)
+
+    def test_gradual_clock_drift_fails_closed_before_replay_cache_expiry(self):
+        server = AuthenticatedPirRpcServer(
+            self.records, server_id="gradual-clock-drift", shared_key=secrets.token_bytes(32),
+            replay_cache_capacity=19, max_requests_per_second=0.1, request_burst=1,
+        )
+        with patch("anonlab.pir_rpc.time.time", return_value=1000), patch(
+            "anonlab.pir_rpc.time.monotonic", return_value=10
+        ):
+            server._accept_nonce("original-nonce", 1000)
+
+        # Wall time advances by one second while monotonic time advances by two.
+        # Each individual discrepancy is small, but cumulative drift eventually
+        # exceeds the 60-second bound. The old nonce must still be retained then.
+        for step in range(1, 62):
+            with patch("anonlab.pir_rpc.time.time", return_value=1000 + step), patch(
+                "anonlab.pir_rpc.time.monotonic", return_value=10 + (2 * step)
+            ):
+                if step < 61:
+                    with self.assertRaisesRegex(PirRpcProtocolError, "replay"):
+                        server._accept_nonce("original-nonce", 1000 + step)
+                else:
+                    with self.assertRaisesRegex(PirRpcProtocolError, "clock drift"):
+                        server._accept_nonce("original-nonce", 1000 + step)
+        self.assertIn("original-nonce", server._seen_nonces)
+        with patch("anonlab.pir_rpc.time.time", return_value=1061), patch(
+            "anonlab.pir_rpc.time.monotonic", return_value=132
+        ):
+            with self.assertRaisesRegex(PirRpcProtocolError, "clock is untrusted"):
+                server._accept_nonce("original-nonce", 1061)
         self.assertIn("original-nonce", server._seen_nonces)
 
     async def test_response_mac_tampering_is_detected(self):
