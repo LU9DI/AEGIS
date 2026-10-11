@@ -62,9 +62,9 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
         canonical_nonce = base64.b64encode(nonce_bytes).decode("ascii")
         alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
         last_data_index = alphabet.index(canonical_nonce[-2])
-        # For 32-byte inputs, the final base64 symbol carries only two data bits;
-        # changing its four unused low bits preserves the decoded nonce bytes.
-        alias_index = (last_data_index & 0b110000) | ((last_data_index + 1) & 0b001111)
+        # For 32-byte inputs, the final base64 symbol carries four data bits;
+        # changing its two unused low bits preserves the decoded nonce bytes.
+        alias_index = (last_data_index & 0b111100) | ((last_data_index + 1) & 0b000011)
         alias_nonce = canonical_nonce[:-2] + alphabet[alias_index] + "="
         self.assertNotEqual(alias_nonce, canonical_nonce)
         self.assertEqual(base64.b64decode(alias_nonce), nonce_bytes)
