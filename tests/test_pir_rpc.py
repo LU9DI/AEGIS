@@ -55,6 +55,77 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(result.authenticated_messages, 4)
                 self.assertFalse(result.is_production_secure)
 
+    async def test_malformed_query_is_rejected_before_nonce_cache_and_rate_limit(self):
+        nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+        payload = {
+            "protocol": "AEGIS-PIR-RPC-v1",
+            "server_id": "replica-a",
+            "nonce": nonce,
+            "issued_at": int(time.time()),
+            "query": base64.b64encode(bytes(1)).decode("ascii"),
+        }
+        frame = _signed_envelope(payload, self.key_a, _REQUEST_DOMAIN)
+        original_acquire = self.server_a._rate_limiter.acquire
+        calls = 0
+
+        def count_acquire():
+            nonlocal calls
+            calls += 1
+            return original_acquire()
+
+        self.server_a._rate_limiter.acquire = count_acquire
+        writer = None
+        try:
+            reader, writer = await asyncio.open_connection("127.0.0.1", self.server_a.port)
+            writer.write(frame)
+            await writer.drain()
+            self.assertEqual(await asyncio.wait_for(reader.read(1), timeout=2), b"")
+            self.assertNotIn(nonce, self.server_a._seen_nonces)
+            self.assertEqual(calls, 0)
+        finally:
+            self.server_a._rate_limiter.acquire = original_acquire
+            if writer is not None:
+                writer.close()
+                await writer.wait_closed()
+
+    async def test_query_mask_trailing_bits_are_rejected_before_admission(self):
+        server = await AuthenticatedPirRpcServer(
+            self.records[:10], server_id="ten-records", shared_key=secrets.token_bytes(32)
+        ).start()
+        key = server._key
+        nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+        payload = {
+            "protocol": "AEGIS-PIR-RPC-v1",
+            "server_id": "ten-records",
+            "nonce": nonce,
+            "issued_at": int(time.time()),
+            "query": base64.b64encode(bytes([0, 0x80])).decode("ascii"),
+        }
+        frame = _signed_envelope(payload, key, _REQUEST_DOMAIN)
+        original_acquire = server._rate_limiter.acquire
+        calls = 0
+
+        def count_acquire():
+            nonlocal calls
+            calls += 1
+            return original_acquire()
+
+        server._rate_limiter.acquire = count_acquire
+        writer = None
+        try:
+            reader, writer = await asyncio.open_connection("127.0.0.1", server.port)
+            writer.write(frame)
+            await writer.drain()
+            self.assertEqual(await asyncio.wait_for(reader.read(1), timeout=2), b"")
+            self.assertNotIn(nonce, server._seen_nonces)
+            self.assertEqual(calls, 0)
+        finally:
+            server._rate_limiter.acquire = original_acquire
+            if writer is not None:
+                writer.close()
+                await writer.wait_closed()
+            await server.close()
+
     async def test_query_wire_schema_contains_mask_but_never_selected_index(self):
         query_a, query_b = make_query_pair(len(self.records), 19)
         payload = {
