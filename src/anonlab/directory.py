@@ -667,7 +667,9 @@ class DirectoryVerifier:
         self._revoked_relay_ids: set[str] = set()
         self._latest_descriptor_sequence: dict[str, int] = {}
         self._descriptor_sequence_digest: dict[tuple[str, int], bytes] = {}
-        if self._state_path is not None and self._state_path.exists():
+        if self._state_path is not None and os.path.lexists(self._state_path):
+            # lexists() also detects dangling symlinks; following exists() would
+            # silently treat one as absent and defer rejection until a write.
             self._load_state()
 
     @property
