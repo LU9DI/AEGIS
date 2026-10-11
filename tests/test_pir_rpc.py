@@ -229,7 +229,7 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
             "server_id": "replica-a",
             "nonce": nonce,
             "issued_at": int(time.time()),
-            "query": base64.b64encode(b"\\x00").decode("ascii"),
+            "query": base64.b64encode(bytes(1)).decode("ascii"),
         }
         frame = _signed_envelope(payload, self.key_a, _REQUEST_DOMAIN)
         original_acquire = self.server_a._rate_limiter.acquire
