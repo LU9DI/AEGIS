@@ -81,12 +81,16 @@ class PirReferenceServer:
         self.record_bytes = len(self._records[0])
         self.query_bytes = _mask_size(self.item_count)
 
-    def answer(self, query_mask: bytes) -> bytes:
+    def validate_query_mask(self, query_mask: bytes) -> None:
+        """Validate query shape without doing database work or mutating server state."""
         if not isinstance(query_mask, bytes) or len(query_mask) != self.query_bytes:
             raise ValueError(f"query mask must be exactly {self.query_bytes} bytes")
         remainder = self.item_count % 8
         if remainder and query_mask[-1] & ~((1 << remainder) - 1):
             raise ValueError("query mask sets bits beyond the database size")
+
+    def answer(self, query_mask: bytes) -> bytes:
+        self.validate_query_mask(query_mask)
         result = bytearray(self.record_bytes)
         for index, record in enumerate(self._records):
             if _is_bit_set(query_mask, index):
