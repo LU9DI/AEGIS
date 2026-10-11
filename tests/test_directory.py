@@ -478,6 +478,30 @@ class SignedDirectoryTests(unittest.TestCase):
                         process.terminate()
                         process.join(5)
 
+    @unittest.skipUnless(os.name == "posix", "POSIX file semantics are required")
+    def test_state_lock_rejects_symlinks_and_hard_links(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state_path = root / "trust-state.json"
+            lock_path = root / "trust-state.json.lock"
+            target = root / "unrelated"
+            target.write_text("do not modify", encoding="ascii")
+            verifier = DirectoryVerifier(self.authority.public_key_bytes, state_path=state_path)
+
+            lock_path.symlink_to(target)
+            with self.assertRaisesRegex(ValueError, "lock file could not be opened safely"):
+                verifier.apply_revocations(self.empty_revocations, now=self.now)
+            self.assertEqual(target.read_text(encoding="ascii"), "do not modify")
+            lock_path.unlink()
+
+            lock_path.write_text("", encoding="ascii")
+            alias_path = root / "lock-alias"
+            os.link(lock_path, alias_path)
+            with self.assertRaisesRegex(ValueError, "without hard links"):
+                verifier.apply_revocations(self.empty_revocations, now=self.now)
+            self.assertFalse(state_path.exists())
+            self.assertEqual(lock_path.stat().st_nlink, 2)
+
     @unittest.skipUnless(os.name == "posix", "POSIX flock is required for durable verifier state")
     def test_two_verifiers_reload_state_under_cross_process_lock(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
