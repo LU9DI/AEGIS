@@ -8,6 +8,7 @@ caller persists it.
 """
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 import hashlib
 import hmac
@@ -22,7 +23,12 @@ import stat
 import tempfile
 import threading
 import time
-from typing import Any, Mapping
+from typing import Any, Iterator, Mapping
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - unavailable on non-POSIX platforms
+    fcntl = None  # type: ignore[assignment]
 
 try:
     from cryptography.exceptions import InvalidSignature
@@ -660,6 +666,8 @@ class DirectoryVerifier:
         self._state_path = Path(state_path) if state_path is not None else None
         self._require_persistent_state = require_persistent_state
         self._lock = threading.RLock()
+        self._state_lock_depth = 0
+        self._state_lock_fd: int | None = None
         self._revocation_epoch = 0
         self._revocation_digest: bytes | None = None
         self._revocation_expires_at: int | None = None
@@ -726,6 +734,68 @@ class DirectoryVerifier:
             "revoked_relay_ids": sorted(revoked),
             "latest_descriptors": latest_entries,
         }
+
+    @contextmanager
+    def _state_operation(self) -> Iterator[None]:
+        """Serialize durable state operations across threads and processes.
+
+        A stable sidecar lock file is never replaced. After acquiring its
+        advisory exclusive lock, reload the latest state before any decision or
+        write. Platforms without fcntl locking fail closed for durable state.
+        """
+        with self._lock:
+            path = self._state_path
+            if path is None:
+                yield
+                return
+            if fcntl is None:
+                raise ValueError("durable directory state requires a supported cross-process file lock")
+            if self._state_lock_depth:
+                self._state_lock_depth += 1
+                try:
+                    yield
+                finally:
+                    self._state_lock_depth -= 1
+                return
+
+            path.parent.mkdir(parents=True, exist_ok=True)
+            _validate_private_state_parent(path)
+            lock_path = path.with_name(path.name + ".lock")
+            flags = os.O_RDWR | os.O_CREAT | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+            try:
+                lock_fd = os.open(lock_path, flags, stat.S_IRUSR | stat.S_IWUSR)
+            except OSError as exc:
+                raise ValueError("directory state lock file could not be opened safely") from exc
+            locked = False
+            try:
+                lock_info = os.fstat(lock_fd)
+                if not stat.S_ISREG(lock_info.st_mode) or lock_info.st_nlink != 1:
+                    raise ValueError("directory state lock must be a regular file without hard links")
+                if os.name == "posix" and lock_info.st_uid != os.geteuid():
+                    raise ValueError("directory state lock must be owned by the current user")
+                if os.name == "posix":
+                    os.fchmod(lock_fd, stat.S_IRUSR | stat.S_IWUSR)
+                fcntl.flock(lock_fd, fcntl.LOCK_EX)
+                locked = True
+                self._state_lock_fd = lock_fd
+                self._state_lock_depth = 1
+                if os.path.lexists(path):
+                    self._load_state()
+                elif (
+                    self._revocation_epoch
+                    or self._latest_descriptor_sequence
+                    or self._revocation_snapshot is not None
+                ):
+                    raise ValueError("persistent directory state disappeared while verifier was active")
+                yield
+            finally:
+                self._state_lock_depth = 0
+                self._state_lock_fd = None
+                try:
+                    if locked:
+                        fcntl.flock(lock_fd, fcntl.LOCK_UN)
+                finally:
+                    os.close(lock_fd)
 
     def _persist_candidate(self, state: Mapping[str, Any]) -> None:
         path = self._state_path
