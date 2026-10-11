@@ -276,11 +276,11 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(set(server._seen_nonces), {f"nonce-{i}" for i in range(19)})
             with self.assertRaisesRegex(PirRpcProtocolError, "replay"):
                 server._accept_nonce("nonce-0", 1000)
-        # After the complete monotonic validity window, old entries expire and admission recovers.
-        with patch("anonlab.pir_rpc.time.time", return_value=1121), patch(
-            "anonlab.pir_rpc.time.monotonic", return_value=1121
+        # After the full 180-second retention window, old entries expire and admission recovers.
+        with patch("anonlab.pir_rpc.time.time", return_value=1181), patch(
+            "anonlab.pir_rpc.time.monotonic", return_value=1181
         ):
-            server._accept_nonce("nonce-recovered", 1121)
+            server._accept_nonce("nonce-recovered", 1181)
             self.assertEqual(set(server._seen_nonces), {"nonce-recovered"})
 
     def test_wall_clock_jump_forward_then_backward_fails_closed_before_cache_eviction(self):
