@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import multiprocessing
+import os
 import secrets
 import sqlite3
 import tempfile
@@ -20,6 +21,17 @@ def _admit_in_process(path: str, nonce: str, issued_at: int, queue) -> None:
         queue.put(True)
     except (ReplayRejected, ReplayStoreError):
         queue.put(False)
+
+
+def _crash_with_uncommitted_nonce(path: str, server_id: str, nonce: str, expires_at: float) -> None:
+    db = sqlite3.connect(path, isolation_level=None)
+    db.execute("BEGIN IMMEDIATE")
+    db.execute(
+        "INSERT INTO seen_nonces(server_id, nonce, expires_at) VALUES(?, ?, ?)",
+        (server_id, nonce, expires_at),
+    )
+    # Simulate abrupt process death after the row write but before COMMIT.
+    os._exit(0)
 
 
 class DurablePirReplayStoreTests(unittest.TestCase):
@@ -78,6 +90,24 @@ class DurablePirReplayStoreTests(unittest.TestCase):
             self.path, server_id="replica-a", max_entries=8, clock=clock_while_locked
         )
         store.admit(self.nonce(), int(self.now[0]))
+
+    def test_uncommitted_nonce_is_rolled_back_after_process_crash(self):
+        nonce = self.nonce()
+        context = multiprocessing.get_context("spawn")
+        process = context.Process(
+            target=_crash_with_uncommitted_nonce,
+            args=(str(self.path), "replica-a", nonce, self.now[0] + 121),
+        )
+        process.start()
+        process.join(timeout=15)
+        if process.is_alive():
+            process.terminate()
+            process.join(timeout=2)
+        self.assertFalse(process.is_alive(), "crash simulation process timed out")
+        self.assertEqual(process.exitcode, 0)
+        # SQLite recovery must discard the uncommitted write; admission can
+        # then consume the nonce normally without accepting a phantom success.
+        self.store.admit(nonce, int(self.now[0]))
 
     def test_two_processes_admit_same_nonce_exactly_once(self):
         path = Path(self.tmp.name) / "multiprocess.sqlite3"
