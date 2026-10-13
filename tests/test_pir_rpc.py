@@ -4,6 +4,7 @@ import asyncio
 import base64
 import json
 import secrets
+import sqlite3
 import tempfile
 import time
 import unittest
@@ -104,6 +105,36 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
             )
             with self.assertRaisesRegex(PirRpcProtocolError, "replay"):
                 second_server._accept_nonce(nonce, issued_at)
+
+    def test_durable_rpc_persists_clock_before_rejecting_stale_timestamp(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "durable-clock.sqlite3"
+            base = int(time.time())
+            advanced = float(base + 300)
+            store = DurablePirReplayStore(
+                path, server_id="durable-clock", max_entries=16, clock=lambda: float(base)
+            )
+            store.initialize()
+            store._clock = lambda: advanced
+            server = AuthenticatedPirRpcServer(
+                self.records,
+                server_id="durable-clock",
+                shared_key=secrets.token_bytes(32),
+                replay_store=store,
+                max_requests_per_second=0.1,
+                request_burst=1,
+            )
+            nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+
+            with patch("anonlab.pir_rpc.time.time", return_value=advanced):
+                with self.assertRaisesRegex(PirRpcProtocolError, "timestamp"):
+                    server._accept_nonce(nonce, base)
+
+            with sqlite3.connect(path) as db:
+                persisted = float(db.execute(
+                    "SELECT value FROM metadata WHERE key='wall_high_water'"
+                ).fetchone()[0])
+            self.assertGreaterEqual(persisted, advanced)
 
     def test_extreme_timestamp_integer_is_rejected_without_overflow(self):
         with self.assertRaisesRegex(PirRpcProtocolError, "timestamp"):
