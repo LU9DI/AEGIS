@@ -24,6 +24,35 @@ The store checks path type, owner, and mode before SQLite opens the path by name
 
 Use a service-owned, non-writable parent directory and a deployment model that prevents untrusted path replacement. Stronger guarantees require an implementation/platform design that binds validation to the same opened file identity used by SQLite; do not claim that a pathname check alone provides that guarantee.
 
+## External replay authority: required contract for a production successor
+
+The current repository has no independent trusted-time or anti-rollback service configured. The SQLite high-water mark is therefore only a rollback detector within the currently observed database history, not a trusted clock. Do not add a nominal `TimeProvider` abstraction and treat that alone as a security fix: an interface cannot create a trust boundary or atomicity that the deployment does not provide.
+
+A production successor should place the authoritative admission decision behind an independently operated, durable authority with a documented trust boundary. Its operation must be equivalent to:
+
+```text
+admit(server_id, nonce_digest, issued_at, policy_id)
+  -> committed receipt | reject
+```
+
+The authority must atomically and durably:
+1. Validate the caller/service identity and the canonical nonce digest.
+2. Obtain time from its explicitly trusted time policy, not from a caller-supplied timestamp or the application host's unchecked wall clock.
+3. Check the signed request timestamp against the configured freshness interval using that trusted time.
+4. Enforce nonce uniqueness for the entire validity/retention interval, across all workers and restarts.
+5. Persist the reservation before returning a committed receipt.
+6. Reject on unavailable storage, uncertain commit, clock-health failure, stale authority state, version rollback, or policy mismatch; never fall back to local memory.
+
+The successful receipt should bind the server identity, nonce digest, policy/version, trusted-time observation, and unique authority transaction/version. It must not contain the raw nonce or request payload unless the threat model explicitly permits that. Receipt semantics must be idempotent for retry after a lost response: a retry may learn that its exact reservation committed, but must not create a second admission or cause a second PIR execution. The application must not begin protected work until it has a valid committed receipt.
+
+**Atomicity requirement:** do not split “check an external clock” and “insert nonce in SQLite” into two independent calls and claim the combined operation is atomic. A crash between those operations leaves an ambiguity. Either the authority itself owns the nonce reservation as the source of truth, or the design must specify a reviewed distributed transaction/recovery protocol that prevents duplicate admission under every partial-failure ordering.
+
+**Clock policy:** define how the authority detects its own time rollback, large forward steps, restart, failover, and loss of synchronization. A monotonic counter alone orders events but does not establish elapsed real time; a wall clock alone does not establish rollback resistance. If the authority cannot establish the validity decision, it must reject. If its trusted time is unavailable for longer than the protocol can safely tolerate, availability is sacrificed rather than silently extending or shortening nonce validity.
+
+**Rollback domain:** the authority's anti-rollback state must not be restorable from the same snapshot or backup domain as the application database. Specify who can restore it, how the newest committed version is verified after recovery, and how service admission remains disabled until reconciliation completes. A remote service is not automatically independent if its database, credentials, backups, and restore operators share the same failure/security domain.
+
+**Deployment gate:** before integration, identify the actual authority product/service, its consistency and durability guarantees, identity/authentication model, failure modes, time source and monitoring, retention/capacity model, backup/restore procedure, and operator ownership. No such backend is currently wired into this repository, so this section is a target contract, not an implemented guarantee.
+
 ## Failure handling and recovery
 
 - Admission must commit the nonce reservation before the protected PIR operation proceeds.
