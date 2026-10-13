@@ -1,8 +1,8 @@
-"""Durable nonce admission primitives for AEGIS PIR RPC.
+"""Opt-in SQLite-backed nonce admission for AEGIS PIR RPC.
 
-This module is deliberately not wired into the RPC server yet. Deployments must
-review the storage-path trust model and integrate it only with explicit config.
-A local database cannot detect restoration of an older copy of itself.
+The RPC server can use this store when explicitly configured and provisioned.
+Filesystem path checks have race/platform limitations, and a local database
+cannot detect restoration of an older copy of itself.
 """
 from __future__ import annotations
 
@@ -62,6 +62,16 @@ class DurablePirReplayStore:
         parent = self.path.parent
         if parent.is_symlink() or not parent.is_dir():
             raise ReplayStoreError("replay database parent must be an existing non-symlink directory")
+        # Validate the clock before creating a file: an invalid initial value
+        # must not leave an unusable database that cannot be safely reset.
+        try:
+            initial_wall_time = float(self._clock())
+        except (OverflowError, TypeError, ValueError) as exc:
+            self._untrusted = True
+            raise ReplayStoreError("wall clock is invalid; replay store was not initialized") from exc
+        if not math.isfinite(initial_wall_time):
+            self._untrusted = True
+            raise ReplayStoreError("wall clock is invalid; replay store was not initialized")
         try:
             fd = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
             os.close(fd)
@@ -78,7 +88,7 @@ class DurablePirReplayStore:
                     "PRIMARY KEY (server_id, nonce))"
                 )
                 db.execute("INSERT INTO metadata(key, value) VALUES('schema_version', ?)", (_SCHEMA_VERSION,))
-                db.execute("INSERT INTO metadata(key, value) VALUES('wall_high_water', ?)", (repr(self._clock()),))
+                db.execute("INSERT INTO metadata(key, value) VALUES('wall_high_water', ?)", (repr(initial_wall_time),))
                 db.execute("COMMIT")
             finally:
                 db.close()
