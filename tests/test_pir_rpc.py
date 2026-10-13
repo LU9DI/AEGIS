@@ -4,8 +4,10 @@ import asyncio
 import base64
 import json
 import secrets
+import tempfile
 import time
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from anonlab.pir_rpc import (
@@ -23,6 +25,7 @@ from anonlab.pir_rpc import (
     retrieve_four_server_pir_rpc_checked,
 )
 from anonlab.pir_two_server import make_query_pair
+from anonlab.pir_replay_store import DurablePirReplayStore
 
 
 class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
@@ -56,6 +59,41 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(result.response_bytes_per_server, len(expected))
                 self.assertEqual(result.authenticated_messages, 4)
                 self.assertFalse(result.is_production_secure)
+
+    def test_durable_replay_store_survives_rpc_server_recreation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "durable-replay.sqlite3"
+            store = DurablePirReplayStore(
+                path, server_id="durable-replica", max_entries=16
+            )
+            store.initialize()
+            nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+            issued_at = int(time.time())
+            records = self.records
+
+            first_server = AuthenticatedPirRpcServer(
+                records,
+                server_id="durable-replica",
+                shared_key=secrets.token_bytes(32),
+                replay_store=store,
+                max_requests_per_second=0.1,
+                request_burst=1,
+            )
+            first_server._accept_nonce(nonce, issued_at)
+
+            reopened_store = DurablePirReplayStore(
+                path, server_id="durable-replica", max_entries=16
+            )
+            second_server = AuthenticatedPirRpcServer(
+                records,
+                server_id="durable-replica",
+                shared_key=secrets.token_bytes(32),
+                replay_store=reopened_store,
+                max_requests_per_second=0.1,
+                request_burst=1,
+            )
+            with self.assertRaisesRegex(PirRpcProtocolError, "replay"):
+                second_server._accept_nonce(nonce, issued_at)
 
     async def test_rate_limited_request_does_not_mutate_replay_cache(self):
         nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
