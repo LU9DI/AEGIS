@@ -345,6 +345,31 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         self.assertTrue(connection.closed)
         self.assertTrue(self.store._untrusted)
 
+    def test_partial_initialization_is_latched_and_never_reset_implicitly(self):
+        class FailingInitializationConnection:
+            def execute(self, _sql, _params=()):
+                raise sqlite3.OperationalError("simulated schema creation failure")
+
+            def close(self):
+                pass
+
+        store = DurablePirReplayStore(
+            Path(self.tmp.name) / "partial.sqlite3",
+            server_id="replica-partial",
+            clock=lambda: self.now[0],
+        )
+        with patch.object(store, "_connect", return_value=FailingInitializationConnection()):
+            with self.assertRaisesRegex(ReplayStoreError, "could not initialize"):
+                store.initialize()
+
+        # Preserve the incomplete artifact for explicit operator inspection;
+        # automatic deletion could remove a replaced or otherwise valuable file.
+        self.assertTrue(store.path.exists())
+        self.assertTrue(store._untrusted)
+        with self.assertRaisesRegex(ReplayStoreError, "already exists"):
+            store.initialize()
+        self.assertTrue(store._untrusted)
+
     def test_corrupt_database_fails_closed(self):
         self.path.write_bytes(b"not a sqlite database")
         store = DurablePirReplayStore(
