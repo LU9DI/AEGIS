@@ -80,6 +80,11 @@ class DurablePirReplayStore:
             # after the filesystem is changed underneath it.
             self._untrusted = True
             raise
+        except OSError as exc:
+            self._untrusted = True
+            raise ReplayStoreError(
+                "replay database parent validation failed; initialization disabled"
+            ) from exc
         # Validate the clock before creating a file: an invalid initial value
         # must not leave an unusable database that cannot be safely reset.
         try:
