@@ -108,6 +108,7 @@ class DurablePirReplayStore:
             raise ReplayStoreError("could not initialize replay database") from exc
 
     def _connect(self) -> sqlite3.Connection:
+        db: sqlite3.Connection | None = None
         try:
             self._validate_parent_directory()
             if self.path.is_symlink():
@@ -124,9 +125,19 @@ class DurablePirReplayStore:
         except ReplayStoreError:
             # A path or permission violation invalidates trust in this store
             # instance; do not allow a later retry to silently resume service.
+            if db is not None:
+                try:
+                    db.close()
+                except sqlite3.Error:
+                    pass
             self._untrusted = True
             raise
         except (OSError, sqlite3.Error) as exc:
+            if db is not None:
+                try:
+                    db.close()
+                except sqlite3.Error:
+                    pass
             self._untrusted = True
             raise ReplayStoreError("replay database is unavailable") from exc
 
