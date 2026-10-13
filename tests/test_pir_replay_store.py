@@ -126,6 +126,15 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ReplayStoreError, "already exists"):
             self.store.initialize()
 
+    def test_invalid_initial_clock_does_not_create_database(self):
+        path = Path(self.tmp.name) / "invalid-clock.sqlite3"
+        store = DurablePirReplayStore(
+            path, server_id="replica-clock", clock=lambda: float("nan")
+        )
+        with self.assertRaisesRegex(ReplayStoreError, "clock is invalid"):
+            store.initialize()
+        self.assertFalse(path.exists())
+
     def test_symlink_database_is_rejected(self):
         if not hasattr(Path, "symlink_to"):
             self.skipTest("symlinks unsupported")
