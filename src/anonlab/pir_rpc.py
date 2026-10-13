@@ -407,6 +407,19 @@ class AuthenticatedPirRpcServer:
         await self.close()
 
     def _accept_nonce(self, nonce_text: str, issued_at: int) -> None:
+        if self._replay_store is not None:
+            # The durable store is the authority for wall-clock observations in
+            # this mode. Do not let process-local discontinuity checks reject a
+            # request before the SQLite high-water mark can be advanced.
+            try:
+                self._replay_store.admit(nonce_text, issued_at)
+            except ReplayRejected as exc:
+                raise PirRpcProtocolError("request replay or timestamp rejected") from exc
+            except ReplayStoreError as exc:
+                self._clock_untrusted = True
+                raise PirRpcProtocolError("durable replay storage unavailable; admission disabled") from exc
+            return
+
         now = time.time()
         monotonic_now = time.monotonic()
         if self._clock_untrusted:
@@ -423,18 +436,6 @@ class AuthenticatedPirRpcServer:
                 raise PirRpcProtocolError("system clock discontinuity; replay admission is disabled")
         self._clock_last_wall = now
         self._clock_last_monotonic = monotonic_now
-        if self._replay_store is not None:
-            # Let the durable store observe and persist its security clock before
-            # rejecting stale/future timestamps or duplicate nonces. A server-side
-            # timestamp pre-check here would bypass that durable observation.
-            try:
-                self._replay_store.admit(nonce_text, issued_at)
-            except ReplayRejected as exc:
-                raise PirRpcProtocolError("request replay or timestamp rejected") from exc
-            except ReplayStoreError as exc:
-                self._clock_untrusted = True
-                raise PirRpcProtocolError("durable replay storage unavailable; admission disabled") from exc
-            return
         # Compare bounds directly instead of subtracting arbitrary-size JSON
         # integers, which can overflow during float conversion.
         if issued_at < now - MAX_CLOCK_SKEW_SECONDS or issued_at > now + MAX_CLOCK_SKEW_SECONDS:
