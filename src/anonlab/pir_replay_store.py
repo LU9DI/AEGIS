@@ -65,9 +65,11 @@ class DurablePirReplayStore:
             fd = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
             os.close(fd)
             os.chmod(self.path, 0o600)
-            with self._connect() as db:
+            db = self._connect()
+            try:
                 db.execute("PRAGMA journal_mode=DELETE")
                 db.execute("PRAGMA synchronous=FULL")
+                db.execute("BEGIN IMMEDIATE")
                 db.execute("CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
                 db.execute(
                     "CREATE TABLE seen_nonces ("
@@ -76,6 +78,9 @@ class DurablePirReplayStore:
                 )
                 db.execute("INSERT INTO metadata(key, value) VALUES('schema_version', ?)", (_SCHEMA_VERSION,))
                 db.execute("INSERT INTO metadata(key, value) VALUES('wall_high_water', ?)", (repr(self._clock()),))
+                db.execute("COMMIT")
+            finally:
+                db.close()
         except FileExistsError as exc:
             raise ReplayStoreError("replay database already exists; refusing implicit reset") from exc
         except (OSError, sqlite3.Error) as exc:
