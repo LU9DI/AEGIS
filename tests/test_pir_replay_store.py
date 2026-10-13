@@ -155,6 +155,27 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         self.now[0] += 122
         self.store.admit(nonce, int(self.now[0]))
 
+    def test_timestamp_freshness_window_boundaries(self):
+        now = int(self.now[0])
+        self.store.admit(self.nonce(), now - 60)
+        self.store.admit(self.nonce(), now + 60)
+        with self.assertRaisesRegex(ReplayRejected, "timestamp"):
+            self.store.admit(self.nonce(), now - 61)
+        with self.assertRaisesRegex(ReplayRejected, "timestamp"):
+            self.store.admit(self.nonce(), now + 61)
+
+    def test_future_edge_nonce_remains_reserved_until_expiry(self):
+        nonce = self.nonce()
+        now = int(self.now[0])
+        self.store.admit(nonce, now + 60)
+        self.now[0] += 120
+        # The conservative expiry includes the accepted future skew and one
+        # second of margin; the nonce must not be evicted at this boundary.
+        with self.assertRaisesRegex(ReplayRejected, "timestamp"):
+            self.store.admit(nonce, int(self.now[0]))
+        self.now[0] += 2
+        self.store.admit(nonce, int(self.now[0]))
+
     def test_extreme_timestamp_integer_is_rejected_without_overflow(self):
         with self.assertRaisesRegex(ReplayRejected, "timestamp"):
             self.store.admit(self.nonce(), 10**10_000)
