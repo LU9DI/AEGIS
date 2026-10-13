@@ -125,8 +125,14 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
                 request_burst=1,
             )
             nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+            # Simulate a process-local clock discontinuity that would have
+            # rejected before reaching the durable store in the old ordering.
+            server._clock_last_wall = float(base)
+            server._clock_last_monotonic = 100.0
 
-            with patch("anonlab.pir_rpc.time.time", return_value=advanced):
+            with patch("anonlab.pir_rpc.time.time", return_value=advanced), patch(
+                "anonlab.pir_rpc.time.monotonic", return_value=100.0
+            ):
                 with self.assertRaisesRegex(PirRpcProtocolError, "timestamp"):
                     server._accept_nonce(nonce, base)
 
