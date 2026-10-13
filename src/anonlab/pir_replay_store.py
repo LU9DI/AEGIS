@@ -89,7 +89,9 @@ class DurablePirReplayStore:
         # must not leave an unusable database that cannot be safely reset.
         try:
             initial_wall_time = float(self._clock())
-        except (OverflowError, TypeError, ValueError) as exc:
+        except Exception as exc:
+            # The clock is an injected dependency. Any ordinary exception from
+            # it must leave this instance latched, not a reusable partial store.
             self._untrusted = True
             raise ReplayStoreError("wall clock is invalid; replay store was not initialized") from exc
         if not math.isfinite(initial_wall_time):
@@ -191,7 +193,10 @@ class DurablePirReplayStore:
             db.execute("BEGIN IMMEDIATE")
             try:
                 now = float(self._clock())
-            except (OverflowError, TypeError, ValueError) as exc:
+            except Exception as exc:
+                # A failing clock dependency is an admission failure regardless
+                # of exception type; the surrounding handler rolls back and the
+                # store remains disabled for this process instance.
                 self._untrusted = True
                 raise ReplayStoreError("wall clock is invalid; admission disabled") from exc
             if not math.isfinite(now):
