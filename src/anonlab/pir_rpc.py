@@ -420,7 +420,9 @@ class AuthenticatedPirRpcServer:
                 raise PirRpcProtocolError("system clock discontinuity; replay admission is disabled")
         self._clock_last_wall = now
         self._clock_last_monotonic = monotonic_now
-        if abs(now - issued_at) > MAX_CLOCK_SKEW_SECONDS:
+        # Compare bounds directly instead of subtracting arbitrary-size JSON
+        # integers, which can overflow during float conversion.
+        if issued_at < now - MAX_CLOCK_SKEW_SECONDS or issued_at > now + MAX_CLOCK_SKEW_SECONDS:
             raise PirRpcProtocolError("request timestamp is outside accepted window")
         if self._replay_store is not None:
             try:
