@@ -255,6 +255,8 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         self.assertTrue(store._untrusted)
 
     def test_rollback_failure_latches_store_untrusted(self):
+        current_time = self.now[0]
+
         class RollbackFailConnection:
             def __init__(self):
                 self.in_transaction = False
@@ -266,7 +268,7 @@ class DurablePirReplayStoreTests(unittest.TestCase):
                 elif "key='schema_version'" in sql:
                     self.row = ("1",)
                 elif "key='wall_high_water'" in sql:
-                    self.row = (repr(self.now),)
+                    self.row = (repr(current_time),)
                 elif "SELECT 1 FROM seen_nonces" in sql:
                     self.row = (1,)
                 elif sql == "ROLLBACK":
