@@ -159,7 +159,7 @@ class DurablePirReplayStore:
             if db is not None:
                 try:
                     db.close()
-                except sqlite3.Error:
+                except Exception:
                     pass
             self._untrusted = True
             raise
@@ -167,7 +167,7 @@ class DurablePirReplayStore:
             if db is not None:
                 try:
                     db.close()
-                except sqlite3.Error:
+                except Exception:
                     pass
             self._untrusted = True
             raise ReplayStoreError("replay database is unavailable") from exc
