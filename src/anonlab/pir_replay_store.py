@@ -116,6 +116,8 @@ class DurablePirReplayStore:
             info = self.path.lstat()
             if not stat.S_ISREG(info.st_mode):
                 raise ReplayStoreError("replay database must be a regular file")
+            if os.name == "posix" and info.st_uid != os.geteuid():
+                raise ReplayStoreError("replay database must be owned by the service identity")
             if os.name == "posix" and stat.S_IMODE(info.st_mode) != 0o600:
                 raise ReplayStoreError("replay database permissions must be 0600")
             db = sqlite3.connect(str(self.path), timeout=2.0, isolation_level=None)
