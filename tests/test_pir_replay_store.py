@@ -170,11 +170,16 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         self.store.admit(nonce, now + 60)
         self.now[0] += 120
         # The conservative expiry includes the accepted future skew and one
-        # second of margin; the nonce must not be evicted at this boundary.
-        with self.assertRaisesRegex(ReplayRejected, "timestamp"):
+        # second of margin; the nonce must still be reserved at this boundary.
+        with self.assertRaisesRegex(ReplayRejected, "replay"):
             self.store.admit(nonce, int(self.now[0]))
         self.now[0] += 2
-        self.store.admit(nonce, int(self.now[0]))
+        self.store.admit(self.nonce(), int(self.now[0]))
+        with sqlite3.connect(self.path) as db:
+            rows = db.execute(
+                "SELECT nonce FROM seen_nonces WHERE server_id=?", ("replica-a",)
+            ).fetchall()
+        self.assertEqual([row[0] for row in rows], [row[0] for row in []])
 
     def test_extreme_timestamp_integer_is_rejected_without_overflow(self):
         with self.assertRaisesRegex(ReplayRejected, "timestamp"):
