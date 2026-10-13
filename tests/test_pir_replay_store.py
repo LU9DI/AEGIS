@@ -151,6 +151,25 @@ class DurablePirReplayStoreTests(unittest.TestCase):
             store.initialize()
         self.assertFalse(path.exists())
 
+    def test_group_or_world_writable_parent_is_rejected_and_latched(self):
+        import os
+
+        if os.name != "posix":
+            self.skipTest("POSIX directory permissions are required")
+        parent = Path(self.tmp.name)
+        original_mode = parent.stat().st_mode & 0o777
+        try:
+            parent.chmod(0o777)
+            store = DurablePirReplayStore(
+                self.path, server_id="replica-a", max_entries=8, clock=lambda: self.now[0]
+            )
+            with self.assertRaisesRegex(ReplayStoreError, "group/world-writable"):
+                store.admit(self.nonce(), int(self.now[0]))
+            with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+                store.admit(self.nonce(), int(self.now[0]))
+        finally:
+            parent.chmod(original_mode)
+
     def test_symlink_database_is_rejected(self):
         if not hasattr(Path, "symlink_to"):
             self.skipTest("symlinks unsupported")
