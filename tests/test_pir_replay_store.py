@@ -358,6 +358,43 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
             store.admit(self.nonce(), int(self.now[0]))
 
+    def test_commit_failure_rolls_back_and_latches_store_untrusted(self):
+        real_connect = sqlite3.connect
+
+        class CommitFailConnection:
+            def __init__(self, connection):
+                self.connection = connection
+
+            @property
+            def in_transaction(self):
+                return self.connection.in_transaction
+
+            def execute(self, sql, *args, **kwargs):
+                if sql == "COMMIT":
+                    raise sqlite3.OperationalError("simulated commit failure")
+                return self.connection.execute(sql, *args, **kwargs)
+
+            def close(self):
+                self.connection.close()
+
+        nonce = self.nonce()
+        store = DurablePirReplayStore(
+            self.path, server_id="replica-a", max_entries=8, clock=lambda: self.now[0]
+        )
+        connection = CommitFailConnection(real_connect(self.path, timeout=2.0, isolation_level=None))
+        with patch.object(store, "_connect", return_value=connection):
+            with self.assertRaisesRegex(ReplayStoreError, "admission failed"):
+                store.admit(nonce, int(self.now[0]))
+
+        self.assertTrue(store._untrusted)
+        with sqlite3.connect(self.path) as db:
+            rows = db.execute(
+                "SELECT nonce FROM seen_nonces WHERE server_id=?", ("replica-a",)
+            ).fetchall()
+        self.assertNotIn(nonce, [row[0] for row in rows])
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+            store.admit(self.nonce(), int(self.now[0]))
+
     def test_connection_close_failure_latches_store_untrusted(self):
         real_connect = sqlite3.connect
 
