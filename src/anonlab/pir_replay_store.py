@@ -57,11 +57,20 @@ class DurablePirReplayStore:
         self._clock = clock
         self._untrusted = False
 
-    def initialize(self) -> None:
-        """Explicitly create a new database; refuses to overwrite any existing path."""
+    def _validate_parent_directory(self) -> None:
         parent = self.path.parent
         if parent.is_symlink() or not parent.is_dir():
             raise ReplayStoreError("replay database parent must be an existing non-symlink directory")
+        if os.name == "posix":
+            info = parent.stat()
+            if info.st_uid != os.geteuid():
+                raise ReplayStoreError("replay database parent must be owned by the service identity")
+            if stat.S_IMODE(info.st_mode) & 0o022:
+                raise ReplayStoreError("replay database parent must not be group/world-writable")
+
+    def initialize(self) -> None:
+        """Explicitly create a new database; refuses to overwrite any existing path."""
+        self._validate_parent_directory()
         # Validate the clock before creating a file: an invalid initial value
         # must not leave an unusable database that cannot be safely reset.
         try:
@@ -100,12 +109,13 @@ class DurablePirReplayStore:
 
     def _connect(self) -> sqlite3.Connection:
         try:
+            self._validate_parent_directory()
             if self.path.is_symlink():
                 raise ReplayStoreError("replay database must not be a symlink")
             info = self.path.lstat()
             if not stat.S_ISREG(info.st_mode):
                 raise ReplayStoreError("replay database must be a regular file")
-            if os.name == "posix" and stat.S_IMODE(info.st_mode) & 0o077:
+            if os.name == "posix" and stat.S_IMODE(info.st_mode) != 0o600:
                 raise ReplayStoreError("replay database permissions must be 0600")
             db = sqlite3.connect(str(self.path), timeout=2.0, isolation_level=None)
             db.execute("PRAGMA busy_timeout=2000")
