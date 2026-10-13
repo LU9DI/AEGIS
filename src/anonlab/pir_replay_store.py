@@ -347,6 +347,13 @@ class DurablePirReplayStore:
                     raise ReplayStoreError(
                         "replay admission rollback failed; admission disabled"
                     ) from exc
+            # The admission transaction may have observed a newer wall-clock
+            # value than the preliminary committed observation above. Persist
+            # that observation after rolling back request-specific changes, so
+            # timestamp and duplicate-nonce rejection cannot rewind the clock.
+            # If persistence fails, fail closed rather than returning a normal
+            # rejection while the security clock's state is uncertain.
+            self._persist_wall_high_water()
             raise
         except ReplayStoreError:
             if db.in_transaction:
