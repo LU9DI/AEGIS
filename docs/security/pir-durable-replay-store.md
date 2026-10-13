@@ -77,3 +77,8 @@ The `expires_at` column remains in schema version 1 for compatibility with alrea
 - Validate the chosen independent anti-rollback control, including backup restoration, failover, and recovery.
 - Review ownership, permissions, mount options, backup policy, and container lifecycle in the deployment environment.
 - Obtain an independent security review. The durable replay store does not address the separate PIR answer-verifiability/correctness question.
+
+
+## Operator recovery runbook
+
+The interim operational steps for capacity exhaustion, clock distrust, uncertain SQLite outcomes, corruption, and suspected snapshot rollback are documented in [`pir-durable-replay-recovery.md`](pir-durable-replay-recovery.md). The runbook deliberately forbids automatic nonce deletion or database reset to restore availability. It does not replace the external trusted-time/anti-rollback authority or production validation gates.
