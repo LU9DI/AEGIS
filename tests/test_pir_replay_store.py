@@ -8,6 +8,7 @@ import sqlite3
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -237,6 +238,24 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(ReplayStoreError, "symlink"):
             store.admit(self.nonce(), int(self.now[0]))
+
+    def test_connection_is_closed_when_initial_pragma_fails(self):
+        class FailingConnection:
+            closed = False
+
+            def execute(self, _sql):
+                raise sqlite3.OperationalError("simulated PRAGMA failure")
+
+            def close(self):
+                self.closed = True
+
+        connection = FailingConnection()
+        with patch("anonlab.pir_replay_store.sqlite3.connect", return_value=connection):
+            with self.assertRaisesRegex(ReplayStoreError, "unavailable"):
+                self.store._connect()
+
+        self.assertTrue(connection.closed)
+        self.assertTrue(self.store._untrusted)
 
     def test_corrupt_database_fails_closed(self):
         self.path.write_bytes(b"not a sqlite database")
