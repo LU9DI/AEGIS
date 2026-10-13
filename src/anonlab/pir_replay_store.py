@@ -247,4 +247,12 @@ class DurablePirReplayStore:
             self._untrusted = True
             raise ReplayStoreError("replay admission failed; admission disabled") from exc
         finally:
-            db.close()
+            try:
+                db.close()
+            except sqlite3.Error as exc:
+                # A close failure after COMMIT makes the outcome uncertain to
+                # the caller. Latch the store so it cannot silently resume.
+                self._untrusted = True
+                raise ReplayStoreError(
+                    "replay database connection cleanup failed; admission disabled"
+                ) from exc
