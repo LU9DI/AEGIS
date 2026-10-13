@@ -30,6 +30,7 @@ import time
 from typing import Sequence
 
 from .pir_two_server import MAX_DATABASE_BYTES, MAX_RECORDS, MAX_RECORD_BYTES, make_query_pair
+from .pir_replay_store import DurablePirReplayStore, ReplayRejected, ReplayStoreError
 
 PROTOCOL = "AEGIS-PIR-RPC-v1"
 MAX_FRAME_BYTES = 2_000_000
@@ -210,8 +211,14 @@ class AuthenticatedPirRpcServer:
         request_timeout_seconds: float = RPC_READ_TIMEOUT_SECONDS,
         max_requests_per_second: float = DEFAULT_MAX_REQUESTS_PER_SECOND,
         request_burst: int = DEFAULT_REQUEST_BURST,
+        replay_store: DurablePirReplayStore | None = None,
     ) -> None:
         _validate_server_id(server_id)
+        if replay_store is not None:
+            if not isinstance(replay_store, DurablePirReplayStore):
+                raise ValueError("replay_store must be a DurablePirReplayStore instance")
+            if replay_store.server_id != server_id:
+                raise ValueError("replay_store server_id must match the RPC server_id")
         if shared_key is not None:
             _validate_key(shared_key)
         if ssl_context is not None:
@@ -277,6 +284,9 @@ class AuthenticatedPirRpcServer:
         self._request_timeout_seconds = float(request_timeout_seconds)
         self.host = host
         self._replay_capacity = replay_cache_capacity
+        # When configured, the durable store replaces the process-local nonce cache.
+        # Its database must be provisioned explicitly before serving requests.
+        self._replay_store = replay_store
         # Replay retention uses monotonic time. Wall-clock discontinuities fail closed
         # because timestamp validity otherwise could be rolled back after cache expiry.
         self._seen_nonces: OrderedDict[str, float] = OrderedDict()
@@ -406,6 +416,15 @@ class AuthenticatedPirRpcServer:
         self._clock_last_monotonic = monotonic_now
         if abs(now - issued_at) > MAX_CLOCK_SKEW_SECONDS:
             raise PirRpcProtocolError("request timestamp is outside accepted window")
+        if self._replay_store is not None:
+            try:
+                self._replay_store.admit(nonce_text, issued_at)
+            except ReplayRejected as exc:
+                raise PirRpcProtocolError("request replay or timestamp rejected") from exc
+            except ReplayStoreError as exc:
+                self._clock_untrusted = True
+                raise PirRpcProtocolError("durable replay storage unavailable; admission disabled") from exc
+            return
         # Retain by elapsed monotonic time, not adjustable wall time. A request
         # timestamp may be 60 seconds in the future and remain valid for another
         # 60 seconds; the nonce therefore stays cached for 120 elapsed seconds.
