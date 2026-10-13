@@ -50,6 +50,18 @@ class DurablePirReplayStoreTests(unittest.TestCase):
     def nonce():
         return base64.b64encode(secrets.token_bytes(32)).decode("ascii")
 
+    def test_noncanonical_base64_nonce_is_rejected(self):
+        nonce = self.nonce()
+        self.store.admit(nonce, int(self.now[0]))
+        alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        index = alphabet.index(nonce[-2])
+        alternate_index = (index & 0b110000) | ((index + 1) & 0b001111)
+        alternate = nonce[:-2] + alphabet[alternate_index] + "="
+        self.assertNotEqual(nonce, alternate)
+        self.assertEqual(base64.b64decode(nonce), base64.b64decode(alternate))
+        with self.assertRaisesRegex(ReplayRejected, "nonce format"):
+            self.store.admit(alternate, int(self.now[0]))
+
     def test_replay_is_rejected_after_store_reopen(self):
         nonce = self.nonce()
         self.store.admit(nonce, int(self.now[0]))
