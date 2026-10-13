@@ -97,8 +97,12 @@ class DurablePirReplayStore:
             raise ReplayStoreError("wall clock is invalid; replay store was not initialized")
         try:
             fd = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-            os.close(fd)
-            os.chmod(self.path, 0o600)
+            try:
+                # Set permissions on the file descriptor itself. chmod(path)
+                # after closing fd would reopen a path-replacement window.
+                os.fchmod(fd, 0o600)
+            finally:
+                os.close(fd)
             db = self._connect()
             try:
                 db.execute("PRAGMA journal_mode=DELETE")
@@ -116,6 +120,10 @@ class DurablePirReplayStore:
             finally:
                 db.close()
         except FileExistsError as exc:
+            # Seeing an existing database during explicit initialization is an
+            # operator-recovery boundary. Do not let this object become usable
+            # merely because the path is later removed or replaced.
+            self._untrusted = True
             raise ReplayStoreError("replay database already exists; refusing implicit reset") from exc
         except (OSError, sqlite3.Error) as exc:
             self._untrusted = True
