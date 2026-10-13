@@ -225,6 +225,27 @@ class DurablePirReplayStoreTests(unittest.TestCase):
             store.initialize()
         self.assertFalse(path.exists())
 
+    def test_initialize_parent_permission_failure_latches_instance(self):
+        if os.name != "posix":
+            self.skipTest("POSIX directory permissions are required")
+        parent = Path(self.tmp.name)
+        original_mode = parent.stat().st_mode & 0o777
+        path = parent / "init-permission.sqlite3"
+        store = DurablePirReplayStore(
+            path, server_id="replica-init-permission", clock=lambda: self.now[0]
+        )
+        try:
+            parent.chmod(0o777)
+            with self.assertRaisesRegex(ReplayStoreError, "group/world-writable"):
+                store.initialize()
+            self.assertTrue(store._untrusted)
+            parent.chmod(original_mode)
+            with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+                store.initialize()
+            self.assertFalse(path.exists())
+        finally:
+            parent.chmod(original_mode)
+
     def test_group_or_world_writable_parent_is_rejected_and_latched(self):
         import os
 
