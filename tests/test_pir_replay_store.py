@@ -1,13 +1,24 @@
 from __future__ import annotations
 
 import base64
+import multiprocessing
 import secrets
 import tempfile
+import time
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from anonlab.pir_replay_store import DurablePirReplayStore, ReplayRejected, ReplayStoreError
+
+
+def _admit_in_process(path: str, nonce: str, issued_at: int, queue) -> None:
+    store = DurablePirReplayStore(path, server_id="multiprocess-replica", max_entries=16)
+    try:
+        store.admit(nonce, issued_at)
+        queue.put(True)
+    except (ReplayRejected, ReplayStoreError):
+        queue.put(False)
 
 
 class DurablePirReplayStoreTests(unittest.TestCase):
@@ -51,6 +62,34 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         with ThreadPoolExecutor(max_workers=8) as pool:
             outcomes = list(pool.map(attempt, stores))
         self.assertEqual(sum(outcomes), 1)
+
+    def test_two_processes_admit_same_nonce_exactly_once(self):
+        path = Path(self.tmp.name) / "multiprocess.sqlite3"
+        store = DurablePirReplayStore(path, server_id="multiprocess-replica", max_entries=16)
+        store.initialize()
+        nonce = self.nonce()
+        issued = int(time.time())
+        context = multiprocessing.get_context("spawn")
+        queue = context.Queue()
+        processes = [
+            context.Process(target=_admit_in_process, args=(str(path), nonce, issued, queue))
+            for _ in range(2)
+        ]
+        for process in processes:
+            process.start()
+        for process in processes:
+            process.join(timeout=15)
+        try:
+            self.assertTrue(all(not process.is_alive() for process in processes), "worker process timed out")
+            self.assertEqual([process.exitcode for process in processes], [0, 0])
+            outcomes = [queue.get(timeout=2) for _ in processes]
+            self.assertEqual(sum(outcomes), 1)
+        finally:
+            for process in processes:
+                if process.is_alive():
+                    process.terminate()
+                    process.join(timeout=2)
+            queue.close()
 
     def test_live_capacity_fails_closed_without_eviction(self):
         small = DurablePirReplayStore(
