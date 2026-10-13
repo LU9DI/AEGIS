@@ -267,6 +267,12 @@ class AuthenticatedPirRpcServer:
                 f"{required_replay_capacity} for the configured request rate, burst, "
                 "and nonce validity window"
             )
+        if replay_store is not None and replay_store.max_entries < required_replay_capacity:
+            raise ValueError(
+                "durable replay store capacity must be at least "
+                f"{required_replay_capacity} for the configured request rate, burst, "
+                "and nonce validity window"
+            )
         # Reuse the shared validation rules from the in-process PIR reference server.
         from .pir_two_server import PirReferenceServer
         self._reference = PirReferenceServer(records)
