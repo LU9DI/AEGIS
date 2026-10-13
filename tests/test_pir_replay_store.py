@@ -429,7 +429,7 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         store = DurablePirReplayStore(
             self.path, server_id="replica-a", max_entries=8, clock=lambda: self.now[0]
         )
-        with patch.object(store, "_connect", return_value=connection):
+        with patch.object(store, "_persist_wall_high_water", return_value=self.now[0]), patch.object(store, "_connect", return_value=connection):
             with self.assertRaisesRegex(ReplayStoreError, "rollback failed"):
                 store.admit(self.nonce(), int(self.now[0]))
 
@@ -465,7 +465,7 @@ class DurablePirReplayStoreTests(unittest.TestCase):
             self.path, server_id="replica-a", max_entries=8, clock=lambda: self.now[0]
         )
         connection = CommitFailConnection(real_connect(self.path, timeout=2.0, isolation_level=None))
-        with patch.object(store, "_connect", return_value=connection):
+        with patch.object(store, "_persist_wall_high_water", return_value=self.now[0]), patch.object(store, "_connect", return_value=connection):
             with self.assertRaisesRegex(ReplayStoreError, "admission failed"):
                 store.admit(nonce, int(self.now[0]))
 
@@ -501,8 +501,15 @@ class DurablePirReplayStoreTests(unittest.TestCase):
             self.path, server_id="replica-a", max_entries=8, clock=lambda: self.now[0]
         )
 
+        connections = 0
+
         def connect_with_close_failure(*args, **kwargs):
-            return CloseFailConnection(real_connect(*args, **kwargs))
+            nonlocal connections
+            connections += 1
+            connection = real_connect(*args, **kwargs)
+            if connections == 1:
+                return connection
+            return CloseFailConnection(connection)
 
         with patch("anonlab.pir_replay_store.sqlite3.connect", side_effect=connect_with_close_failure):
             with self.assertRaisesRegex(ReplayStoreError, "connection cleanup failed"):
@@ -619,7 +626,7 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         connection = UnexpectedExecuteConnection(
             real_connect(self.path, timeout=2.0, isolation_level=None)
         )
-        with patch.object(store, "_connect", return_value=connection):
+        with patch.object(store, "_persist_wall_high_water", return_value=self.now[0]), patch.object(store, "_connect", return_value=connection):
             with self.assertRaisesRegex(ReplayStoreError, "admission failed"):
                 store.admit(self.nonce(), int(self.now[0]))
 
