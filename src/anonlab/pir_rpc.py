@@ -423,11 +423,10 @@ class AuthenticatedPirRpcServer:
                 raise PirRpcProtocolError("system clock discontinuity; replay admission is disabled")
         self._clock_last_wall = now
         self._clock_last_monotonic = monotonic_now
-        # Compare bounds directly instead of subtracting arbitrary-size JSON
-        # integers, which can overflow during float conversion.
-        if issued_at < now - MAX_CLOCK_SKEW_SECONDS or issued_at > now + MAX_CLOCK_SKEW_SECONDS:
-            raise PirRpcProtocolError("request timestamp is outside accepted window")
         if self._replay_store is not None:
+            # Let the durable store observe and persist its security clock before
+            # rejecting stale/future timestamps or duplicate nonces. A server-side
+            # timestamp pre-check here would bypass that durable observation.
             try:
                 self._replay_store.admit(nonce_text, issued_at)
             except ReplayRejected as exc:
@@ -436,6 +435,10 @@ class AuthenticatedPirRpcServer:
                 self._clock_untrusted = True
                 raise PirRpcProtocolError("durable replay storage unavailable; admission disabled") from exc
             return
+        # Compare bounds directly instead of subtracting arbitrary-size JSON
+        # integers, which can overflow during float conversion.
+        if issued_at < now - MAX_CLOCK_SKEW_SECONDS or issued_at > now + MAX_CLOCK_SKEW_SECONDS:
+            raise PirRpcProtocolError("request timestamp is outside accepted window")
         # Retain by elapsed monotonic time, not adjustable wall time. A request
         # timestamp may be 60 seconds in the future and remain valid for another
         # 60 seconds; the nonce therefore stays cached for 120 elapsed seconds.
