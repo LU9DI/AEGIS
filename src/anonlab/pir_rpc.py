@@ -408,6 +408,13 @@ class AuthenticatedPirRpcServer:
 
     def _accept_nonce(self, nonce_text: str, issued_at: int) -> None:
         if self._replay_store is not None:
+            # A storage error latches this endpoint, even if the underlying
+            # failure looked recoverable (for example, lifetime capacity full).
+            # Do not retry admission on this server instance after that boundary.
+            if self._clock_untrusted:
+                raise PirRpcProtocolError(
+                    "durable replay storage unavailable; admission disabled"
+                )
             # The durable store is the authority for wall-clock observations in
             # this mode. Do not let process-local discontinuity checks reject a
             # request before the SQLite high-water mark can be advanced.
