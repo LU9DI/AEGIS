@@ -53,6 +53,14 @@ The successful receipt should bind the server identity, nonce digest, policy/ver
 
 **Deployment gate:** before integration, identify the actual authority product/service, its consistency and durability guarantees, identity/authentication model, failure modes, time source and monitoring, retention/capacity model, backup/restore procedure, and operator ownership. No such backend is currently wired into this repository, so this section is a target contract, not an implemented guarantee.
 
+## Conservative retention policy while trusted time is unavailable
+
+The current SQLite prototype does **not delete durable nonce rows based on wall-clock expiry**. A forward clock step can otherwise make old rows appear expired and erase replay history. Until an independent trusted-time and anti-rollback authority is integrated, the store keeps nonce reservations for the lifetime of that database and treats `max_entries` as a lifetime admission budget, not merely a concurrent-window cache size.
+
+This is an intentional fail-closed trade-off: after the lifetime budget is exhausted, new admissions are rejected until an operator follows an approved recovery/re-provisioning process. Operators must not delete rows or reset the database merely to restore capacity, because doing so may re-enable replay. This interim behavior removes wall-clock-driven deletion of durable replay history; it does **not** make request freshness decisions independent of wall time, detect forward clock jumps, or protect against restoration of an old database snapshot. Those remain blockers for issue #30.
+
+The `expires_at` column remains in schema version 1 for compatibility with already provisioned opt-in databases, but durable admission no longer uses it to delete nonce records. A future schema/authority migration must be explicit and reviewed; do not silently reinterpret existing database state.
+
 ## Failure handling and recovery
 
 - Admission must commit the nonce reservation before the protected PIR operation proceeds.
