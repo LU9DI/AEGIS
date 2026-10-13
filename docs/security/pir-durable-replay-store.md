@@ -27,6 +27,7 @@ Use a service-owned, non-writable parent directory and a deployment model that p
 ## Failure handling and recovery
 
 - Admission must commit the nonce reservation before the protected PIR operation proceeds.
+- The observed wall-clock high-water mark is committed in a separate SQLite transaction before request-specific timestamp and duplicate-nonce rejection, so those rejections cannot roll back the already persisted clock observation. Nonce insertion remains serialized and transactional.
 - Unexpected ordinary exceptions during connection setup, initialization, or admission latch the current store instance as untrusted.
 - A rollback or close failure is treated conservatively; the caller must not infer that admission definitely did or did not commit.
 - A partial database artifact is preserved for operator inspection rather than automatically removed or reset.
