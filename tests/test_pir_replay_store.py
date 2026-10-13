@@ -482,6 +482,45 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
             store.admit(self.nonce(), int(self.now[0]))
 
+    def test_begin_immediate_failure_latches_store_untrusted(self):
+        real_connect = sqlite3.connect
+
+        class BeginFailConnection:
+            def __init__(self, connection):
+                self.connection = connection
+                self.closed = False
+
+            @property
+            def in_transaction(self):
+                return self.connection.in_transaction
+
+            def execute(self, sql, *args, **kwargs):
+                if sql == "BEGIN IMMEDIATE":
+                    raise sqlite3.OperationalError("simulated database is locked")
+                return self.connection.execute(sql, *args, **kwargs)
+
+            def close(self):
+                self.connection.close()
+                self.closed = True
+
+        store = DurablePirReplayStore(
+            self.path, server_id="replica-a", max_entries=8, clock=lambda: self.now[0]
+        )
+        connection = BeginFailConnection(
+            real_connect(self.path, timeout=2.0, isolation_level=None)
+        )
+        with patch.object(store, "_persist_wall_high_water", return_value=self.now[0]), patch.object(
+            store, "_connect", return_value=connection
+        ):
+            with self.assertRaisesRegex(ReplayStoreError, "admission failed"):
+                store.admit(self.nonce(), int(self.now[0]))
+
+        self.assertTrue(connection.closed)
+        self.assertFalse(connection.in_transaction)
+        self.assertTrue(store._untrusted)
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+            store.admit(self.nonce(), int(self.now[0]))
+
     def test_commit_failure_rolls_back_and_latches_store_untrusted(self):
         real_connect = sqlite3.connect
 
