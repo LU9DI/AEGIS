@@ -443,6 +443,19 @@ class DurablePirReplayStoreTests(unittest.TestCase):
                 store.admit(nonce, int(self.now[0]))
 
         self.assertTrue(store._untrusted)
+        # The connection may have committed before close reported an error.
+        # Verify the ambiguous outcome is treated conservatively: the nonce
+        # remains consumed, and a newly constructed store rejects its replay.
+        with sqlite3.connect(self.path) as db:
+            rows = db.execute(
+                "SELECT nonce FROM seen_nonces WHERE server_id=?", ("replica-a",)
+            ).fetchall()
+        self.assertIn(nonce, [row[0] for row in rows])
+        reopened = DurablePirReplayStore(
+            self.path, server_id="replica-a", max_entries=8, clock=lambda: self.now[0]
+        )
+        with self.assertRaisesRegex(ReplayRejected, "replay"):
+            reopened.admit(nonce, int(self.now[0]))
         with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
             store.admit(self.nonce(), int(self.now[0]))
 
