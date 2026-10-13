@@ -504,6 +504,29 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         self.assertTrue(connection.closed)
         self.assertTrue(self.store._untrusted)
 
+    def test_unexpected_connection_setup_exception_closes_and_latches(self):
+        class FailingConnection:
+            closed = False
+
+            def execute(self, _sql):
+                raise RuntimeError("simulated unexpected PRAGMA failure")
+
+            def close(self):
+                self.closed = True
+
+        connection = FailingConnection()
+        store = DurablePirReplayStore(
+            self.path, server_id="replica-connect-runtime", clock=lambda: self.now[0]
+        )
+        with patch("anonlab.pir_replay_store.sqlite3.connect", return_value=connection):
+            with self.assertRaisesRegex(ReplayStoreError, "unavailable"):
+                store._connect()
+
+        self.assertTrue(connection.closed)
+        self.assertTrue(store._untrusted)
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+            store.admit(self.nonce(), int(self.now[0]))
+
     def test_partial_initialization_is_latched_and_never_reset_implicitly(self):
         class FailingInitializationConnection:
             def execute(self, _sql, _params=()):
