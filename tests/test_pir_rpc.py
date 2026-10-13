@@ -67,7 +67,9 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
             "query": base64.b64encode(bytes(4)).decode("ascii"),
         }
         frame = _signed_envelope(payload, self.key_a, _REQUEST_DOMAIN)
-        self.server_a._rate_limiter.tokens = 0.0
+        # Force the limiter's rejection branch deterministically. Setting the
+        # token count to zero can race with time-based refill under CI load.
+        self.server_a._rate_limiter.acquire = lambda: False
         writer = None
         try:
             reader, writer = await asyncio.open_connection("127.0.0.1", self.server_a.port)
