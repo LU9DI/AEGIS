@@ -84,6 +84,24 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ReplayStoreError, "moved backwards"):
             reopened.admit(self.nonce(), int(self.now[0]))
 
+    def test_rejected_admission_persists_clock_sample_taken_inside_admission_transaction(self):
+        base = self.now[0]
+        samples = iter((base + 10, base + 200, base + 200))
+        self.store._clock = lambda: next(samples)
+
+        # The first sample is committed by the preliminary transaction. The
+        # second sample occurs after the admission lock is acquired and causes
+        # this timestamp to be rejected. That newer observation must survive
+        # the admission rollback via the rejection-path persistence step.
+        with self.assertRaisesRegex(ReplayRejected, "outside accepted window"):
+            self.store.admit(self.nonce(), int(base + 10))
+
+        with sqlite3.connect(self.path) as db:
+            persisted = float(db.execute(
+                "SELECT value FROM metadata WHERE key='wall_high_water'"
+            ).fetchone()[0])
+        self.assertGreaterEqual(persisted, base + 200)
+
     def test_high_water_persists_when_duplicate_nonce_is_rejected(self):
         nonce = self.nonce()
         self.store.admit(nonce, int(self.now[0]))
