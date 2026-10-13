@@ -239,6 +239,21 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ReplayStoreError, "symlink"):
             store.admit(self.nonce(), int(self.now[0]))
 
+    def test_database_owned_by_another_identity_is_rejected(self):
+        if os.name != "posix":
+            self.skipTest("POSIX ownership is required")
+        from types import SimpleNamespace
+
+        actual = self.path.lstat()
+        fake_info = SimpleNamespace(st_mode=actual.st_mode, st_uid=os.geteuid() + 1)
+        store = DurablePirReplayStore(
+            self.path, server_id="replica-a", max_entries=8, clock=lambda: self.now[0]
+        )
+        with patch.object(Path, "lstat", return_value=fake_info):
+            with self.assertRaisesRegex(ReplayStoreError, "owned by the service identity"):
+                store._connect()
+        self.assertTrue(store._untrusted)
+
     def test_connection_is_closed_when_initial_pragma_fails(self):
         class FailingConnection:
             closed = False
