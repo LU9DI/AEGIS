@@ -112,8 +112,12 @@ class DurablePirReplayStore:
             db.execute("PRAGMA synchronous=FULL")
             return db
         except ReplayStoreError:
+            # A path or permission violation invalidates trust in this store
+            # instance; do not allow a later retry to silently resume service.
+            self._untrusted = True
             raise
         except (OSError, sqlite3.Error) as exc:
+            self._untrusted = True
             raise ReplayStoreError("replay database is unavailable") from exc
 
     def admit(self, nonce: str, issued_at: int) -> None:
@@ -131,7 +135,11 @@ class DurablePirReplayStore:
         if isinstance(issued_at, bool) or not isinstance(issued_at, int):
             raise ReplayRejected("request timestamp is invalid")
 
-        now = float(self._clock())
+        try:
+            now = float(self._clock())
+        except (OverflowError, TypeError, ValueError) as exc:
+            self._untrusted = True
+            raise ReplayStoreError("wall clock is invalid; admission disabled") from exc
         if not math.isfinite(now):
             self._untrusted = True
             raise ReplayStoreError("wall clock is invalid; admission disabled")
@@ -151,6 +159,7 @@ class DurablePirReplayStore:
                 "SELECT value FROM metadata WHERE key='wall_high_water'"
             ).fetchone()
             if version is None or version[0] != _SCHEMA_VERSION or high_row is None:
+                self._untrusted = True
                 raise ReplayStoreError("replay database schema/metadata is invalid")
             high_water = float(high_row[0])
             if not math.isfinite(high_water):
