@@ -209,6 +209,22 @@ class DurablePirReplayStoreTests(unittest.TestCase):
             store.initialize()
         self.assertFalse(path.exists())
 
+    def test_invalid_initialization_clock_latches_and_blocks_retry(self):
+        path = Path(self.tmp.name) / "retry-clock.sqlite3"
+        clock_value = [float("nan")]
+        store = DurablePirReplayStore(
+            path, server_id="replica-clock-retry", clock=lambda: clock_value[0]
+        )
+        with self.assertRaisesRegex(ReplayStoreError, "clock is invalid"):
+            store.initialize()
+        self.assertTrue(store._untrusted)
+        self.assertFalse(path.exists())
+
+        clock_value[0] = self.now[0]
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+            store.initialize()
+        self.assertFalse(path.exists())
+
     def test_group_or_world_writable_parent_is_rejected_and_latched(self):
         import os
 
