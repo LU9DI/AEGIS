@@ -7,6 +7,7 @@ A local database cannot detect restoration of an older copy of itself.
 from __future__ import annotations
 
 import base64
+import math
 import os
 from pathlib import Path
 import re
@@ -121,7 +122,12 @@ class DurablePirReplayStore:
             raise ReplayRejected("request timestamp is invalid")
 
         now = float(self._clock())
-        if abs(now - issued_at) > MAX_CLOCK_SKEW_SECONDS:
+        if not math.isfinite(now):
+            self._untrusted = True
+            raise ReplayStoreError("wall clock is invalid; admission disabled")
+        # Bound-check before converting issued_at to float; JSON can contain
+        # arbitrarily large integers that overflow during float conversion.
+        if issued_at < now - MAX_CLOCK_SKEW_SECONDS or issued_at > now + MAX_CLOCK_SKEW_SECONDS:
             raise ReplayRejected("request timestamp is outside accepted window")
         expires_at = max(now, float(issued_at)) + MAX_CLOCK_SKEW_SECONDS + 1.0
 
@@ -137,6 +143,9 @@ class DurablePirReplayStore:
             if version is None or version[0] != _SCHEMA_VERSION or high_row is None:
                 raise ReplayStoreError("replay database schema/metadata is invalid")
             high_water = float(high_row[0])
+            if not math.isfinite(high_water):
+                self._untrusted = True
+                raise ReplayStoreError("replay database clock metadata is invalid")
             if now < high_water - 1.0:
                 self._untrusted = True
                 raise ReplayStoreError("wall clock moved backwards; replay admission disabled")
