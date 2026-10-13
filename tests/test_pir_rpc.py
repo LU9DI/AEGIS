@@ -95,6 +95,13 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaisesRegex(PirRpcProtocolError, "replay"):
                 second_server._accept_nonce(nonce, issued_at)
 
+    def test_extreme_timestamp_integer_is_rejected_without_overflow(self):
+        with self.assertRaisesRegex(PirRpcProtocolError, "timestamp"):
+            self.server_a._accept_nonce(
+                base64.b64encode(secrets.token_bytes(32)).decode("ascii"),
+                10**10_000,
+            )
+
     async def test_rate_limited_request_does_not_mutate_replay_cache(self):
         nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
         payload = {
