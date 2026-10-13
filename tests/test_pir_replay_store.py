@@ -64,6 +64,21 @@ class DurablePirReplayStoreTests(unittest.TestCase):
             outcomes = list(pool.map(attempt, stores))
         self.assertEqual(sum(outcomes), 1)
 
+    def test_clock_is_sampled_after_write_transaction_lock(self):
+        def clock_while_locked():
+            probe = sqlite3.connect(self.path, timeout=0)
+            try:
+                with self.assertRaises(sqlite3.OperationalError):
+                    probe.execute("BEGIN IMMEDIATE")
+            finally:
+                probe.close()
+            return self.now[0]
+
+        store = DurablePirReplayStore(
+            self.path, server_id="replica-a", max_entries=8, clock=clock_while_locked
+        )
+        store.admit(self.nonce(), int(self.now[0]))
+
     def test_two_processes_admit_same_nonce_exactly_once(self):
         path = Path(self.tmp.name) / "multiprocess.sqlite3"
         store = DurablePirReplayStore(path, server_id="multiprocess-replica", max_entries=16)
