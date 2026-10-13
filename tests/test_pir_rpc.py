@@ -18,6 +18,7 @@ from anonlab.pir_rpc import (
     PirRpcProtocolError,
     _REQUEST_DOMAIN,
     _RESPONSE_DOMAIN,
+    _decode_b64,
     _signed_envelope,
     _verify_envelope,
     recover_colluded_index,
@@ -45,6 +46,15 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
 
     async def asyncTearDown(self) -> None:
         await asyncio.gather(self.server_a.close(), self.server_b.close())
+
+    async def test_noncanonical_base64_nonce_is_rejected_before_replay_admission(self):
+        nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+        alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        index = alphabet.index(nonce[-2])
+        alternate = nonce[:-2] + alphabet[index | 1] + "="
+        self.assertEqual(base64.b64decode(nonce), base64.b64decode(alternate))
+        with self.assertRaisesRegex(PirRpcProtocolError, "canonical base64"):
+            _decode_b64(alternate, "nonce")
 
     async def test_two_distinct_authenticated_rpc_endpoints_retrieve_the_record(self):
         for index, expected in enumerate(self.records):
