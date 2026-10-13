@@ -217,12 +217,15 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ReplayRejected, "replay"):
             small.admit(first, int(self.now[0]))
 
-    def test_expired_nonce_can_be_removed_only_after_validity_window(self):
+    def test_durable_nonce_is_retained_after_validity_window_without_trusted_time(self):
         nonce = self.nonce()
         issued = int(self.now[0])
         self.store.admit(nonce, issued)
         self.now[0] += 122
-        self.store.admit(nonce, int(self.now[0]))
+        # Durable mode must not delete replay history based on an unchecked
+        # wall clock. The old nonce remains rejected even after freshness ends.
+        with self.assertRaisesRegex(ReplayRejected, "replay"):
+            self.store.admit(nonce, int(self.now[0]))
 
     def test_timestamp_freshness_window_boundaries(self):
         now = int(self.now[0])
@@ -233,13 +236,13 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ReplayRejected, "timestamp"):
             self.store.admit(self.nonce(), now + 61)
 
-    def test_future_edge_nonce_remains_reserved_until_expiry(self):
+    def test_future_edge_nonce_is_retained_without_wall_clock_expiry(self):
         nonce = self.nonce()
         now = int(self.now[0])
         self.store.admit(nonce, now + 60)
         self.now[0] += 120
-        # The conservative expiry includes the accepted future skew and one
-        # second of margin; the nonce must still be reserved at this boundary.
+        # The timestamp is still at the accepted boundary, but replay history
+        # is retained independently of the wall-clock cleanup horizon.
         with self.assertRaisesRegex(ReplayRejected, "replay"):
             self.store.admit(nonce, int(self.now[0]))
         self.now[0] += 2
@@ -248,8 +251,8 @@ class DurablePirReplayStoreTests(unittest.TestCase):
             rows = db.execute(
                 "SELECT nonce FROM seen_nonces WHERE server_id=?", ("replica-a",)
             ).fetchall()
-        self.assertEqual(len(rows), 1)
-        self.assertNotIn(nonce, [row[0] for row in rows])
+        self.assertEqual(len(rows), 2)
+        self.assertIn(nonce, [row[0] for row in rows])
 
     def test_extreme_timestamp_integer_is_rejected_without_overflow(self):
         with self.assertRaisesRegex(ReplayRejected, "timestamp"):
