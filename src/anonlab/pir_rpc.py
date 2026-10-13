@@ -151,9 +151,12 @@ def _decode_b64(value: object, field_name: str) -> bytes:
     if not isinstance(value, str):
         raise PirRpcProtocolError(f"{field_name} must be base64 text")
     try:
-        decoded = base64.b64decode(value.encode("ascii"), validate=True)
+        encoded = value.encode("ascii")
+        decoded = base64.b64decode(encoded, validate=True)
     except (ValueError, UnicodeEncodeError) as exc:
         raise PirRpcProtocolError(f"{field_name} is not valid base64") from exc
+    if base64.b64encode(decoded).decode("ascii") != value:
+        raise PirRpcProtocolError(f"{field_name} is not canonical base64")
     return decoded
 
 
