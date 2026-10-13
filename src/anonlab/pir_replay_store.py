@@ -220,11 +220,23 @@ class DurablePirReplayStore:
             db.execute("COMMIT")
         except ReplayRejected:
             if db.in_transaction:
-                db.execute("ROLLBACK")
+                try:
+                    db.execute("ROLLBACK")
+                except sqlite3.Error as exc:
+                    self._untrusted = True
+                    raise ReplayStoreError(
+                        "replay admission rollback failed; admission disabled"
+                    ) from exc
             raise
         except ReplayStoreError:
             if db.in_transaction:
-                db.execute("ROLLBACK")
+                try:
+                    db.execute("ROLLBACK")
+                except sqlite3.Error as exc:
+                    self._untrusted = True
+                    raise ReplayStoreError(
+                        "replay admission rollback failed; admission disabled"
+                    ) from exc
             raise
         except (sqlite3.Error, OSError, ValueError) as exc:
             if db.in_transaction:
