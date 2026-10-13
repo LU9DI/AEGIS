@@ -65,6 +65,41 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ReplayRejected, "nonce format"):
             self.store.admit(alternate, int(self.now[0]))
 
+    def test_high_water_persists_when_timestamp_is_rejected(self):
+        advanced = self.now[0] + 300
+        self.now[0] = advanced
+        with self.assertRaisesRegex(ReplayRejected, "outside accepted window"):
+            self.store.admit(self.nonce(), int(advanced - 120))
+
+        with sqlite3.connect(self.path) as db:
+            persisted = float(db.execute(
+                "SELECT value FROM metadata WHERE key='wall_high_water'"
+            ).fetchone()[0])
+        self.assertGreaterEqual(persisted, advanced)
+
+        reopened = DurablePirReplayStore(
+            self.path, server_id="replica-a", max_entries=8, clock=lambda: self.now[0]
+        )
+        self.now[0] = advanced - 10
+        with self.assertRaisesRegex(ReplayStoreError, "moved backwards"):
+            reopened.admit(self.nonce(), int(self.now[0]))
+
+    def test_high_water_persists_when_duplicate_nonce_is_rejected(self):
+        nonce = self.nonce()
+        self.store.admit(nonce, int(self.now[0]))
+        self.now[0] += 120
+        # The nonce has expired by this time, so use a fresh request timestamp
+        # but move the clock only a fraction to preserve the original nonce.
+        self.now[0] -= 119
+        with self.assertRaisesRegex(ReplayRejected, "replay"):
+            self.store.admit(nonce, int(self.now[0]))
+
+        with sqlite3.connect(self.path) as db:
+            persisted = float(db.execute(
+                "SELECT value FROM metadata WHERE key='wall_high_water'"
+            ).fetchone()[0])
+        self.assertGreaterEqual(persisted, self.now[0])
+
     def test_replay_is_rejected_after_store_reopen(self):
         nonce = self.nonce()
         self.store.admit(nonce, int(self.now[0]))
