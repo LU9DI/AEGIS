@@ -171,6 +171,14 @@ class DurablePirReplayStore:
                     pass
             self._untrusted = True
             raise ReplayStoreError("replay database is unavailable") from exc
+        except Exception as exc:
+            if db is not None:
+                try:
+                    db.close()
+                except Exception:
+                    pass
+            self._untrusted = True
+            raise ReplayStoreError("replay database is unavailable") from exc
 
     def admit(self, nonce: str, issued_at: int) -> None:
         """Atomically validate timestamp and consume nonce, or raise fail-closed."""
