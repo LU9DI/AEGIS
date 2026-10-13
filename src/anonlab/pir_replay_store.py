@@ -130,6 +130,11 @@ class DurablePirReplayStore:
         except (OSError, sqlite3.Error) as exc:
             self._untrusted = True
             raise ReplayStoreError("could not initialize replay database") from exc
+        except Exception as exc:
+            # Unexpected ordinary failures must not leave this instance reusable
+            # after initialization may have partially changed the database.
+            self._untrusted = True
+            raise ReplayStoreError("could not initialize replay database") from exc
 
     def _connect(self) -> sqlite3.Connection:
         db: sqlite3.Connection | None = None
@@ -262,7 +267,7 @@ class DurablePirReplayStore:
             if db.in_transaction:
                 try:
                     db.execute("ROLLBACK")
-                except sqlite3.Error as exc:
+                except Exception as exc:
                     self._untrusted = True
                     raise ReplayStoreError(
                         "replay admission rollback failed; admission disabled"
