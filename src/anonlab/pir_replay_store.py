@@ -70,6 +70,8 @@ class DurablePirReplayStore:
 
     def initialize(self) -> None:
         """Explicitly create a new database; refuses to overwrite any existing path."""
+        if self._untrusted:
+            raise ReplayStoreError("replay store is untrusted; initialization disabled")
         self._validate_parent_directory()
         # Validate the clock before creating a file: an invalid initial value
         # must not leave an unusable database that cannot be safely reset.
