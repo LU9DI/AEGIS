@@ -282,6 +282,23 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
             store.initialize()
 
+    def test_full_store_persists_clock_observed_in_rolled_back_admission(self):
+        # Fill the store, then advance the clock separately for the preliminary
+        # observation, admission transaction, and post-rollback persistence.
+        self.store.max_entries = 1
+        self.store.admit(self.nonce(), int(self.now[0]))
+        observed = [self.now[0] + 1, self.now[0] + 2, self.now[0] + 3]
+        self.store._clock = lambda: observed.pop(0)
+
+        with self.assertRaisesRegex(ReplayStoreError, "store is full"):
+            self.store.admit(self.nonce(), int(self.now[0] + 2))
+
+        with sqlite3.connect(self.path) as db:
+            high_water = float(db.execute(
+                "SELECT value FROM metadata WHERE key='wall_high_water'"
+            ).fetchone()[0])
+        self.assertEqual(high_water, self.now[0] + 3)
+
     def test_backward_clock_step_fails_closed(self):
         self.store.admit(self.nonce(), int(self.now[0]))
         self.now[0] -= 5
