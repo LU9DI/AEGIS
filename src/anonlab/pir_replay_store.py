@@ -135,23 +135,20 @@ class DurablePirReplayStore:
         if isinstance(issued_at, bool) or not isinstance(issued_at, int):
             raise ReplayRejected("request timestamp is invalid")
 
-        try:
-            now = float(self._clock())
-        except (OverflowError, TypeError, ValueError) as exc:
-            self._untrusted = True
-            raise ReplayStoreError("wall clock is invalid; admission disabled") from exc
-        if not math.isfinite(now):
-            self._untrusted = True
-            raise ReplayStoreError("wall clock is invalid; admission disabled")
-        # Bound-check before converting issued_at to float; JSON can contain
-        # arbitrarily large integers that overflow during float conversion.
-        if issued_at < now - MAX_CLOCK_SKEW_SECONDS or issued_at > now + MAX_CLOCK_SKEW_SECONDS:
-            raise ReplayRejected("request timestamp is outside accepted window")
-        expires_at = max(now, float(issued_at)) + MAX_CLOCK_SKEW_SECONDS + 1.0
-
         db = self._connect()
         try:
+            # Acquire SQLite's write lock before sampling wall time. Otherwise,
+            # lock contention can make a request's freshness check stale while
+            # it waits to enter the serialized admission transaction.
             db.execute("BEGIN IMMEDIATE")
+            try:
+                now = float(self._clock())
+            except (OverflowError, TypeError, ValueError) as exc:
+                self._untrusted = True
+                raise ReplayStoreError("wall clock is invalid; admission disabled") from exc
+            if not math.isfinite(now):
+                self._untrusted = True
+                raise ReplayStoreError("wall clock is invalid; admission disabled")
             version = db.execute(
                 "SELECT value FROM metadata WHERE key='schema_version'"
             ).fetchone()
@@ -161,13 +158,22 @@ class DurablePirReplayStore:
             if version is None or version[0] != _SCHEMA_VERSION or high_row is None:
                 self._untrusted = True
                 raise ReplayStoreError("replay database schema/metadata is invalid")
-            high_water = float(high_row[0])
+            try:
+                high_water = float(high_row[0])
+            except (OverflowError, TypeError, ValueError) as exc:
+                self._untrusted = True
+                raise ReplayStoreError("replay database clock metadata is invalid") from exc
             if not math.isfinite(high_water):
                 self._untrusted = True
                 raise ReplayStoreError("replay database clock metadata is invalid")
             if now < high_water - 1.0:
                 self._untrusted = True
                 raise ReplayStoreError("wall clock moved backwards; replay admission disabled")
+            # Bound-check before converting issued_at to float; JSON can contain
+            # arbitrarily large integers that overflow during float conversion.
+            if issued_at < now - MAX_CLOCK_SKEW_SECONDS or issued_at > now + MAX_CLOCK_SKEW_SECONDS:
+                raise ReplayRejected("request timestamp is outside accepted window")
+            expires_at = max(now, float(issued_at)) + MAX_CLOCK_SKEW_SECONDS + 1.0
             db.execute(
                 "UPDATE metadata SET value=? WHERE key='wall_high_water'",
                 (repr(max(now, high_water)),),
