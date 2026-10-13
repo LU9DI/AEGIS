@@ -254,6 +254,43 @@ class DurablePirReplayStoreTests(unittest.TestCase):
                 store._connect()
         self.assertTrue(store._untrusted)
 
+    def test_rollback_failure_latches_store_untrusted(self):
+        class RollbackFailConnection:
+            def __init__(self):
+                self.in_transaction = False
+                self.row = None
+
+            def execute(self, sql, _params=()):
+                if sql == "BEGIN IMMEDIATE":
+                    self.in_transaction = True
+                elif "key='schema_version'" in sql:
+                    self.row = ("1",)
+                elif "key='wall_high_water'" in sql:
+                    self.row = (repr(self.now),)
+                elif "SELECT 1 FROM seen_nonces" in sql:
+                    self.row = (1,)
+                elif sql == "ROLLBACK":
+                    raise sqlite3.OperationalError("simulated rollback failure")
+                return self
+
+            def fetchone(self):
+                return self.row
+
+            def close(self):
+                pass
+
+        connection = RollbackFailConnection()
+        store = DurablePirReplayStore(
+            self.path, server_id="replica-a", max_entries=8, clock=lambda: self.now[0]
+        )
+        with patch.object(store, "_connect", return_value=connection):
+            with self.assertRaisesRegex(ReplayStoreError, "rollback failed"):
+                store.admit(self.nonce(), int(self.now[0]))
+
+        self.assertTrue(store._untrusted)
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+            store.admit(self.nonce(), int(self.now[0]))
+
     def test_connection_is_closed_when_initial_pragma_fails(self):
         class FailingConnection:
             closed = False
