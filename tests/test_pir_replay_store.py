@@ -109,6 +109,10 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         self.now[0] += 122
         self.store.admit(nonce, int(self.now[0]))
 
+    def test_extreme_timestamp_integer_is_rejected_without_overflow(self):
+        with self.assertRaisesRegex(ReplayRejected, "timestamp"):
+            self.store.admit(self.nonce(), 10**10_000)
+
     def test_backward_clock_step_fails_closed(self):
         self.store.admit(self.nonce(), int(self.now[0]))
         self.now[0] -= 5
