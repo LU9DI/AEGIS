@@ -364,6 +364,12 @@ class DurablePirReplayStore:
                     raise ReplayStoreError(
                         "replay admission rollback failed; admission disabled"
                     ) from exc
+            # Recoverable admission failures (for example, capacity exhaustion)
+            # also roll back the transaction that sampled the clock. Preserve
+            # that observation just as we do for request-level rejections. If
+            # trust or persistence has already failed, do not attempt recovery.
+            if not self._untrusted:
+                self._persist_wall_high_water()
             raise
         except Exception as exc:
             if db.in_transaction:
