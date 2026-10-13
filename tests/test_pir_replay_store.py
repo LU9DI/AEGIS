@@ -408,9 +408,13 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         class CommitFailConnection:
             def __init__(self, connection):
                 self.connection = connection
+                self.closed = False
+                self.transaction_was_open_at_close = None
 
             @property
             def in_transaction(self):
+                if self.closed:
+                    return False
                 return self.connection.in_transaction
 
             def execute(self, sql, *args, **kwargs):
@@ -570,7 +574,9 @@ class DurablePirReplayStoreTests(unittest.TestCase):
                 return self.connection.execute(sql, *args, **kwargs)
 
             def close(self):
+                self.transaction_was_open_at_close = self.connection.in_transaction
                 self.connection.close()
+                self.closed = True
 
         store = DurablePirReplayStore(
             self.path, server_id="replica-a", max_entries=8, clock=lambda: self.now[0]
@@ -582,7 +588,8 @@ class DurablePirReplayStoreTests(unittest.TestCase):
             with self.assertRaisesRegex(ReplayStoreError, "admission failed"):
                 store.admit(self.nonce(), int(self.now[0]))
 
-        self.assertFalse(connection.in_transaction)
+        self.assertTrue(connection.closed)
+        self.assertFalse(connection.transaction_was_open_at_close)
         self.assertTrue(store._untrusted)
         with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
             store.admit(self.nonce(), int(self.now[0]))
