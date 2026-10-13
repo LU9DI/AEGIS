@@ -180,6 +180,79 @@ class DurablePirReplayStore:
             self._untrusted = True
             raise ReplayStoreError("replay database is unavailable") from exc
 
+    def _persist_wall_high_water(self) -> float:
+        """Persist the observed wall clock before any request-specific rejection.
+
+        This deliberately commits separately from nonce admission: a duplicate
+        nonce or stale/future request timestamp must not roll back the security
+        clock merely because its admission transaction is rejected.
+        """
+        if self._untrusted:
+            raise ReplayStoreError("replay store is untrusted; admission disabled")
+        db = self._connect()
+        try:
+            db.execute("BEGIN IMMEDIATE")
+            try:
+                now = float(self._clock())
+            except Exception as exc:
+                self._untrusted = True
+                raise ReplayStoreError("wall clock is invalid; admission disabled") from exc
+            if not math.isfinite(now):
+                self._untrusted = True
+                raise ReplayStoreError("wall clock is invalid; admission disabled")
+            version = db.execute(
+                "SELECT value FROM metadata WHERE key='schema_version'"
+            ).fetchone()
+            high_row = db.execute(
+                "SELECT value FROM metadata WHERE key='wall_high_water'"
+            ).fetchone()
+            if version is None or version[0] != _SCHEMA_VERSION or high_row is None:
+                self._untrusted = True
+                raise ReplayStoreError("replay database schema/metadata is invalid")
+            try:
+                high_water = float(high_row[0])
+            except (OverflowError, TypeError, ValueError) as exc:
+                self._untrusted = True
+                raise ReplayStoreError("replay database clock metadata is invalid") from exc
+            if not math.isfinite(high_water):
+                self._untrusted = True
+                raise ReplayStoreError("replay database clock metadata is invalid")
+            if now < high_water - 1.0:
+                self._untrusted = True
+                raise ReplayStoreError("wall clock moved backwards; replay admission disabled")
+            db.execute(
+                "UPDATE metadata SET value=? WHERE key='wall_high_water'",
+                (repr(max(now, high_water)),),
+            )
+            db.execute("COMMIT")
+            return now
+        except ReplayStoreError:
+            if db.in_transaction:
+                try:
+                    db.execute("ROLLBACK")
+                except Exception as exc:
+                    self._untrusted = True
+                    raise ReplayStoreError(
+                        "replay clock rollback failed; admission disabled"
+                    ) from exc
+            raise
+        except Exception as exc:
+            if db.in_transaction:
+                try:
+                    db.execute("ROLLBACK")
+                except Exception:
+                    self._untrusted = True
+            self._untrusted = True
+            raise ReplayStoreError("could not persist replay security clock") from exc
+        finally:
+            try:
+                db.close()
+            except Exception as exc:
+                self._untrusted = True
+                raise ReplayStoreError(
+                    "replay clock connection cleanup failed; admission disabled"
+                ) from exc
+
     def admit(self, nonce: str, issued_at: int) -> None:
         """Atomically validate timestamp and consume nonce, or raise fail-closed."""
         if self._untrusted:
@@ -195,6 +268,10 @@ class DurablePirReplayStore:
             # identical bytes but differ as SQLite text keys, bypassing replay
             # uniqueness if the protocol accepts both representations.
             raise ReplayRejected("nonce format is invalid")
+        # Commit the clock observation independently before validating the
+        # request timestamp or checking nonce uniqueness. Rejections below must
+        # not rewind the security clock through transaction rollback.
+        self._persist_wall_high_water()
         if isinstance(issued_at, bool) or not isinstance(issued_at, int):
             raise ReplayRejected("request timestamp is invalid")
 
