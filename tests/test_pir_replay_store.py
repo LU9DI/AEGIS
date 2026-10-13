@@ -382,8 +382,9 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         # automatic deletion could remove a replaced or otherwise valuable file.
         self.assertTrue(store.path.exists())
         self.assertTrue(store._untrusted)
-        with self.assertRaisesRegex(ReplayStoreError, "already exists"):
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
             store.initialize()
+        self.assertTrue(store.path.exists())
         self.assertTrue(store._untrusted)
 
     def test_corrupt_database_fails_closed(self):
