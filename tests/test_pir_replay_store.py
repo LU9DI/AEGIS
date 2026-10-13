@@ -225,6 +225,19 @@ class DurablePirReplayStoreTests(unittest.TestCase):
             store.initialize()
         self.assertFalse(path.exists())
 
+    def test_initialize_parent_oserror_latches_instance(self):
+        path = Path(self.tmp.name) / "init-oserror.sqlite3"
+        store = DurablePirReplayStore(
+            path, server_id="replica-init-oserror", clock=lambda: self.now[0]
+        )
+        with patch.object(store, "_validate_parent_directory", side_effect=PermissionError("simulated")):
+            with self.assertRaisesRegex(ReplayStoreError, "parent validation failed"):
+                store.initialize()
+        self.assertTrue(store._untrusted)
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+            store.initialize()
+        self.assertFalse(path.exists())
+
     def test_initialize_parent_permission_failure_latches_instance(self):
         if os.name != "posix":
             self.skipTest("POSIX directory permissions are required")
