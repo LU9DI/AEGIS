@@ -211,9 +211,26 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
             self.store.admit(self.nonce(), int(self.now[0]))
 
-    def test_initialization_refuses_to_reset_existing_database(self):
+    def test_initialization_refuses_to_reset_existing_database_and_latches(self):
         with self.assertRaisesRegex(ReplayStoreError, "already exists"):
             self.store.initialize()
+        self.assertTrue(self.store._untrusted)
+
+        # Removing/replacing the path after this failed initialization attempt
+        # must not make the same object eligible to admit requests.
+        self.path.unlink()
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+            self.store.admit(self.nonce(), int(self.now[0]))
+
+    def test_initialization_sets_permissions_on_open_file_descriptor(self):
+        path = Path(self.tmp.name) / "fchmod.sqlite3"
+        store = DurablePirReplayStore(
+            path, server_id="replica-fchmod", clock=lambda: self.now[0]
+        )
+        with patch("anonlab.pir_replay_store.os.chmod", side_effect=AssertionError("path chmod must not be used")):
+            store.initialize()
+        if os.name == "posix":
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
 
     def test_invalid_initial_clock_does_not_create_database(self):
         path = Path(self.tmp.name) / "invalid-clock.sqlite3"
