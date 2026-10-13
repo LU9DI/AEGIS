@@ -27,7 +27,7 @@ from anonlab.pir_rpc import (
     retrieve_four_server_pir_rpc_checked,
 )
 from anonlab.pir_two_server import make_query_pair
-from anonlab.pir_replay_store import DurablePirReplayStore
+from anonlab.pir_replay_store import DurablePirReplayStore, ReplayStoreError
 
 
 class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
@@ -105,6 +105,35 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
             )
             with self.assertRaisesRegex(PirRpcProtocolError, "replay"):
                 second_server._accept_nonce(nonce, issued_at)
+
+    def test_durable_rpc_latches_after_storage_failure_without_retrying_store(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "durable-latch.sqlite3"
+            store = DurablePirReplayStore(
+                path, server_id="durable-latch", max_entries=16
+            )
+            store.initialize()
+            server = AuthenticatedPirRpcServer(
+                self.records,
+                server_id="durable-latch",
+                shared_key=secrets.token_bytes(32),
+                replay_store=store,
+                max_requests_per_second=0.1,
+                request_burst=1,
+            )
+            nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+            # The second outcome would succeed if the server retried storage.
+            # It must instead reject from its endpoint-level fail-closed latch.
+            with patch.object(
+                store, "admit",
+                side_effect=[ReplayStoreError("simulated storage failure"), None],
+            ) as admit:
+                with self.assertRaisesRegex(PirRpcProtocolError, "durable replay storage unavailable"):
+                    server._accept_nonce(nonce, int(time.time()))
+                with self.assertRaisesRegex(PirRpcProtocolError, "durable replay storage unavailable"):
+                    server._accept_nonce(nonce, int(time.time()))
+                self.assertEqual(admit.call_count, 1)
+                self.assertTrue(server._clock_untrusted)
 
     def test_durable_rpc_persists_clock_before_rejecting_stale_timestamp(self):
         with tempfile.TemporaryDirectory() as temporary:
