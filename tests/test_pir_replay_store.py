@@ -530,6 +530,61 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         self.assertTrue(store.path.exists())
         self.assertTrue(store._untrusted)
 
+    def test_unexpected_transaction_exception_rolls_back_and_latches(self):
+        real_connect = sqlite3.connect
+
+        class UnexpectedExecuteConnection:
+            def __init__(self, connection):
+                self.connection = connection
+
+            @property
+            def in_transaction(self):
+                return self.connection.in_transaction
+
+            def execute(self, sql, *args, **kwargs):
+                if "key='schema_version'" in sql:
+                    raise RuntimeError("simulated adapter failure")
+                return self.connection.execute(sql, *args, **kwargs)
+
+            def close(self):
+                self.connection.close()
+
+        store = DurablePirReplayStore(
+            self.path, server_id="replica-a", max_entries=8, clock=lambda: self.now[0]
+        )
+        connection = UnexpectedExecuteConnection(
+            real_connect(self.path, timeout=2.0, isolation_level=None)
+        )
+        with patch.object(store, "_connect", return_value=connection):
+            with self.assertRaisesRegex(ReplayStoreError, "admission failed"):
+                store.admit(self.nonce(), int(self.now[0]))
+
+        self.assertFalse(connection.in_transaction)
+        self.assertTrue(store._untrusted)
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+            store.admit(self.nonce(), int(self.now[0]))
+
+    def test_unexpected_initialization_exception_latches_partial_store(self):
+        class UnexpectedInitializationConnection:
+            def execute(self, _sql, _params=()):
+                raise RuntimeError("simulated adapter failure during initialization")
+
+            def close(self):
+                pass
+
+        path = Path(self.tmp.name) / "unexpected-partial.sqlite3"
+        store = DurablePirReplayStore(
+            path, server_id="replica-unexpected-init", clock=lambda: self.now[0]
+        )
+        with patch.object(store, "_connect", return_value=UnexpectedInitializationConnection()):
+            with self.assertRaisesRegex(ReplayStoreError, "could not initialize"):
+                store.initialize()
+
+        self.assertTrue(path.exists())
+        self.assertTrue(store._untrusted)
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+            store.initialize()
+
     def test_corrupt_database_fails_closed(self):
         self.path.write_bytes(b"not a sqlite database")
         store = DurablePirReplayStore(
