@@ -15,7 +15,10 @@ from pathlib import Path
 from anonlab.pir_replay_store import DurablePirReplayStore, ReplayRejected, ReplayStoreError
 
 
-def _admit_in_process(path: str, nonce: str, issued_at: int, queue) -> None:
+def _admit_in_process(path: str, nonce: str, issued_at: int, queue, start_barrier) -> None:
+    # Hold both independent processes at the same point so this test exercises
+    # overlapping admission attempts rather than merely sequential replays.
+    start_barrier.wait(timeout=15)
     store = DurablePirReplayStore(path, server_id="multiprocess-replica", max_entries=16)
     try:
         store.admit(nonce, issued_at)
@@ -186,8 +189,12 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         issued = int(time.time())
         context = multiprocessing.get_context("spawn")
         queue = context.Queue()
+        start_barrier = context.Barrier(2)
         processes = [
-            context.Process(target=_admit_in_process, args=(str(path), nonce, issued, queue))
+            context.Process(
+                target=_admit_in_process,
+                args=(str(path), nonce, issued, queue, start_barrier),
+            )
             for _ in range(2)
         ]
         for process in processes:
