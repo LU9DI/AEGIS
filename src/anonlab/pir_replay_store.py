@@ -321,7 +321,10 @@ class DurablePirReplayStore:
                 "UPDATE metadata SET value=? WHERE key='wall_high_water'",
                 (repr(max(now, high_water)),),
             )
-            db.execute("DELETE FROM seen_nonces WHERE expires_at < ?", (now,))
+            # Deliberately do not expire durable nonce rows using wall time.
+            # Without an independent trusted-time/rollback authority, a forward
+            # clock step could erase replay history. Capacity exhaustion is
+            # therefore fail-closed until an approved recovery/provisioning path.
             duplicate = db.execute(
                 "SELECT 1 FROM seen_nonces WHERE server_id=? AND nonce=?",
                 (self.server_id, nonce),
