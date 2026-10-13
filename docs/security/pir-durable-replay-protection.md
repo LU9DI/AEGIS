@@ -1,6 +1,6 @@
 # PIR RPC durable replay protection: design and validation plan
 
-Status: design proposal; implementation and security review are still required.
+Status: opt-in prototype implemented on the associated draft PR; deployment validation and independent security review are still required.
 
 Related findings:
 - [Issue #30: persist replay protection across process restarts](https://github.com/LU9DI/AEGIS/issues/30)
@@ -16,7 +16,7 @@ This mechanism prevents replay only. It does not establish that a PIR answer was
 
 ## Proposed storage boundary
 
-Use Python's standard-library SQLite implementation initially, behind a small replay-store interface so persistence semantics can be tested independently of the RPC handler. Do not silently select this backend for remote deployments until configuration, migration, and operational requirements are explicit.
+The current prototype uses Python's standard-library SQLite implementation behind a small replay-store class, and the RPC server can opt into it with explicit configuration. Do not silently select this backend for remote deployments until configuration, migration, and operational requirements are explicit.
 
 The database must be provisioned at a configured absolute path in a service-owned directory. The directory must not be writable by untrusted users. On supported POSIX deployments, enforce restrictive directory/file permissions and reject symlinks or non-regular files; open/initialization must not follow attacker-controlled path replacements. Document platform-specific limits rather than claiming identical guarantees on every OS. A local SQLite file is not a defense against a privileged attacker who can replace or restore the entire state directory.
 
@@ -86,4 +86,4 @@ Do not use SQLite row count alone as an unbounded capacity policy. The configure
 
 ## Implementation note
 
-This document is not an implementation and provides no evidence that durable replay protection currently exists. The branch is intended to make the security contract reviewable before changing runtime behavior.
+The draft PR implements an opt-in SQLite nonce store and connects it to the RPC server when explicitly supplied. This is not enabled by default and is not production-ready. Tests cover persistence across reopen, thread/process races, expiry, capacity, timestamp edge cases, clock rollback, corruption, symlinks, and explicit initialization. Still outstanding are crash/fault injection, stronger filesystem/path hardening, deployment configuration and recovery validation, and an independent review. The same-database high-water mark cannot detect stale snapshot restoration.
