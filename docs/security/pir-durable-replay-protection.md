@@ -23,7 +23,7 @@ The database must be provisioned at a configured absolute path in a service-owne
 Suggested schema:
 
 - `metadata(key PRIMARY KEY, value)`: schema version and persisted wall-clock high-water mark.
-- `seen_nonces(server_id, nonce, first_seen_wall, expires_at_wall, PRIMARY KEY(server_id, nonce))`: durable replay records.
+- `seen_nonces(server_id, nonce, first_seen_wall, expires_at_wall, PRIMARY KEY(server_id, nonce))`: durable replay records. In the current conservative prototype, the legacy expiry column is retained for schema compatibility but is not used to delete rows.
 
 Nonce strings must be validated to the protocol's exact expected representation and size before storage, including canonical Base64 encoding where Base64 is used. Distinct textual encodings of the same nonce bytes must not become distinct database keys. Use bound SQL parameters only. Set an explicit busy timeout and verify database/schema health at startup. Do not use an in-memory fallback if storage is unavailable.
 
@@ -45,11 +45,11 @@ Any database exception, lock timeout, integrity failure, schema mismatch, uncert
 
 A monotonic clock is appropriate for measuring elapsed time within one process, but its origin is not portable across reboot or process lifetime. Durable expiry therefore needs an explicit wall-clock trust policy, with a persisted high-water mark and fail-closed behavior on detected rollback. The original signed timestamp remains subject to the protocol freshness window.
 
-**Current implementation gap:** the SQLite prototype still computes durable nonce expiry from wall-clock time. The persisted high-water mark detects some backward clock steps, but it is not an independent trusted time source and cannot prove elapsed real time across restart. A large forward jump can move the expiry horizon forward and alter cleanup/freshness behavior. Therefore the acceptance criterion that expiry not depend on an untrusted wall clock is **not yet satisfied**. Do not describe this prototype as meeting that criterion until a trusted external time/monotonic authority is integrated, or the protocol is redesigned with a defensible bounded-lifetime model and corresponding restart/fault tests.
+**Current implementation status (latest retention hardening):** the SQLite prototype no longer deletes durable nonce rows based on wall-clock expiry. Because there is no independent trusted-time/anti-rollback authority yet, durable nonce records are retained for the lifetime of the database and `max_entries` is a lifetime admission budget; capacity exhaustion fails closed until an approved operator recovery. This removes wall-clock-driven deletion of durable replay history, but it does **not** make request freshness checks independent of wall time, detect large forward clock jumps, or prevent old snapshot restoration. The overall issue #30 time-trust acceptance criterion is therefore still **not satisfied**. Do not describe this prototype as production-ready.
 
 A high-water mark stored only in the same SQLite file cannot detect restoration of an older database snapshot: both the nonce table and high-water mark can be rolled back together. Strong protection against snapshot/VM/host rollback requires an independent monotonic anchor (for example, a separately protected external service or hardware-backed counter) or an operational guarantee that such rollback is excluded. If neither is available, document that limitation prominently and do not claim rollback-resistant replay protection.
 
-Do not use SQLite row count alone as an unbounded capacity policy. The configured maximum request rate, burst, retention duration, and memory/disk budget must be mutually consistent. Refuse unsafe configuration at initialization and never evict unexpired entries to recover capacity.
+Do not treat capacity as unbounded. The current durable prototype counts every nonce ever accepted in the database; capacity is a lifetime budget and exhaustion fails closed. Never delete rows or reset the database merely to recover capacity. A production retention/capacity model must be grounded in an independently trusted time and anti-rollback mechanism.
 
 ## Failure and lifecycle behavior
 
@@ -60,7 +60,7 @@ Do not use SQLite row count alone as an unbounded capacity policy. The configure
 - Concurrent processes: uniqueness and transaction serialization must prevent duplicate admission.
 - Backup restore: reject or require an independently verified freshness anchor; a restored file alone is not evidence that replay history is current.
 - Disk full, read-only filesystem, permission changes, lock contention, or I/O errors: reject admissions and surface a sanitized operational error without logging nonce contents or request secrets.
-- Cleanup: run transactionally and delete only expired records; do not expose nonce values in logs or metrics.
+- Future trusted-authority design: cleanup may be enabled only when a reviewed trusted-time and rollback-resistant retention policy is deployed; do not expose nonce values in logs or metrics.
 
 ## Required tests before merge
 
