@@ -293,6 +293,40 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
             store.admit(self.nonce(), int(self.now[0]))
 
+    def test_connection_close_failure_latches_store_untrusted(self):
+        real_connect = sqlite3.connect
+
+        class CloseFailConnection:
+            def __init__(self, connection):
+                self.connection = connection
+
+            @property
+            def in_transaction(self):
+                return self.connection.in_transaction
+
+            def execute(self, *args, **kwargs):
+                return self.connection.execute(*args, **kwargs)
+
+            def close(self):
+                self.connection.close()
+                raise sqlite3.OperationalError("simulated close failure")
+
+        nonce = self.nonce()
+        store = DurablePirReplayStore(
+            self.path, server_id="replica-a", max_entries=8, clock=lambda: self.now[0]
+        )
+
+        def connect_with_close_failure(*args, **kwargs):
+            return CloseFailConnection(real_connect(*args, **kwargs))
+
+        with patch("anonlab.pir_replay_store.sqlite3.connect", side_effect=connect_with_close_failure):
+            with self.assertRaisesRegex(ReplayStoreError, "connection cleanup failed"):
+                store.admit(nonce, int(self.now[0]))
+
+        self.assertTrue(store._untrusted)
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+            store.admit(self.nonce(), int(self.now[0]))
+
     def test_connection_is_closed_when_initial_pragma_fails(self):
         class FailingConnection:
             closed = False
