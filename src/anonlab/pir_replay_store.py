@@ -167,7 +167,10 @@ class DurablePirReplayStore:
             decoded = base64.b64decode(nonce, validate=True)
         except (ValueError, base64.binascii.Error) as exc:
             raise ReplayRejected("nonce format is invalid") from exc
-        if len(decoded) != 32:
+        if len(decoded) != 32 or base64.b64encode(decoded).decode("ascii") != nonce:
+            # Require canonical Base64. Non-canonical encodings can decode to
+            # identical bytes but differ as SQLite text keys, bypassing replay
+            # uniqueness if the protocol accepts both representations.
             raise ReplayRejected("nonce format is invalid")
         if isinstance(issued_at, bool) or not isinstance(issued_at, int):
             raise ReplayRejected("request timestamp is invalid")
