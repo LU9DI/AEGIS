@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import multiprocessing
 import secrets
+import sqlite3
 import tempfile
 import time
 import unittest
@@ -152,6 +153,21 @@ class DurablePirReplayStoreTests(unittest.TestCase):
             self.path, server_id="replica-a", max_entries=8, clock=lambda: self.now[0]
         )
         with self.assertRaises(ReplayStoreError):
+            store.admit(self.nonce(), int(self.now[0]))
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+            store.admit(self.nonce(), int(self.now[0]))
+
+    def test_schema_mismatch_latches_store_untrusted(self):
+        with sqlite3.connect(self.path) as db:
+            db.execute(
+                "UPDATE metadata SET value='999' WHERE key='schema_version'"
+            )
+        store = DurablePirReplayStore(
+            self.path, server_id="replica-a", max_entries=8, clock=lambda: self.now[0]
+        )
+        with self.assertRaisesRegex(ReplayStoreError, "schema/metadata"):
+            store.admit(self.nonce(), int(self.now[0]))
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
             store.admit(self.nonce(), int(self.now[0]))
 
 
