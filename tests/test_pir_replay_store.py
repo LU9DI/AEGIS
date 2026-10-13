@@ -179,7 +179,8 @@ class DurablePirReplayStoreTests(unittest.TestCase):
             rows = db.execute(
                 "SELECT nonce FROM seen_nonces WHERE server_id=?", ("replica-a",)
             ).fetchall()
-        self.assertEqual([row[0] for row in rows], [row[0] for row in []])
+        self.assertEqual(len(rows), 1)
+        self.assertNotIn(nonce, [row[0] for row in rows])
 
     def test_extreme_timestamp_integer_is_rejected_without_overflow(self):
         with self.assertRaisesRegex(ReplayRejected, "timestamp"):
