@@ -202,6 +202,33 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ReplayRejected, "timestamp"):
             self.store.admit(self.nonce(), 10**10_000)
 
+    def test_unexpected_clock_exception_latches_admission_store(self):
+        def broken_clock():
+            raise RuntimeError("clock provider crashed")
+
+        store = DurablePirReplayStore(
+            self.path, server_id="replica-a", max_entries=8, clock=broken_clock
+        )
+        with self.assertRaisesRegex(ReplayStoreError, "wall clock is invalid"):
+            store.admit(self.nonce(), int(self.now[0]))
+        self.assertTrue(store._untrusted)
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+            store.admit(self.nonce(), int(self.now[0]))
+
+    def test_unexpected_clock_exception_latches_initialization(self):
+        path = Path(self.tmp.name) / "broken-clock.sqlite3"
+
+        def broken_clock():
+            raise RuntimeError("clock provider crashed")
+
+        store = DurablePirReplayStore(path, server_id="replica-clock", clock=broken_clock)
+        with self.assertRaisesRegex(ReplayStoreError, "wall clock is invalid"):
+            store.initialize()
+        self.assertTrue(store._untrusted)
+        self.assertFalse(path.exists())
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+            store.initialize()
+
     def test_backward_clock_step_fails_closed(self):
         self.store.admit(self.nonce(), int(self.now[0]))
         self.now[0] -= 5
