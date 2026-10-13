@@ -55,7 +55,10 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         self.store.admit(nonce, int(self.now[0]))
         alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
         index = alphabet.index(nonce[-2])
-        alternate_index = (index & 0b110000) | ((index + 1) & 0b001111)
+        # For a 32-byte value, the final Base64 symbol has two unused low
+        # bits. Set one padding bit to create a non-canonical alias that still
+        # decodes to the same 32 bytes.
+        alternate_index = index | 1
         alternate = nonce[:-2] + alphabet[alternate_index] + "="
         self.assertNotEqual(nonce, alternate)
         self.assertEqual(base64.b64decode(nonce), base64.b64decode(alternate))
