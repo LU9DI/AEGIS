@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import platform
+import signal
 import subprocess
 import sys
 import time
@@ -62,24 +63,33 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
     monotonic_started = time.monotonic()
     timed_out = False
     try:
-        completed = subprocess.run(
+        # Put the benchmark in its own process group on POSIX so a timeout can
+        # terminate the benchmark and its relay/echo descendants together.
+        process = subprocess.Popen(
             command,
             cwd=ROOT,
             env=env,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=args.timeout,
-            check=False,
+            start_new_session=(os.name == "posix"),
         )
-        stdout = _text(completed.stdout)
-        stderr = _text(completed.stderr)
-        exit_code = completed.returncode
-    except subprocess.TimeoutExpired as exc:
-        timed_out = True
-        stdout = _text(exc.stdout)
-        stderr = _text(exc.stderr)
-        stderr += f"\nBenchmark exceeded timeout of {args.timeout} seconds."
-        exit_code = 124
+        try:
+            stdout, stderr = process.communicate(timeout=args.timeout)
+            exit_code = process.returncode
+        except subprocess.TimeoutExpired:
+            timed_out = True
+            if os.name == "posix":
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+            else:
+                process.kill()
+            # Drain after termination to preserve all output emitted before exit.
+            stdout, stderr = process.communicate()
+            stderr += f"\nBenchmark exceeded timeout of {args.timeout} seconds."
+            exit_code = 124
     finished = datetime.now(timezone.utc)
     stdout_bytes = stdout.encode("utf-8")
     result: dict[str, Any] = {
