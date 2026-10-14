@@ -68,12 +68,12 @@ jobs:
       - name: Capture a larger multi-hop loopback artifact
         if: github.event_name == 'workflow_dispatch' && inputs.full_baseline == true
         run: |
-          python scripts/run_transport_baseline.py \\
-            --hops 3 \\
-            --bytes 4000000 \\
-            --trials 5 \\
-            --latency-samples 100 \\
-            --timeout 300 \\
+          python scripts/run_transport_baseline.py \
+            --hops 3 \
+            --bytes 4000000 \
+            --trials 5 \
+            --latency-samples 100 \
+            --timeout 300 \
             --output "$RUNNER_TEMP/aegis-transport-full.json"
 
       - name: Upload raw benchmark artifact
