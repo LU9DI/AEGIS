@@ -522,6 +522,30 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
             store.admit(self.nonce(), int(self.now[0]))
 
+    def test_real_sqlite_write_lock_timeout_latches_store_untrusted(self):
+        # Exercise actual SQLite lock contention (not only a mocked BEGIN error).
+        # Skip the preliminary clock write so the held lock targets the admission
+        # transaction's BEGIN IMMEDIATE path specifically.
+        blocker = sqlite3.connect(self.path, timeout=0, isolation_level=None)
+        try:
+            blocker.execute("BEGIN IMMEDIATE")
+            store = DurablePirReplayStore(
+                self.path, server_id="replica-a", max_entries=8,
+                clock=lambda: self.now[0],
+            )
+            with patch.object(
+                store, "_persist_wall_high_water", return_value=self.now[0]
+            ):
+                with self.assertRaisesRegex(ReplayStoreError, "admission failed"):
+                    store.admit(self.nonce(), int(self.now[0]))
+            self.assertTrue(store._untrusted)
+            with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+                store.admit(self.nonce(), int(self.now[0]))
+        finally:
+            if blocker.in_transaction:
+                blocker.execute("ROLLBACK")
+            blocker.close()
+
     def test_commit_failure_rolls_back_and_latches_store_untrusted(self):
         real_connect = sqlite3.connect
 
