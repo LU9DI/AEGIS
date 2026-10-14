@@ -91,6 +91,11 @@ def test_transport_baseline_runner_records_timeout_without_losing_partial_output
             return CompletedProcess(command, 0, stdout="abc123\n", stderr="")
         raise TimeoutExpired(command, timeout=1, output=b'{"partial":', stderr=b"still running")
 
+    # platform.platform()/processor() may spawn subprocesses internally; keep host
+    # metadata deterministic so this test only intercepts the runner subprocesses.
+    monkeypatch.setattr(runner.platform, "platform", lambda: "test-platform")
+    monkeypatch.setattr(runner.platform, "machine", lambda: "test-machine")
+    monkeypatch.setattr(runner.platform, "processor", lambda: "test-processor")
     monkeypatch.setattr(runner.subprocess, "run", fake_run)
     result = runner._run(Namespace(
         hops=1,
