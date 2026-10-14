@@ -6,6 +6,9 @@ import unittest
 
 try:
     from cryptography.exceptions import InvalidTag
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+    from anonlab.ntor_experiment import client_finish, client_start, relay_respond
     from anonlab.onion_protocol import (
         CircuitReplayGuard,
         build_request,
@@ -90,8 +93,17 @@ class OnionPrototypeTests(unittest.TestCase):
         from anonlab.onion_relay import _handle
 
         async def scenario() -> None:
-            request_key = os.urandom(32)
-            response_key = os.urandom(32)
+            identity = os.urandom(20)
+            relay_private = X25519PrivateKey.generate()
+            relay_public = relay_private.public_key().public_bytes(
+                serialization.Encoding.Raw, serialization.PublicFormat.Raw
+            )
+            client_state, handshake = client_start(identity, relay_public)
+            relay_handshake, relay_keys = relay_respond(handshake, identity, relay_private)
+            client_keys = client_finish(client_state, relay_handshake)
+            self.assertEqual(client_keys, relay_keys)
+            request_key = client_keys.request_key
+            response_key = client_keys.response_key
             self.assertNotEqual(request_key, response_key)
 
             async def echo(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
