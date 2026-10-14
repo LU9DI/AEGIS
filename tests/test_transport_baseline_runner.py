@@ -69,3 +69,42 @@ def test_transport_baseline_runner_refuses_to_overwrite_artifact(tmp_path: Path)
     assert completed.returncode == 3
     assert "Refusing to overwrite" in completed.stderr
     assert artifact.read_text(encoding="utf-8") == '{"preserve": true}\n'
+
+
+def test_transport_baseline_runner_records_timeout_without_losing_partial_output(monkeypatch) -> None:
+    import importlib.util
+    from argparse import Namespace
+    from subprocess import CompletedProcess, TimeoutExpired
+
+    spec = importlib.util.spec_from_file_location("transport_baseline_runner", RUNNER)
+    assert spec is not None and spec.loader is not None
+    runner = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = runner
+    spec.loader.exec_module(runner)
+
+    calls = 0
+
+    def fake_run(command, **kwargs):
+        nonlocal calls
+        calls += 1
+        if command[0] == "git":
+            return CompletedProcess(command, 0, stdout="abc123\n", stderr="")
+        raise TimeoutExpired(command, timeout=1, output=b'{"partial":', stderr=b"still running")
+
+    monkeypatch.setattr(runner.subprocess, "run", fake_run)
+    result = runner._run(Namespace(
+        hops=1,
+        payload_bytes=1024,
+        trials=1,
+        latency_samples=3,
+        seed=20261009,
+        timeout=1,
+    ))
+
+    assert calls == 3
+    assert result["timed_out"] is True
+    assert result["exit_code"] == 124
+    assert result["raw_stdout"] == '{"partial":'
+    assert "exceeded timeout" in result["stderr"]
+    assert len(result["stdout_sha256"]) == 64
+
