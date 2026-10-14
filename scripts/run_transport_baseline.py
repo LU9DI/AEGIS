@@ -90,6 +90,10 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
             stdout, stderr = process.communicate()
             stderr += f"\nBenchmark exceeded timeout of {args.timeout} seconds."
             exit_code = 124
+    except OSError as exc:
+        stdout = ""
+        stderr = f"Could not start benchmark process: {exc}"
+        exit_code = 127
     finished = datetime.now(timezone.utc)
     stdout_bytes = stdout.encode("utf-8")
     result: dict[str, Any] = {
