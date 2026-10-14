@@ -127,7 +127,7 @@ From the repository root, after installing the project dependencies, run:
 python scripts/run_transport_baseline.py
 ```
 
-The runner invokes the existing loopback raw-TCP relay benchmark and writes a timestamped JSON artifact under `experiments/baselines/`. The artifact preserves the exact command, raw stdout/stderr, stdout SHA-256, exit status, commit SHA, working-tree state, runtime/platform metadata, and parsed per-trial benchmark output. A caller-specified `--output path.json` is also supported. Existing artifacts are never overwritten; choose a new path for each run. A nonzero benchmark exit status is preserved and returned by the runner.
+The runner invokes the existing loopback raw-TCP relay benchmark and writes a timestamped JSON artifact under `experiments/baselines/`. The artifact preserves the exact command, raw stdout/stderr, stdout SHA-256, exit status, commit SHA, working-tree state, runtime/platform metadata, and parsed per-trial benchmark output. A caller-specified `--output path.json` is also supported. Existing artifacts are never overwritten; choose a new path for each run. A nonzero benchmark exit status is preserved and returned by the runner. When run in GitHub Actions, the artifact also contains a `github_actions` provenance object with the event, ref, workflow/run identifiers, and—on pull requests—the original head and base SHAs. `source.git_commit` identifies the checked-out tree; for a `pull_request` run this may be GitHub's synthetic merge commit, so do not confuse it with `github_actions.pr_head_sha`.
 
 Example for a shorter smoke-sized run (not suitable as a final performance result):
 
