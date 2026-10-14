@@ -462,6 +462,25 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         finally:
             parent.chmod(original_mode)
 
+    def test_symlinked_ancestor_directory_is_rejected_and_latched(self):
+        root = Path(self.tmp.name)
+        real_parent = root / "real-parent"
+        nested = real_parent / "nested"
+        nested.mkdir(parents=True)
+        alias = root / "ancestor-link"
+        alias.symlink_to(real_parent, target_is_directory=True)
+        path = alias / "nested" / "ancestor.sqlite3"
+        store = DurablePirReplayStore(
+            path, server_id="replica-ancestor-link", max_entries=8,
+            clock=lambda: self.now[0],
+        )
+        with self.assertRaisesRegex(ReplayStoreError, "ancestry.*symlinks"):
+            store.initialize()
+        self.assertTrue(store._untrusted)
+        self.assertFalse((nested / "ancestor.sqlite3").exists())
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+            store.initialize()
+
     def test_symlink_database_is_rejected(self):
         if not hasattr(Path, "symlink_to"):
             self.skipTest("symlinks unsupported")
