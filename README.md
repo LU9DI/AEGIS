@@ -4,6 +4,98 @@
 
 The v0.27.4 recovered Python source, tests, design documents, examples, experiment results, and reports are now published as normal Git files. The repository also retains the consolidated recovery ZIP. Eight pre-existing files intentionally differ from the snapshot and were preserved rather than overwritten; their reconciliation is tracked in [Issue #1](https://github.com/LU9DI/AEGIS/issues/1). The original historical Git commit graph has not been reconstructed.
 
+## Run AEGIS locally (quick start)
+
+This section is the shortest path from a fresh checkout to an executable local run. It separates the **simulator** from the **real loopback testbeds**: neither is a public anonymity service, and neither should receive sensitive traffic.
+
+### 1. Requirements
+
+- Python 3.11 or newer.
+- Git, and a terminal opened at the repository root.
+- Internet access only to install Python packages.
+
+### 2. Install
+
+**Windows (PowerShell):**
+
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e ".[onion-lab]"
+python -m pip install pytest
+```
+
+If PowerShell blocks activation, run the commands below using `.\.venv\Scripts\python.exe` instead of activating the environment.
+
+**Linux / macOS:**
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[onion-lab]"
+python -m pip install pytest
+```
+
+The optional `onion-lab` extra installs the `cryptography` dependency used by experimental encrypted-onion and handshake demos. The core simulator and raw TCP relay benchmark do not require that extra, but installing it enables more of the research tools.
+
+### 3. Run the simulator
+
+This is a deterministic model, not a network connection. It writes a JSON report you can inspect or feed into your own analysis.
+
+```bash
+aegis --duration 30 --request-rate 1.4 --seed 20261009 --output results/simulation.json
+```
+
+The output explicitly marks `is_live_network_test: false` and `is_security_proof: false`. To see the available options, run `aegis --help`.
+
+### 4. Run a real local TCP relay-chain benchmark
+
+This starts an echo destination and multiple relay processes on `127.0.0.1`, transfers payloads through them, checks data integrity and emits a provenance-rich JSON artifact. It does **not** send traffic over the Internet.
+
+```bash
+python scripts/run_transport_baseline.py --hops 3 --bytes 4000000 --trials 5 --latency-samples 100 --timeout 300
+```
+
+The runner creates a timestamped file under `experiments/baselines/` by default and refuses to overwrite an existing artifact. To run a smaller smoke test:
+
+```bash
+python scripts/run_transport_baseline.py --hops 1 --bytes 65536 --trials 2 --latency-samples 10 --timeout 60
+```
+
+To run the same full configuration on GitHub Actions, open **Actions → Transport baseline regression → Run workflow**, select the branch you want to test, and set `full_baseline` to `true`. Download the generated artifact from that run to inspect the JSON evidence. A successful workflow validates this local benchmark; it does not validate anonymity or production security.
+
+### 5. Run the experimental encrypted-onion benchmark
+
+After installing `.[onion-lab]`, run the current loopback-only onion prototype:
+
+```bash
+aegis-onion-bench --help
+```
+
+Use the options displayed by that command to choose hop count, payload, trials and output. The prototype uses per-run pre-shared keys and experimental framing; it is **not** a production protocol, has no authenticated key exchange or forward secrecy, and is not safe for sensitive communications.
+
+### 6. Run the test suite
+
+```bash
+python -m pytest -q
+```
+
+For only the baseline runner regression tests:
+
+```bash
+python -m pytest -q tests/test_transport_baseline_runner.py
+```
+
+### What “running AEGIS” means today
+
+- **Runnable now:** the research simulator, local TCP relay benchmark, experimental loopback onion/handshake tools, and automated tests.
+- **Not available as a safe public service:** a production-ready multi-operator anonymity network, a browser proxy, a deployable Internet relay network, or cryptographically verifiable remote PIR.
+- **Do not expose the research relay to the Internet or route personal/sensitive traffic through it.** The local relay intentionally restricts its bind address to loopback; changing that guard is not a deployment step.
+
+If the goal is a service that real users can rely on, the next engineering stage is not merely hosting this code: it requires a defined client/server product, authenticated relay discovery and key management, protocol threat review, abuse controls, integration and adversarial tests, deployment automation, observability, and independent security review. Until those are implemented and validated, treat this repository as an executable research lab rather than a secure anonymity product.
+
 ## Current upload status
 
 Published and verified:
