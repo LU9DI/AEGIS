@@ -90,7 +90,9 @@ class OnionPrototypeTests(unittest.TestCase):
         from anonlab.onion_relay import _handle
 
         async def scenario() -> None:
-            key = os.urandom(32)
+            request_key = os.urandom(32)
+            response_key = os.urandom(32)
+            self.assertNotEqual(request_key, response_key)
 
             async def echo(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
                 try:
@@ -106,14 +108,14 @@ class OnionPrototypeTests(unittest.TestCase):
             destination = await asyncio.start_server(echo, "127.0.0.1", 0)
             destination_port = int(destination.sockets[0].getsockname()[1])
             relay = await asyncio.start_server(
-                lambda r, w: _handle(r, w, "relay-1", key, destination_port, True),
+                lambda r, w: _handle(r, w, "relay-1", request_key, destination_port, True, response_key),
                 "127.0.0.1",
                 0,
             )
             relay_port = int(relay.sockets[0].getsockname()[1])
             circuit_id = os.urandom(16)
             packet = build_request(
-                b"payload!", [relay_port], [key], destination_port,
+                b"payload!", [relay_port], [request_key], destination_port,
                 circuit_id=circuit_id, sequence=0,
             )
 
@@ -128,7 +130,7 @@ class OnionPrototypeTests(unittest.TestCase):
                 response = await asyncio.wait_for(read_frame(reader), timeout=2)
                 self.assertEqual(
                     unwrap_response(
-                        key, "relay-1", response,
+                        response_key, "relay-1", response,
                         circuit_id=circuit_id, expected_sequence=0,
                     ),
                     b"payload!",
