@@ -90,6 +90,18 @@ For a manually configured relay process, `--key-file` supplies the request-direc
 
 Important remaining gap: the relay CLI does not yet perform ntor with each connecting client, provision per-circuit keys automatically, or remove pre-shared key setup end to end. The ntor transcript/KDF is AEGIS-specific and is not wire-compatible with Tor; it has not received independent cryptographic review. This is integration progress, not a production security claim.
 
+### 5.2. Run the synthetic privacy evaluation harness
+
+Run a reproducible simulation of constrained path selection and a simple website-fingerprinting attacker:
+
+```bash
+aegis-privacy-eval --seed 20261014 --output experiments/privacy-eval.json
+```
+
+The harness uses synthetic latency-detour/ASN candidates and synthetic traffic traces. It reports randomized eligible-path selection, a nearest-centroid classifier's holdout accuracy, a chance baseline, and byte overhead for a toy size-bucketing/cover model on the client-to-entry link. It refuses to overwrite an existing output file.
+
+**Interpretation limit:** this is a harness smoke test, not a realistic Internet/AS topology model, not Deep Fingerprinting, not a Tor comparison, and not evidence that padding improves anonymity. Its value is a reproducible place to plug in trace datasets, calibrated route data, stronger attackers and explicit budget/accuracy targets.
+
 ### 6. Run the test suite
 
 ```bash
