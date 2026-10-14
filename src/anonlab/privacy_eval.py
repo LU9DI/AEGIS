@@ -97,7 +97,7 @@ def features(trace: dict[str, Any], *, bins: int = 24) -> tuple[float, ...]:
     """Compact directional size/time histogram suitable for a tiny baseline classifier."""
     packets = trace["packets"]
     if not packets:
-        return (0.0,) * (bins * 4 + 2)
+        return (0.0,) * (bins * 2 + 4)
     size_hist = [0.0] * bins
     delay_hist = [0.0] * bins
     up = down = total_bytes = 0
