@@ -57,6 +57,30 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(PirRpcProtocolError, "canonical base64"):
             _decode_b64(alternate, "nonce")
 
+    async def test_close_cancels_stalled_handlers_and_server_can_restart(self):
+        assert self.server_a.port is not None
+        reader, writer = await asyncio.open_connection("127.0.0.1", self.server_a.port)
+        try:
+            for _ in range(20):
+                if self.server_a.aggregate_stats["active_connections"] == 1:
+                    break
+                await asyncio.sleep(0)
+            self.assertEqual(self.server_a.aggregate_stats["active_connections"], 1)
+            await self.server_a.close()
+            self.assertEqual(self.server_a.aggregate_stats["active_connections"], 0)
+            self.assertEqual(await asyncio.wait_for(reader.read(), timeout=1), b"")
+            self.assertEqual(self.server_a.aggregate_stats["active_connections"], 0)
+
+            await self.server_a.start()
+            self.assertIsNotNone(self.server_a.port)
+            self.assertEqual(await asyncio.wait_for(reader.read(), timeout=1), b"")
+        finally:
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except (ConnectionError, OSError):
+                pass
+
     async def test_two_distinct_authenticated_rpc_endpoints_retrieve_the_record(self):
         for index, expected in enumerate(self.records):
             with self.subTest(index=index):
