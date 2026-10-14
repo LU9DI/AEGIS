@@ -59,7 +59,7 @@ jobs:
             --output "$RUNNER_TEMP/aegis-transport-smoke.json"
 
       - name: Upload raw smoke artifact
-        if: always() && hashFiles('/tmp/aegis-transport-smoke.json') != ''
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: aegis-transport-smoke-${{ github.run_id }}-${{ github.run_attempt }}
