@@ -37,6 +37,17 @@ jobs:
   loopback-baseline:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      AEGIS_GITHUB_EVENT_NAME: ${{ github.event_name }}
+      AEGIS_GITHUB_REF: ${{ github.ref }}
+      AEGIS_GITHUB_SHA: ${{ github.sha }}
+      AEGIS_GITHUB_HEAD_REF: ${{ github.head_ref }}
+      AEGIS_GITHUB_BASE_REF: ${{ github.base_ref }}
+      AEGIS_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
+      AEGIS_PR_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+      AEGIS_GITHUB_RUN_ID: ${{ github.run_id }}
+      AEGIS_GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
+      AEGIS_GITHUB_WORKFLOW: ${{ github.workflow }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
