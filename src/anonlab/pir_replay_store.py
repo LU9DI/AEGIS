@@ -66,6 +66,19 @@ class DurablePirReplayStore:
         if parent.is_symlink() or not parent.is_dir():
             raise ReplayStoreError("replay database parent must be an existing non-symlink directory")
         if os.name == "posix":
+            # Reject symlinks in every directory component, not just the leaf
+            # parent. A symlinked ancestor can redirect the apparently safe
+            # database path to a different tree. This remains a check/use
+            # sequence and does not eliminate concurrent path replacement.
+            for component in (parent, *parent.parents):
+                try:
+                    component_info = component.lstat()
+                except OSError as exc:
+                    raise ReplayStoreError("replay database path ancestry is unavailable") from exc
+                if stat.S_ISLNK(component_info.st_mode):
+                    raise ReplayStoreError("replay database path ancestry must not contain symlinks")
+                if not stat.S_ISDIR(component_info.st_mode):
+                    raise ReplayStoreError("replay database path ancestry must contain directories")
             info = parent.stat()
             if info.st_uid != os.geteuid():
                 raise ReplayStoreError("replay database parent must be owned by the service identity")
