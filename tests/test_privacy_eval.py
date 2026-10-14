@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -59,9 +60,11 @@ def test_classifier_is_deterministic_and_reports_chance_baseline() -> None:
 
 
 def test_cli_emits_explicit_non_production_flags() -> None:
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(ROOT / "src") + os.pathsep + env.get("PYTHONPATH", "")
     completed = subprocess.run(
         [sys.executable, "-m", "anonlab.privacy_eval", "--seed", "123"],
-        cwd=ROOT, capture_output=True, text=True, timeout=10, check=False,
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=10, check=False,
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
     data = json.loads(completed.stdout)
