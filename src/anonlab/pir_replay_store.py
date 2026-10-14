@@ -29,6 +29,10 @@ class ReplayRejected(ReplayStoreError):
     """Request must be rejected because its timestamp or nonce is invalid/replayed."""
 
 
+class ReplayStoreFull(ReplayStoreError):
+    """The durable lifetime admission budget is exhausted."""
+
+
 class DurablePirReplayStore:
     """SQLite-backed atomic nonce store; callers must commit admission before work.
 
@@ -335,12 +339,27 @@ class DurablePirReplayStore:
                 "SELECT COUNT(*) FROM seen_nonces WHERE server_id=?", (self.server_id,)
             ).fetchone()[0]
             if count >= self.max_entries:
-                raise ReplayStoreError("replay store is full; admission disabled")
+                raise ReplayStoreFull("replay store is full; admission disabled")
             db.execute(
                 "INSERT INTO seen_nonces(server_id, nonce, expires_at) VALUES(?, ?, ?)",
                 (self.server_id, nonce, expires_at),
             )
             db.execute("COMMIT")
+        except ReplayStoreFull:
+            if db.in_transaction:
+                try:
+                    db.execute("ROLLBACK")
+                except Exception as exc:
+                    self._untrusted = True
+                    raise ReplayStoreError(
+                        "replay admission rollback failed; admission disabled"
+                    ) from exc
+            # Preserve the latest observed clock before latching the exhausted
+            # lifetime budget. Repeated requests must not keep opening write
+            # transactions against a store that cannot admit any new nonce.
+            self._persist_wall_high_water()
+            self._untrusted = True
+            raise
         except ReplayRejected:
             if db.in_transaction:
                 try:
