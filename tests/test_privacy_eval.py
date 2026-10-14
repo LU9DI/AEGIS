@@ -76,3 +76,18 @@ def test_cli_emits_explicit_non_production_flags() -> None:
 
 def test_run_evaluation_output_is_reproducible() -> None:
     assert run_evaluation(77) == run_evaluation(77)
+
+
+def test_acceptance_threshold_fails_with_machine_readable_evidence() -> None:
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(ROOT / "src") + os.pathsep + env.get("PYTHONPATH", "")
+    completed = subprocess.run(
+        [sys.executable, "-m", "anonlab.privacy_eval", "--seed", "123",
+         "--max-padding-overhead", "0"],
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=10, check=False,
+    )
+    assert completed.returncode == 2
+    data = json.loads(completed.stdout)
+    assert data["acceptance_checks"]["passed"] is False
+    assert data["acceptance_checks"]["checks"][0]["metric"] == "padding_byte_overhead_ratio"
+    assert data["acceptance_checks"]["checks"][0]["passed"] is False
