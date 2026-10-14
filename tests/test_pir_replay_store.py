@@ -105,6 +105,23 @@ class DurablePirReplayStoreTests(unittest.TestCase):
             ).fetchone()[0])
         self.assertGreaterEqual(persisted, base + 200)
 
+    def test_rejected_admission_preserves_peak_clock_sample_if_clock_moves_back(self):
+        base = self.now[0]
+        # Preliminary persistence sees base; the locked admission sees a
+        # forward jump; the post-rollback persistence sees the clock back at
+        # base. The peak observation must not be lost during rollback.
+        samples = iter((base, base + 200, base))
+        self.store._clock = lambda: next(samples)
+
+        with self.assertRaisesRegex(ReplayRejected, "outside accepted window"):
+            self.store.admit(self.nonce(), int(base))
+
+        with sqlite3.connect(self.path) as db:
+            persisted = float(db.execute(
+                "SELECT value FROM metadata WHERE key='wall_high_water'"
+            ).fetchone()[0])
+        self.assertGreaterEqual(persisted, base + 200)
+
     def test_high_water_persists_when_duplicate_nonce_is_rejected(self):
         nonce = self.nonce()
         self.store.admit(nonce, int(self.now[0]))
