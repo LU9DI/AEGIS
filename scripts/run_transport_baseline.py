@@ -14,6 +14,7 @@ import os
 import platform
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -35,6 +36,14 @@ def _git(*args: str) -> str | None:
     return result.stdout.strip()
 
 
+def _text(value: str | bytes | None) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return value
+
+
 def _run(args: argparse.Namespace) -> dict[str, Any]:
     commit = _git("rev-parse", "HEAD")
     dirty = _git("status", "--porcelain")
@@ -50,23 +59,36 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
     source = str(ROOT / "src")
     env["PYTHONPATH"] = source + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
     started = datetime.now(timezone.utc)
-    completed = subprocess.run(
-        command,
-        cwd=ROOT,
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=args.timeout,
-        check=False,
-    )
+    monotonic_started = time.monotonic()
+    timed_out = False
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=args.timeout,
+            check=False,
+        )
+        stdout = _text(completed.stdout)
+        stderr = _text(completed.stderr)
+        exit_code = completed.returncode
+    except subprocess.TimeoutExpired as exc:
+        timed_out = True
+        stdout = _text(exc.stdout)
+        stderr = _text(exc.stderr)
+        stderr += f"\nBenchmark exceeded timeout of {args.timeout} seconds."
+        exit_code = 124
     finished = datetime.now(timezone.utc)
-    stdout_bytes = completed.stdout.encode("utf-8")
+    stdout_bytes = stdout.encode("utf-8")
     result: dict[str, Any] = {
         "schema_version": 1,
         "runner": "scripts/run_transport_baseline.py",
         "started_at_utc": started.isoformat(),
         "finished_at_utc": finished.isoformat(),
-        "elapsed_wall_seconds": (finished - started).total_seconds(),
+        "elapsed_wall_seconds": round(time.monotonic() - monotonic_started, 6),
+        "timed_out": timed_out,
         "source": {
             "git_commit": commit,
             "working_tree_dirty": None if dirty is None else bool(dirty),
@@ -80,15 +102,15 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
             "cpu_count": os.cpu_count(),
         },
         "command": command,
-        "exit_code": completed.returncode,
+        "exit_code": exit_code,
         "stdout_sha256": hashlib.sha256(stdout_bytes).hexdigest(),
-        "stderr": completed.stderr,
-        "raw_stdout": completed.stdout,
+        "stderr": stderr,
+        "raw_stdout": stdout,
         "benchmark": None,
     }
-    if completed.returncode == 0:
+    if exit_code == 0:
         try:
-            parsed = json.loads(completed.stdout)
+            parsed = json.loads(stdout)
         except json.JSONDecodeError as exc:
             result["parse_error"] = str(exc)
             result["exit_code"] = 2
@@ -99,10 +121,10 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--hops", type=int, default=3)
+    parser.add_argument("--hops", type=int, choices=range(1, 9), default=3)
     parser.add_argument("--bytes", type=int, default=4_000_000, dest="payload_bytes")
-    parser.add_argument("--trials", type=int, default=3)
-    parser.add_argument("--latency-samples", type=int, default=30)
+    parser.add_argument("--trials", type=int, choices=range(1, 21), default=3)
+    parser.add_argument("--latency-samples", type=int, choices=range(3, 501), default=30)
     parser.add_argument("--seed", type=int, default=20261009)
     parser.add_argument("--timeout", type=int, default=180, help="whole benchmark timeout in seconds")
     parser.add_argument(
@@ -111,6 +133,8 @@ def main() -> int:
         help="output JSON path; defaults to a timestamped file under experiments/baselines",
     )
     args = parser.parse_args()
+    if args.payload_bytes < 1024:
+        parser.error("--bytes must be at least 1024")
     if args.timeout < 1:
         parser.error("--timeout must be positive")
 
@@ -136,6 +160,7 @@ def main() -> int:
     print(json.dumps({
         "artifact": str(output),
         "exit_code": result["exit_code"],
+        "timed_out": result["timed_out"],
         "git_commit": result["source"]["git_commit"],
         "working_tree_dirty": result["source"]["working_tree_dirty"],
         "stdout_sha256": result["stdout_sha256"],
