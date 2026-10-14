@@ -79,6 +79,7 @@ The `expires_at` column remains in schema version 1 for compatibility with alrea
 - Validate the chosen independent anti-rollback control, including backup restoration, failover, and recovery.
 - Review ownership, permissions, mount options, backup policy, and container lifecycle in the deployment environment.
 - Obtain an independent security review. The durable replay store does not address the separate PIR answer-verifiability/correctness question.
+- For TLS listener deployments, review [PIR RPC transport resource and shutdown boundaries](pir-rpc-transport.md): the application handler cap begins after TLS negotiation and is not a concurrent-handshake cap. Directly exposed listeners need a tested handshake concurrency/rate limit before production use.
 
 
 ## Operator recovery runbook
