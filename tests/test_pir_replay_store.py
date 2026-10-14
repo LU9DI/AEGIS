@@ -247,6 +247,28 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
             small.admit(self.nonce(), int(self.now[0]))
 
+    def test_capacity_rejection_preserves_peak_clock_sample_if_clock_moves_back(self):
+        base = self.now[0]
+        small = DurablePirReplayStore(
+            self.path, server_id="replica-a", max_entries=1, clock=lambda: base
+        )
+        small.admit(self.nonce(), int(base))
+        # Preliminary persistence samples base; the locked admission observes
+        # a forward jump and is rejected for capacity; the follow-up sample
+        # falls back to base. Capacity handling must preserve the peak sample.
+        samples = iter((base, base + 200, base))
+        small._clock = lambda: next(samples)
+
+        with self.assertRaisesRegex(ReplayStoreError, "full"):
+            small.admit(self.nonce(), int(base + 200))
+
+        with sqlite3.connect(self.path) as db:
+            persisted = float(db.execute(
+                "SELECT value FROM metadata WHERE key='wall_high_water'"
+            ).fetchone()[0])
+        self.assertGreaterEqual(persisted, base + 200)
+        self.assertTrue(small._untrusted)
+
     def test_durable_nonce_is_retained_after_validity_window_without_trusted_time(self):
         nonce = self.nonce()
         issued = int(self.now[0])
