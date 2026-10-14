@@ -20,7 +20,7 @@ Until such a mechanism is implemented and tested, the threat model must explicit
 
 ## Filesystem race limitation
 
-The store checks path type, owner, and mode before SQLite opens the path by name. Those checks and SQLite's open are separate operations; an attacker able to mutate the directory concurrently may exploit a time-of-check/time-of-use race. Mode and ownership checks reduce exposure but do not eliminate it.
+On POSIX, the store checks path type, owner, and mode and rejects symlinks in every directory component before SQLite opens the path by name. Those checks and SQLite's open are separate operations; an attacker able to mutate the directory concurrently may still exploit a time-of-check/time-of-use race. Mode, ownership, and ancestor checks reduce exposure but do not eliminate it. Non-POSIX platform behavior requires separate validation.
 
 Use a service-owned, non-writable parent directory and a deployment model that prevents untrusted path replacement. Stronger guarantees require an implementation/platform design that binds validation to the same opened file identity used by SQLite; do not claim that a pathname check alone provides that guarantee.
 
