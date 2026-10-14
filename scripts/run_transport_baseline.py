@@ -94,6 +94,20 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
             "working_tree_dirty": None if dirty is None else bool(dirty),
             "working_tree_status": dirty,
         },
+        # On pull_request events, github.sha is often a synthetic merge commit.
+        # Preserve both that checkout identity and the original PR head/base SHAs.
+        "github_actions": {
+            "event_name": os.getenv("AEGIS_GITHUB_EVENT_NAME") or None,
+            "ref": os.getenv("AEGIS_GITHUB_REF") or None,
+            "sha": os.getenv("AEGIS_GITHUB_SHA") or None,
+            "head_ref": os.getenv("AEGIS_GITHUB_HEAD_REF") or None,
+            "base_ref": os.getenv("AEGIS_GITHUB_BASE_REF") or None,
+            "pr_head_sha": os.getenv("AEGIS_PR_HEAD_SHA") or None,
+            "pr_base_sha": os.getenv("AEGIS_PR_BASE_SHA") or None,
+            "run_id": os.getenv("AEGIS_GITHUB_RUN_ID") or None,
+            "run_attempt": os.getenv("AEGIS_GITHUB_RUN_ATTEMPT") or None,
+            "workflow": os.getenv("AEGIS_GITHUB_WORKFLOW") or None,
+        },
         "host": {
             "python": sys.version,
             "platform": platform.platform(),
