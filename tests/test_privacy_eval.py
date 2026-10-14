@@ -72,6 +72,12 @@ def test_cli_emits_explicit_non_production_flags() -> None:
     assert data["is_security_proof"] is False
     assert data["path_selection"]["selection_count"] == 500
     assert data["fingerprinting"]["padding"]["observed_bytes"] > 0
+    sweep = data["fingerprinting"]["defense_sweep"]
+    assert len(sweep) == 20
+    assert {row["bucket_bytes"] for row in sweep} == {128, 256, 512, 1024}
+    assert {row["cover_rate"] for row in sweep} == {0.0, 0.25, 0.5, 0.75, 1.0}
+    assert all(0 <= row["fingerprinting_accuracy"] <= 1 for row in sweep)
+    assert all(row["byte_overhead_ratio"] >= 0 for row in sweep)
 
 
 def test_run_evaluation_output_is_reproducible() -> None:
