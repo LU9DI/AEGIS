@@ -118,3 +118,22 @@ For each proposed optimization:
 ## 8. Current non-claims
 
 This plan does **not** establish that AEGIS is as fast as Edge, as anonymous as Tor, resistant to a global passive observer, or ready for sensitive/production use. The existing code and benchmark suite must be evaluated at their actual scope. The goal is to produce evidence that can support or falsify each claim, not to assume the result in advance.
+
+## 9. Capture a first machine-readable baseline
+
+From the repository root, after installing the project dependencies, run:
+
+```sh
+python scripts/run_transport_baseline.py
+```
+
+The runner invokes the existing loopback raw-TCP relay benchmark and writes a timestamped JSON artifact under `experiments/baselines/`. The artifact preserves the exact command, raw stdout/stderr, stdout SHA-256, exit status, commit SHA, working-tree state, runtime/platform metadata, and parsed per-trial benchmark output. A caller-specified `--output path.json` is also supported. Existing artifacts are never overwritten; choose a new path for each run. A nonzero benchmark exit status is preserved and returned by the runner.
+
+Example for a shorter smoke-sized run (not suitable as a final performance result):
+
+```sh
+python scripts/run_transport_baseline.py --bytes 65536 --trials 3 --latency-samples 10
+```
+
+Use default or larger payloads and repeated independent runs for the actual baseline. Record power mode, CPU/RAM details, virtualization, dependency lock state, and background load alongside the generated artifact; host metadata cannot reliably infer all of these. Review `working_tree_dirty` before treating results as a commit-specific comparison. This runner is deliberately limited to the existing raw loopback relay benchmark and does not broaden the project's privacy or performance claims.
+
