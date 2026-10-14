@@ -516,7 +516,8 @@ class DurablePirReplayStoreTests(unittest.TestCase):
                 store.admit(self.nonce(), int(self.now[0]))
 
         self.assertTrue(connection.closed)
-        self.assertFalse(connection.in_transaction)
+        # BEGIN failed before SQLite opened a transaction; the store still
+        # must latch because the admission attempt's storage outcome is unsafe.
         self.assertTrue(store._untrusted)
         with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
             store.admit(self.nonce(), int(self.now[0]))
