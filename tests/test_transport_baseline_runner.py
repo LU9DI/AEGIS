@@ -10,7 +10,17 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNNER = ROOT / "scripts" / "run_transport_baseline.py"
 
 
-def test_transport_baseline_runner_writes_auditable_artifact(tmp_path: Path) -> None:
+def test_transport_baseline_runner_writes_auditable_artifact(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("AEGIS_GITHUB_EVENT_NAME", "pull_request")
+    monkeypatch.setenv("AEGIS_GITHUB_REF", "refs/pull/34/merge")
+    monkeypatch.setenv("AEGIS_GITHUB_SHA", "merge-sha")
+    monkeypatch.setenv("AEGIS_GITHUB_HEAD_REF", "perf/reproducible-baseline-plan")
+    monkeypatch.setenv("AEGIS_GITHUB_BASE_REF", "main")
+    monkeypatch.setenv("AEGIS_PR_HEAD_SHA", "head-sha")
+    monkeypatch.setenv("AEGIS_PR_BASE_SHA", "base-sha")
+    monkeypatch.setenv("AEGIS_GITHUB_RUN_ID", "12345")
+    monkeypatch.setenv("AEGIS_GITHUB_RUN_ATTEMPT", "2")
+    monkeypatch.setenv("AEGIS_GITHUB_WORKFLOW", "Transport baseline regression")
     artifact = tmp_path / "baseline.json"
     completed = subprocess.run(
         [
@@ -37,6 +47,18 @@ def test_transport_baseline_runner_writes_auditable_artifact(tmp_path: Path) -> 
     assert summary["exit_code"] == 0
     assert saved["schema_version"] == 1
     assert saved["source"]["git_commit"]
+    assert saved["github_actions"] == {
+        "event_name": "pull_request",
+        "ref": "refs/pull/34/merge",
+        "sha": "merge-sha",
+        "head_ref": "perf/reproducible-baseline-plan",
+        "base_ref": "main",
+        "pr_head_sha": "head-sha",
+        "pr_base_sha": "base-sha",
+        "run_id": "12345",
+        "run_attempt": "2",
+        "workflow": "Transport baseline regression",
+    }
     assert saved["command"][-1] == "20261009"
     assert saved["benchmark"]["results"]["integrity_verified"] is True
     assert saved["benchmark"]["is_live_internet_test"] is False
