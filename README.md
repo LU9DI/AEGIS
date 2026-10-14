@@ -96,9 +96,11 @@ Run a reproducible simulation of constrained path selection and a simple website
 
 ```bash
 aegis-privacy-eval --seed 20261014 --output experiments/privacy-eval.json
+# Optional fail-able experiment gates:
+aegis-privacy-eval --seed 20261014 --max-padding-overhead 0.50 --max-fingerprinting-accuracy 0.60
 ```
 
-The harness uses synthetic latency-detour/ASN candidates and synthetic traffic traces. It reports randomized eligible-path selection, a nearest-centroid classifier's holdout accuracy, a chance baseline, and byte overhead for a toy size-bucketing/cover model on the client-to-entry link. It refuses to overwrite an existing output file.
+The harness uses synthetic latency-detour/ASN candidates and synthetic traffic traces. It reports randomized eligible-path selection, a nearest-centroid classifier's holdout accuracy, a chance baseline, and byte overhead for a toy size-bucketing/cover model on the client-to-entry link. It refuses to overwrite an existing output file. Optional thresholds are explicit experimental gates: the command exits with status 2 when a configured threshold fails and includes the observed values in its JSON output. Thresholds must be calibrated against a real dataset before being treated as meaningful targets.
 
 **Interpretation limit:** this is a harness smoke test, not a realistic Internet/AS topology model, not Deep Fingerprinting, not a Tor comparison, and not evidence that padding improves anonymity. Its value is a reproducible place to plug in trace datasets, calibrated route data, stronger attackers and explicit budget/accuracy targets.
 
