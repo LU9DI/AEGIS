@@ -82,6 +82,14 @@ aegis-onion-bench --help
 
 Use the options displayed by that command to choose hop count, payload, trials and output. The prototype uses per-run pre-shared keys and experimental framing; it is **not** a production protocol, has no authenticated key exchange or forward secrecy, and is not safe for sensitive communications.
 
+### 5.1. Experimental ntor-to-AEAD key plumbing (not a deployed handshake)
+
+The lab now has an experimental ntor-style key agreement and the onion relay API can use distinct 32-byte request and response AEAD keys. A regression test derives both keys through the handshake functions and exercises encrypted request/response traffic through a loopback relay.
+
+For a manually configured relay process, `--key-file` supplies the request-direction key. You may additionally pass `--response-key-file` for the separate relay-to-client key. Omitting it preserves legacy same-key lab behavior. These files are test inputs, **not** a secure key-distribution mechanism.
+
+Important remaining gap: the relay CLI does not yet perform ntor with each connecting client, provision per-circuit keys automatically, or remove pre-shared key setup end to end. The ntor transcript/KDF is AEGIS-specific and is not wire-compatible with Tor; it has not received independent cryptographic review. This is integration progress, not a production security claim.
+
 ### 6. Run the test suite
 
 ```bash
