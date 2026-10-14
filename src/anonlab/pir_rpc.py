@@ -307,6 +307,8 @@ class AuthenticatedPirRpcServer:
         self._requests_accepted = 0
         self._requests_rate_limited = 0
         self._server: asyncio.AbstractServer | None = None
+        self._closing = False
+        self._handler_tasks: set[asyncio.Task[None]] = set()
         self.port: int | None = None
 
     @property
@@ -376,6 +378,7 @@ class AuthenticatedPirRpcServer:
     async def start(self) -> "AuthenticatedPirRpcServer":
         if self._server is not None:
             raise RuntimeError("PIR RPC server is already started")
+        self._closing = False
         server_options: dict[str, object] = {
             "limit": MAX_FRAME_BYTES + 4,
             "ssl": self.ssl_context,
@@ -394,11 +397,22 @@ class AuthenticatedPirRpcServer:
         return self
 
     async def close(self) -> None:
-        if self._server is not None:
-            self._server.close()
-            await self._server.wait_closed()
+        # Stop accepting first, then cancel handlers already accepted by asyncio.
+        # In particular, a stalled frame/TLS client must not outlive close() and
+        # later reach replay admission or use a store that the caller is closing.
+        self._closing = True
+        server = self._server
+        if server is not None:
+            server.close()
+            await server.wait_closed()
             self._server = None
             self.port = None
+        current = asyncio.current_task()
+        handlers = [task for task in self._handler_tasks if task is not current]
+        for task in handlers:
+            task.cancel()
+        if handlers:
+            await asyncio.gather(*handlers, return_exceptions=True)
 
     async def __aenter__(self) -> "AuthenticatedPirRpcServer":
         return await self.start()
@@ -464,6 +478,18 @@ class AuthenticatedPirRpcServer:
         self._seen_nonces[nonce_text] = monotonic_now
 
     async def _handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        # asyncio schedules one task per accepted connection. Track it so close()
+        # can cancel in-flight work rather than only stopping the listening socket.
+        task = asyncio.current_task()
+        if self._closing:
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except (ConnectionError, OSError):
+                pass
+            return
+        if task is not None:
+            self._handler_tasks.add(task)
         # Bound concurrent handlers and slow clients. asyncio creates a task per
         # accepted connection, so reject over-capacity sockets before parsing frames.
         if self._active_connections >= MAX_ACTIVE_RPC_CONNECTIONS:
@@ -498,6 +524,8 @@ class AuthenticatedPirRpcServer:
             if not self._rate_limiter.acquire():
                 self._requests_rate_limited += 1
                 return
+            if self._closing:
+                return
             self._accept_nonce(nonce_text, issued_at)
             answer = self._reference.answer(query)
             self._requests_accepted += 1
@@ -520,6 +548,8 @@ class AuthenticatedPirRpcServer:
             pass
         finally:
             self._active_connections -= 1
+            if task is not None:
+                self._handler_tasks.discard(task)
             writer.close()
             try:
                 await writer.wait_closed()
