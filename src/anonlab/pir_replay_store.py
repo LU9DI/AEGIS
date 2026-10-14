@@ -184,7 +184,7 @@ class DurablePirReplayStore:
             self._untrusted = True
             raise ReplayStoreError("replay database is unavailable") from exc
 
-    def _persist_wall_high_water(self) -> float:
+    def _persist_wall_high_water(self, minimum_observed: float | None = None) -> float:
         """Persist the observed wall clock before any request-specific rejection.
 
         This deliberately commits separately from nonce admission: a duplicate
@@ -204,6 +204,9 @@ class DurablePirReplayStore:
             if not math.isfinite(now):
                 self._untrusted = True
                 raise ReplayStoreError("wall clock is invalid; admission disabled")
+            if minimum_observed is not None and not math.isfinite(minimum_observed):
+                self._untrusted = True
+                raise ReplayStoreError("observed wall clock is invalid; admission disabled")
             version = db.execute(
                 "SELECT value FROM metadata WHERE key='schema_version'"
             ).fetchone()
@@ -226,7 +229,7 @@ class DurablePirReplayStore:
                 raise ReplayStoreError("wall clock moved backwards; replay admission disabled")
             db.execute(
                 "UPDATE metadata SET value=? WHERE key='wall_high_water'",
-                (repr(max(now, high_water)),),
+                (repr(max(now, high_water, minimum_observed if minimum_observed is not None else high_water)),),
             )
             db.execute("COMMIT")
             return now
@@ -357,7 +360,7 @@ class DurablePirReplayStore:
             # Preserve the latest observed clock before latching the exhausted
             # lifetime budget. Repeated requests must not keep opening write
             # transactions against a store that cannot admit any new nonce.
-            self._persist_wall_high_water()
+            self._persist_wall_high_water(minimum_observed=now)
             self._untrusted = True
             raise
         except ReplayRejected:
@@ -375,7 +378,7 @@ class DurablePirReplayStore:
             # timestamp and duplicate-nonce rejection cannot rewind the clock.
             # If persistence fails, fail closed rather than returning a normal
             # rejection while the security clock's state is uncertain.
-            self._persist_wall_high_water()
+            self._persist_wall_high_water(minimum_observed=now)
             raise
         except ReplayStoreError:
             if db.in_transaction:
