@@ -502,7 +502,16 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         store = DurablePirReplayStore(
             self.path, server_id="replica-a", max_entries=8, clock=lambda: self.now[0]
         )
-        with patch.object(Path, "lstat", return_value=fake_info):
+        original_lstat = Path.lstat
+
+        def lstat_with_foreign_database_owner(path):
+            if path == self.path:
+                return fake_info
+            return original_lstat(path)
+
+        # The store now lstat()s every ancestor too. Only spoof the database
+        # file's metadata; ancestor checks must see the real filesystem.
+        with patch.object(Path, "lstat", lstat_with_foreign_database_owner):
             with self.assertRaisesRegex(ReplayStoreError, "owned by the service identity"):
                 store._connect()
         self.assertTrue(store._untrusted)
