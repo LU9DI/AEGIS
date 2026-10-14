@@ -30,6 +30,7 @@ async def _handle(
     key: bytes,
     allowed_next_port: int,
     terminal_relay: bool,
+    response_key: bytes | None = None,
 ) -> None:
     upstream_writer: asyncio.StreamWriter | None = None
     upstream_reader: asyncio.StreamReader | None = None
@@ -82,7 +83,8 @@ async def _handle(
                 response = await asyncio.wait_for(_read_frame(upstream_reader), timeout=30)
             # Each hop adds a response layer. The client removes them in route order.
             writer.write(frame(wrap_response(
-                key, relay_id, response, circuit_id=circuit_id, sequence=sequence
+                response_key if response_key is not None else key,
+                relay_id, response, circuit_id=circuit_id, sequence=sequence
             )))
             await writer.drain()
             expected_sequence += 1
@@ -99,10 +101,11 @@ async def _handle(
 
 
 async def run_server(
-    host: str, port: int, relay_id: str, key: bytes, allowed_next_port: int, terminal_relay: bool
+    host: str, port: int, relay_id: str, key: bytes, allowed_next_port: int,
+    terminal_relay: bool, response_key: bytes | None = None,
 ) -> None:
     async def handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await _handle(reader, writer, relay_id, key, allowed_next_port, terminal_relay)
+        await _handle(reader, writer, relay_id, key, allowed_next_port, terminal_relay, response_key)
 
     server = await asyncio.start_server(handler, host, port, limit=64 * 1024)
     async with server:
@@ -114,7 +117,8 @@ def main() -> None:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, required=True)
     parser.add_argument("--relay-id", required=True)
-    parser.add_argument("--key-file", type=Path, required=True)
+    parser.add_argument("--key-file", type=Path, required=True, help="legacy/request-direction 32-byte key file")
+    parser.add_argument("--response-key-file", type=Path, help="optional separate 32-byte relay-to-client AEAD key; omit only for legacy same-key lab mode")
     parser.add_argument("--allowed-next-port", type=int, required=True)
     parser.add_argument("--terminal-relay", action="store_true")
     args = parser.parse_args()
@@ -127,8 +131,13 @@ def main() -> None:
     key = args.key_file.read_bytes()
     if len(key) != 32:
         parser.error("key file must contain exactly 32 raw bytes")
+    response_key = args.response_key_file.read_bytes() if args.response_key_file else None
+    if response_key is not None and len(response_key) != 32:
+        parser.error("response key file must contain exactly 32 raw bytes")
+    if response_key is not None and response_key == key:
+        parser.error("request and response keys must be different when using directional keys")
     logging.basicConfig(level=logging.WARNING)
-    asyncio.run(run_server(args.host, args.port, args.relay_id, key, args.allowed_next_port, args.terminal_relay))
+    asyncio.run(run_server(args.host, args.port, args.relay_id, key, args.allowed_next_port, args.terminal_relay, response_key))
 
 
 if __name__ == "__main__":
