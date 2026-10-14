@@ -493,6 +493,8 @@ class AuthenticatedPirRpcServer:
         # Bound concurrent handlers and slow clients. asyncio creates a task per
         # accepted connection, so reject over-capacity sockets before parsing frames.
         if self._active_connections >= MAX_ACTIVE_RPC_CONNECTIONS:
+            if task is not None:
+                self._handler_tasks.discard(task)
             writer.close()
             try:
                 await writer.wait_closed()
