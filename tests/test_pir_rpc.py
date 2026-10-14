@@ -135,6 +135,43 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(admit.call_count, 1)
                 self.assertTrue(server._clock_untrusted)
 
+    def test_durable_rpc_latches_after_lifetime_capacity_exhaustion(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "durable-capacity.sqlite3"
+            store = DurablePirReplayStore(
+                path, server_id="durable-capacity", max_entries=13
+            )
+            store.initialize()
+            now = int(time.time())
+            # The server configuration below requires a minimum of 13 durable
+            # entries (12 seconds-window rate budget plus one burst token).
+            for _ in range(13):
+                store.admit(
+                    base64.b64encode(secrets.token_bytes(32)).decode("ascii"),
+                    now,
+                )
+
+            server = AuthenticatedPirRpcServer(
+                self.records,
+                server_id="durable-capacity",
+                shared_key=secrets.token_bytes(32),
+                replay_store=store,
+                max_requests_per_second=0.1,
+                request_burst=1,
+            )
+            nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+            with patch.object(store, "admit", wraps=store.admit) as admit:
+                with self.assertRaisesRegex(
+                    PirRpcProtocolError, "durable replay storage unavailable"
+                ):
+                    server._accept_nonce(nonce, now)
+                with self.assertRaisesRegex(
+                    PirRpcProtocolError, "durable replay storage unavailable"
+                ):
+                    server._accept_nonce(nonce, now)
+                self.assertEqual(admit.call_count, 1)
+                self.assertTrue(server._clock_untrusted)
+
     def test_durable_rpc_persists_clock_before_rejecting_stale_timestamp(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "durable-clock.sqlite3"
