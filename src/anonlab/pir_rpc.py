@@ -30,6 +30,7 @@ import time
 from typing import Sequence
 
 from .pir_two_server import MAX_DATABASE_BYTES, MAX_RECORDS, MAX_RECORD_BYTES, make_query_pair
+from .pir_replay_store import DurablePirReplayStore, ReplayRejected, ReplayStoreError
 
 PROTOCOL = "AEGIS-PIR-RPC-v1"
 MAX_FRAME_BYTES = 2_000_000
@@ -150,9 +151,12 @@ def _decode_b64(value: object, field_name: str) -> bytes:
     if not isinstance(value, str):
         raise PirRpcProtocolError(f"{field_name} must be base64 text")
     try:
-        decoded = base64.b64decode(value.encode("ascii"), validate=True)
+        encoded = value.encode("ascii")
+        decoded = base64.b64decode(encoded, validate=True)
     except (ValueError, UnicodeEncodeError) as exc:
         raise PirRpcProtocolError(f"{field_name} is not valid base64") from exc
+    if base64.b64encode(decoded).decode("ascii") != value:
+        raise PirRpcProtocolError(f"{field_name} is not canonical base64")
     return decoded
 
 
@@ -210,8 +214,14 @@ class AuthenticatedPirRpcServer:
         request_timeout_seconds: float = RPC_READ_TIMEOUT_SECONDS,
         max_requests_per_second: float = DEFAULT_MAX_REQUESTS_PER_SECOND,
         request_burst: int = DEFAULT_REQUEST_BURST,
+        replay_store: DurablePirReplayStore | None = None,
     ) -> None:
         _validate_server_id(server_id)
+        if replay_store is not None:
+            if not isinstance(replay_store, DurablePirReplayStore):
+                raise ValueError("replay_store must be a DurablePirReplayStore instance")
+            if replay_store.server_id != server_id:
+                raise ValueError("replay_store server_id must match the RPC server_id")
         if shared_key is not None:
             _validate_key(shared_key)
         if ssl_context is not None:
@@ -260,6 +270,12 @@ class AuthenticatedPirRpcServer:
                 f"{required_replay_capacity} for the configured request rate, burst, "
                 "and nonce validity window"
             )
+        if replay_store is not None and replay_store.max_entries < required_replay_capacity:
+            raise ValueError(
+                "durable replay store capacity must be at least "
+                f"{required_replay_capacity} for the configured request rate, burst, "
+                "and nonce validity window"
+            )
         # Reuse the shared validation rules from the in-process PIR reference server.
         from .pir_two_server import PirReferenceServer
         self._reference = PirReferenceServer(records)
@@ -277,6 +293,9 @@ class AuthenticatedPirRpcServer:
         self._request_timeout_seconds = float(request_timeout_seconds)
         self.host = host
         self._replay_capacity = replay_cache_capacity
+        # When configured, the durable store replaces the process-local nonce cache.
+        # Its database must be provisioned explicitly before serving requests.
+        self._replay_store = replay_store
         # Replay retention uses monotonic time. Wall-clock discontinuities fail closed
         # because timestamp validity otherwise could be rolled back after cache expiry.
         self._seen_nonces: OrderedDict[str, float] = OrderedDict()
@@ -288,6 +307,8 @@ class AuthenticatedPirRpcServer:
         self._requests_accepted = 0
         self._requests_rate_limited = 0
         self._server: asyncio.AbstractServer | None = None
+        self._closing = False
+        self._handler_tasks: set[asyncio.Task[None]] = set()
         self.port: int | None = None
 
     @property
@@ -357,6 +378,7 @@ class AuthenticatedPirRpcServer:
     async def start(self) -> "AuthenticatedPirRpcServer":
         if self._server is not None:
             raise RuntimeError("PIR RPC server is already started")
+        self._closing = False
         server_options: dict[str, object] = {
             "limit": MAX_FRAME_BYTES + 4,
             "ssl": self.ssl_context,
@@ -375,11 +397,22 @@ class AuthenticatedPirRpcServer:
         return self
 
     async def close(self) -> None:
-        if self._server is not None:
-            self._server.close()
-            await self._server.wait_closed()
+        # Stop accepting first, then cancel handlers already accepted by asyncio.
+        # In particular, a stalled frame/TLS client must not outlive close() and
+        # later reach replay admission or use a store that the caller is closing.
+        self._closing = True
+        server = self._server
+        if server is not None:
+            server.close()
+            await server.wait_closed()
             self._server = None
             self.port = None
+        current = asyncio.current_task()
+        handlers = [task for task in self._handler_tasks if task is not current]
+        for task in handlers:
+            task.cancel()
+        if handlers:
+            await asyncio.gather(*handlers, return_exceptions=True)
 
     async def __aenter__(self) -> "AuthenticatedPirRpcServer":
         return await self.start()
@@ -388,6 +421,26 @@ class AuthenticatedPirRpcServer:
         await self.close()
 
     def _accept_nonce(self, nonce_text: str, issued_at: int) -> None:
+        if self._replay_store is not None:
+            # A storage error latches this endpoint, even if the underlying
+            # failure looked recoverable (for example, lifetime capacity full).
+            # Do not retry admission on this server instance after that boundary.
+            if self._clock_untrusted:
+                raise PirRpcProtocolError(
+                    "durable replay storage unavailable; admission disabled"
+                )
+            # The durable store is the authority for wall-clock observations in
+            # this mode. Do not let process-local discontinuity checks reject a
+            # request before the SQLite high-water mark can be advanced.
+            try:
+                self._replay_store.admit(nonce_text, issued_at)
+            except ReplayRejected as exc:
+                raise PirRpcProtocolError("request replay or timestamp rejected") from exc
+            except ReplayStoreError as exc:
+                self._clock_untrusted = True
+                raise PirRpcProtocolError("durable replay storage unavailable; admission disabled") from exc
+            return
+
         now = time.time()
         monotonic_now = time.monotonic()
         if self._clock_untrusted:
@@ -404,7 +457,9 @@ class AuthenticatedPirRpcServer:
                 raise PirRpcProtocolError("system clock discontinuity; replay admission is disabled")
         self._clock_last_wall = now
         self._clock_last_monotonic = monotonic_now
-        if abs(now - issued_at) > MAX_CLOCK_SKEW_SECONDS:
+        # Compare bounds directly instead of subtracting arbitrary-size JSON
+        # integers, which can overflow during float conversion.
+        if issued_at < now - MAX_CLOCK_SKEW_SECONDS or issued_at > now + MAX_CLOCK_SKEW_SECONDS:
             raise PirRpcProtocolError("request timestamp is outside accepted window")
         # Retain by elapsed monotonic time, not adjustable wall time. A request
         # timestamp may be 60 seconds in the future and remain valid for another
@@ -423,9 +478,23 @@ class AuthenticatedPirRpcServer:
         self._seen_nonces[nonce_text] = monotonic_now
 
     async def _handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        # asyncio schedules one task per accepted connection. Track it so close()
+        # can cancel in-flight work rather than only stopping the listening socket.
+        task = asyncio.current_task()
+        if self._closing:
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except (ConnectionError, OSError):
+                pass
+            return
+        if task is not None:
+            self._handler_tasks.add(task)
         # Bound concurrent handlers and slow clients. asyncio creates a task per
         # accepted connection, so reject over-capacity sockets before parsing frames.
         if self._active_connections >= MAX_ACTIVE_RPC_CONNECTIONS:
+            if task is not None:
+                self._handler_tasks.discard(task)
             writer.close()
             try:
                 await writer.wait_closed()
@@ -457,6 +526,8 @@ class AuthenticatedPirRpcServer:
             if not self._rate_limiter.acquire():
                 self._requests_rate_limited += 1
                 return
+            if self._closing:
+                return
             self._accept_nonce(nonce_text, issued_at)
             answer = self._reference.answer(query)
             self._requests_accepted += 1
@@ -479,6 +550,8 @@ class AuthenticatedPirRpcServer:
             pass
         finally:
             self._active_connections -= 1
+            if task is not None:
+                self._handler_tasks.discard(task)
             writer.close()
             try:
                 await writer.wait_closed()

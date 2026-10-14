@@ -4,8 +4,11 @@ import asyncio
 import base64
 import json
 import secrets
+import sqlite3
+import tempfile
 import time
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from anonlab.pir_rpc import (
@@ -16,6 +19,7 @@ from anonlab.pir_rpc import (
     PirRpcProtocolError,
     _REQUEST_DOMAIN,
     _RESPONSE_DOMAIN,
+    _decode_b64,
     _signed_envelope,
     _verify_envelope,
     recover_colluded_index,
@@ -23,6 +27,7 @@ from anonlab.pir_rpc import (
     retrieve_four_server_pir_rpc_checked,
 )
 from anonlab.pir_two_server import make_query_pair
+from anonlab.pir_replay_store import DurablePirReplayStore, ReplayStoreError
 
 
 class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
@@ -43,6 +48,39 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
     async def asyncTearDown(self) -> None:
         await asyncio.gather(self.server_a.close(), self.server_b.close())
 
+    async def test_noncanonical_base64_nonce_is_rejected_before_replay_admission(self):
+        nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+        alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        index = alphabet.index(nonce[-2])
+        alternate = nonce[:-2] + alphabet[index | 1] + "="
+        self.assertEqual(base64.b64decode(nonce), base64.b64decode(alternate))
+        with self.assertRaisesRegex(PirRpcProtocolError, "canonical base64"):
+            _decode_b64(alternate, "nonce")
+
+    async def test_close_cancels_stalled_handlers_and_server_can_restart(self):
+        assert self.server_a.port is not None
+        reader, writer = await asyncio.open_connection("127.0.0.1", self.server_a.port)
+        try:
+            for _ in range(20):
+                if self.server_a.aggregate_stats["active_connections"] == 1:
+                    break
+                await asyncio.sleep(0)
+            self.assertEqual(self.server_a.aggregate_stats["active_connections"], 1)
+            await self.server_a.close()
+            self.assertEqual(self.server_a.aggregate_stats["active_connections"], 0)
+            self.assertEqual(await asyncio.wait_for(reader.read(), timeout=1), b"")
+            self.assertEqual(self.server_a.aggregate_stats["active_connections"], 0)
+
+            await self.server_a.start()
+            self.assertIsNotNone(self.server_a.port)
+            self.assertEqual(await asyncio.wait_for(reader.read(), timeout=1), b"")
+        finally:
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except (ConnectionError, OSError):
+                pass
+
     async def test_two_distinct_authenticated_rpc_endpoints_retrieve_the_record(self):
         for index, expected in enumerate(self.records):
             with self.subTest(index=index):
@@ -57,6 +95,150 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(result.authenticated_messages, 4)
                 self.assertFalse(result.is_production_secure)
 
+    def test_durable_replay_store_survives_rpc_server_recreation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "durable-replay.sqlite3"
+            store = DurablePirReplayStore(
+                path, server_id="durable-replica", max_entries=16
+            )
+            store.initialize()
+            nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+            issued_at = int(time.time())
+            records = self.records
+
+            first_server = AuthenticatedPirRpcServer(
+                records,
+                server_id="durable-replica",
+                shared_key=secrets.token_bytes(32),
+                replay_store=store,
+                max_requests_per_second=0.1,
+                request_burst=1,
+            )
+            first_server._accept_nonce(nonce, issued_at)
+
+            reopened_store = DurablePirReplayStore(
+                path, server_id="durable-replica", max_entries=16
+            )
+            second_server = AuthenticatedPirRpcServer(
+                records,
+                server_id="durable-replica",
+                shared_key=secrets.token_bytes(32),
+                replay_store=reopened_store,
+                max_requests_per_second=0.1,
+                request_burst=1,
+            )
+            with self.assertRaisesRegex(PirRpcProtocolError, "replay"):
+                second_server._accept_nonce(nonce, issued_at)
+
+    def test_durable_rpc_latches_after_storage_failure_without_retrying_store(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "durable-latch.sqlite3"
+            store = DurablePirReplayStore(
+                path, server_id="durable-latch", max_entries=16
+            )
+            store.initialize()
+            server = AuthenticatedPirRpcServer(
+                self.records,
+                server_id="durable-latch",
+                shared_key=secrets.token_bytes(32),
+                replay_store=store,
+                max_requests_per_second=0.1,
+                request_burst=1,
+            )
+            nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+            # The second outcome would succeed if the server retried storage.
+            # It must instead reject from its endpoint-level fail-closed latch.
+            with patch.object(
+                store, "admit",
+                side_effect=[ReplayStoreError("simulated storage failure"), None],
+            ) as admit:
+                with self.assertRaisesRegex(PirRpcProtocolError, "durable replay storage unavailable"):
+                    server._accept_nonce(nonce, int(time.time()))
+                with self.assertRaisesRegex(PirRpcProtocolError, "durable replay storage unavailable"):
+                    server._accept_nonce(nonce, int(time.time()))
+                self.assertEqual(admit.call_count, 1)
+                self.assertTrue(server._clock_untrusted)
+
+    def test_durable_rpc_latches_after_lifetime_capacity_exhaustion(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "durable-capacity.sqlite3"
+            store = DurablePirReplayStore(
+                path, server_id="durable-capacity", max_entries=13
+            )
+            store.initialize()
+            now = int(time.time())
+            # The server configuration below requires a minimum of 13 durable
+            # entries (12 seconds-window rate budget plus one burst token).
+            for _ in range(13):
+                store.admit(
+                    base64.b64encode(secrets.token_bytes(32)).decode("ascii"),
+                    now,
+                )
+
+            server = AuthenticatedPirRpcServer(
+                self.records,
+                server_id="durable-capacity",
+                shared_key=secrets.token_bytes(32),
+                replay_store=store,
+                max_requests_per_second=0.1,
+                request_burst=1,
+            )
+            nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+            with patch.object(store, "admit", wraps=store.admit) as admit:
+                with self.assertRaisesRegex(
+                    PirRpcProtocolError, "durable replay storage unavailable"
+                ):
+                    server._accept_nonce(nonce, now)
+                with self.assertRaisesRegex(
+                    PirRpcProtocolError, "durable replay storage unavailable"
+                ):
+                    server._accept_nonce(nonce, now)
+                self.assertEqual(admit.call_count, 1)
+                self.assertTrue(server._clock_untrusted)
+
+    def test_durable_rpc_persists_clock_before_rejecting_stale_timestamp(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "durable-clock.sqlite3"
+            base = int(time.time())
+            advanced = float(base + 300)
+            store = DurablePirReplayStore(
+                path, server_id="durable-clock", max_entries=16, clock=lambda: float(base)
+            )
+            store.initialize()
+            store._clock = lambda: advanced
+            server = AuthenticatedPirRpcServer(
+                self.records,
+                server_id="durable-clock",
+                shared_key=secrets.token_bytes(32),
+                replay_store=store,
+                max_requests_per_second=0.1,
+                request_burst=1,
+            )
+            nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+            # Simulate a process-local clock discontinuity that would have
+            # rejected before reaching the durable store in the old ordering.
+            server._clock_last_wall = float(base)
+            server._clock_last_monotonic = 100.0
+
+            with patch("anonlab.pir_rpc.time.time", return_value=advanced), patch(
+                "anonlab.pir_rpc.time.monotonic", return_value=100.0
+            ):
+                with self.assertRaisesRegex(PirRpcProtocolError, "timestamp"):
+                    server._accept_nonce(nonce, base)
+
+            with sqlite3.connect(path) as db:
+                persisted = float(db.execute(
+                    "SELECT value FROM metadata WHERE key='wall_high_water'"
+                ).fetchone()[0])
+            self.assertGreaterEqual(persisted, advanced)
+
+    def test_extreme_timestamp_integer_is_rejected_without_overflow(self):
+        with self.assertRaisesRegex(PirRpcProtocolError, "timestamp"):
+            self.server_a._accept_nonce(
+                base64.b64encode(secrets.token_bytes(32)).decode("ascii"),
+                10**10_000,
+            )
+
     async def test_rate_limited_request_does_not_mutate_replay_cache(self):
         nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
         payload = {
@@ -67,7 +249,9 @@ class AuthenticatedPirRpcTests(unittest.IsolatedAsyncioTestCase):
             "query": base64.b64encode(bytes(4)).decode("ascii"),
         }
         frame = _signed_envelope(payload, self.key_a, _REQUEST_DOMAIN)
-        self.server_a._rate_limiter.tokens = 0.0
+        # Force the limiter's rejection branch deterministically. Setting the
+        # token count to zero can race with time-based refill under CI load.
+        self.server_a._rate_limiter.acquire = lambda: False
         writer = None
         try:
             reader, writer = await asyncio.open_connection("127.0.0.1", self.server_a.port)

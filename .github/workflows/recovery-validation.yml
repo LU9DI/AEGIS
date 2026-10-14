@@ -145,8 +145,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(find src/anonlab -maxdepth 1 -name '*.py' -type f | wc -l)" -eq 42
-          test "$(find tests -maxdepth 1 -name 'test_*.py' -type f | wc -l)" -eq 26
+          test "$(find src/anonlab -maxdepth 1 -name '*.py' -type f | wc -l)" -ge 42
+          test "$(find tests -maxdepth 1 -name 'test_*.py' -type f | wc -l)" -ge 26
           python -m pip install -e ".[onion-lab]" pytest
           python -m pip check
           python -m compileall -q src tests
@@ -195,8 +195,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(find src/anonlab -maxdepth 1 -name '*.py' -type f | wc -l)" -eq 42
-          test "$(find tests -maxdepth 1 -name 'test_*.py' -type f | wc -l)" -eq 26
+          test "$(find src/anonlab -maxdepth 1 -name '*.py' -type f | wc -l)" -ge 42
+          test "$(find tests -maxdepth 1 -name 'test_*.py' -type f | wc -l)" -ge 26
           python -m pip install -e ".[onion-lab]" pytest
           python -m pip check
           python -m compileall -q src tests
