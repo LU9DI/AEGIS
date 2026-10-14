@@ -41,7 +41,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
     command = [
         sys.executable, "-m", "anonlab.local_benchmark",
         "--hops", str(args.hops),
-        "--bytes", str(args.bytes),
+        "--bytes", str(args.payload_bytes),
         "--trials", str(args.trials),
         "--latency-samples", str(args.latency_samples),
         "--seed", str(args.seed),
