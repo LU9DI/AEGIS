@@ -235,7 +235,7 @@ def main() -> None:
     if args.max_fingerprinting_accuracy is not None:
         checks.append({"metric": "padded_fingerprinting_accuracy", "limit": args.max_fingerprinting_accuracy, "observed": accuracy, "passed": accuracy <= args.max_fingerprinting_accuracy})
     result["acceptance_checks"] = {"checks": checks, "passed": all(check["passed"] for check in checks)}
-    rendered = json.dumps(result, indent=2, sort_keys=True) + "\\n"
+    rendered = json.dumps(result, indent=2, sort_keys=True) + "\n"
     if args.output:
         if args.output.exists():
             parser.error(f"refusing to overwrite existing artifact: {args.output}")
