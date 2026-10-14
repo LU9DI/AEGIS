@@ -19,6 +19,12 @@ on:
       - ".github/workflows/transport-baseline.yml"
       - "pyproject.toml"
   workflow_dispatch:
+    inputs:
+      full_baseline:
+        description: "Run a larger multi-hop loopback measurement instead of the smoke test"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -30,7 +36,7 @@ concurrency:
 jobs:
   loopback-baseline:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -49,6 +55,7 @@ jobs:
         run: python -m pytest -q tests/test_transport_baseline_runner.py
 
       - name: Capture a smoke-sized loopback artifact
+        if: github.event_name != 'workflow_dispatch' || inputs.full_baseline != true
         run: |
           python scripts/run_transport_baseline.py \
             --hops 1 \
@@ -58,11 +65,22 @@ jobs:
             --timeout 60 \
             --output "$RUNNER_TEMP/aegis-transport-smoke.json"
 
-      - name: Upload raw smoke artifact
+      - name: Capture a larger multi-hop loopback artifact
+        if: github.event_name == 'workflow_dispatch' && inputs.full_baseline == true
+        run: |
+          python scripts/run_transport_baseline.py \\
+            --hops 3 \\
+            --bytes 4000000 \\
+            --trials 5 \\
+            --latency-samples 100 \\
+            --timeout 300 \\
+            --output "$RUNNER_TEMP/aegis-transport-full.json"
+
+      - name: Upload raw benchmark artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: aegis-transport-smoke-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/aegis-transport-smoke.json
+          name: aegis-transport-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/aegis-transport-*.json
           if-no-files-found: ignore
           retention-days: 30
