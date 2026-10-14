@@ -8,6 +8,10 @@ The v0.27.4 recovered Python source, tests, design documents, examples, experime
 
 This section is the shortest path from a fresh checkout to an executable local run. It separates the **simulator** from the **real loopback testbeds**: neither is a public anonymity service, and neither should receive sensitive traffic.
 
+> **Warning:** AEGIS is an unaudited research prototype. Do not route personal, sensitive or production traffic through it, and do not expose its relays to the Internet.
+>
+> **Version note:** the recovered snapshot, reports and design notes are labelled **v0.27.4**, but the package metadata (`pyproject.toml`, `anonlab.__version__`) and `CHANGELOG.md` still report **0.26.0**. `pip show aegis-anon-lab` will therefore print 0.26.0. This mismatch is known and not yet reconciled.
+
 ### 1. Requirements
 
 - Python 3.11 or newer.
@@ -65,6 +69,8 @@ python scripts/run_transport_baseline.py --hops 1 --bytes 65536 --trials 2 --lat
 ```
 
 To run the same full configuration on GitHub Actions, open **Actions → Transport baseline regression → Run workflow**, select the branch you want to test, and set `full_baseline` to `true`. Download the generated artifact from that run to inspect the JSON evidence. A successful workflow validates this local benchmark; it does not validate anonymity or production security.
+
+**How to read the benchmark numbers.** The goodput and round-trip times measure raw TCP byte forwarding through Python relay processes on one machine (loopback). There is no physical network, and this is the raw TCP relay benchmark, not the experimental encrypted-onion prototype, so it says nothing about anonymity. The numbers are **not** Internet performance, are **not** comparable to Tor or to a direct connection, and a single run is not a stable baseline: transfers within one run can differ by tens of percent, so repeat the run and compare the spread. Compare only runs made on the same machine or runner. Use them to detect regressions in the relay code, not to make performance or privacy claims.
 
 ### 5. Run the experimental encrypted-onion benchmark
 
