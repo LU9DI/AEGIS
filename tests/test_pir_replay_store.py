@@ -219,10 +219,16 @@ class DurablePirReplayStoreTests(unittest.TestCase):
         )
         first = self.nonce()
         small.admit(first, int(self.now[0]))
-        with self.assertRaisesRegex(ReplayStoreError, "full"):
-            small.admit(self.nonce(), int(self.now[0]))
+        # A duplicate is rejected while the one-entry budget is still full,
+        # before an attempted new admission trips the terminal capacity latch.
         with self.assertRaisesRegex(ReplayRejected, "replay"):
             small.admit(first, int(self.now[0]))
+        with self.assertRaisesRegex(ReplayStoreError, "full"):
+            small.admit(self.nonce(), int(self.now[0]))
+        # Capacity exhaustion is terminal for this store instance. Repeated
+        # traffic must not keep opening SQLite write transactions indefinitely.
+        with self.assertRaisesRegex(ReplayStoreError, "untrusted"):
+            small.admit(self.nonce(), int(self.now[0]))
 
     def test_durable_nonce_is_retained_after_validity_window_without_trusted_time(self):
         nonce = self.nonce()
