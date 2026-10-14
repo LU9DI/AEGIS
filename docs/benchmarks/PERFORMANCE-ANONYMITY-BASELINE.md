@@ -137,3 +137,17 @@ python scripts/run_transport_baseline.py --bytes 65536 --trials 3 --latency-samp
 
 Use default or larger payloads and repeated independent runs for the actual baseline. Record power mode, CPU/RAM details, virtualization, dependency lock state, and background load alongside the generated artifact; host metadata cannot reliably infer all of these. Review `working_tree_dirty` before treating results as a commit-specific comparison. This runner is deliberately limited to the existing raw loopback relay benchmark and does not broaden the project's privacy or performance claims.
 
+## 10. Run the CI baseline workflow
+
+The GitHub Actions workflow `.github/workflows/transport-baseline.yml` runs a short smoke test on pull requests and relevant pushes. That run checks wiring and artifact production; its tiny payload and hosted virtual machine are not a representative performance result.
+
+To request the larger CI experiment:
+
+1. Open the repository's **Actions** tab.
+2. Select **Transport baseline regression**.
+3. Choose **Run workflow** on branch `perf/reproducible-baseline-plan`.
+4. Set `full_baseline` to `true`, then start the run.
+5. Open the completed run and download its `aegis-transport-<run-id>-<attempt>` artifact. Preserve the JSON unchanged and review exit status, timeout state, integrity result, trial spread, and commit metadata.
+
+The full CI configuration uses 3 loopback relay hops, a 4,000,000-byte payload, 5 trials and 100 latency samples. This is still a loopback microbenchmark on a GitHub-hosted runner, not a WAN experiment and not a measurement on the intended Surface device. For a device-specific baseline, run the script locally on that device under controlled power mode and load, and retain multiple artifacts from independent runs. Never compare a GitHub-hosted result directly with Edge page-load timings.
+
