@@ -219,15 +219,31 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", type=int, default=20261014)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--max-padding-overhead", type=float, help="optional acceptance threshold, e.g. 0.50 for <=50% byte overhead")
+    parser.add_argument("--max-fingerprinting-accuracy", type=float, help="optional acceptance threshold in [0,1] for the padded synthetic attack")
     args = parser.parse_args()
+    if args.max_padding_overhead is not None and args.max_padding_overhead < 0:
+        parser.error("--max-padding-overhead must be >= 0")
+    if args.max_fingerprinting_accuracy is not None and not 0 <= args.max_fingerprinting_accuracy <= 1:
+        parser.error("--max-fingerprinting-accuracy must be in [0,1]")
     result = run_evaluation(args.seed)
-    rendered = json.dumps(result, indent=2, sort_keys=True) + "\n"
+    checks = []
+    overhead = result["fingerprinting"]["padding"]["byte_overhead_ratio"]
+    accuracy = result["fingerprinting"]["padded"]["accuracy"]
+    if args.max_padding_overhead is not None:
+        checks.append({"metric": "padding_byte_overhead_ratio", "limit": args.max_padding_overhead, "observed": overhead, "passed": overhead <= args.max_padding_overhead})
+    if args.max_fingerprinting_accuracy is not None:
+        checks.append({"metric": "padded_fingerprinting_accuracy", "limit": args.max_fingerprinting_accuracy, "observed": accuracy, "passed": accuracy <= args.max_fingerprinting_accuracy})
+    result["acceptance_checks"] = {"checks": checks, "passed": all(check["passed"] for check in checks)}
+    rendered = json.dumps(result, indent=2, sort_keys=True) + "\\n"
     if args.output:
         if args.output.exists():
             parser.error(f"refusing to overwrite existing artifact: {args.output}")
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(rendered, encoding="utf-8")
     print(rendered, end="")
+    if checks and not result["acceptance_checks"]["passed"]:
+        raise SystemExit(2)
 
 
 if __name__ == "__main__":
