@@ -182,6 +182,36 @@ def run_evaluation(seed: int = 20261014) -> dict[str, Any]:
     padded_attack = evaluate_nearest_centroid(padded, seed=seed)
     original_bytes = sum(t["original_bytes"] for t in padded)
     observed_bytes = sum(t["observed_bytes"] for t in padded)
+
+    # A small parameter sweep prevents a single arbitrary padding setting from
+    # being mistaken for evidence that the defense works.
+    defense_sweep = []
+    for bucket_bytes in (128, 256, 512, 1024):
+        for cover_rate in (0.0, 0.25, 0.5, 0.75, 1.0):
+            defended = [
+                pad_trace(
+                    trace,
+                    bucket_bytes=bucket_bytes,
+                    cover_rate=cover_rate,
+                    seed=seed + index,
+                )
+                for index, trace in enumerate(traces)
+            ]
+            defended_original = sum(item["original_bytes"] for item in defended)
+            defended_observed = sum(item["observed_bytes"] for item in defended)
+            attack = evaluate_nearest_centroid(defended, seed=seed)
+            defense_sweep.append({
+                "bucket_bytes": bucket_bytes,
+                "cover_rate": cover_rate,
+                "fingerprinting_accuracy": attack["accuracy"],
+                "chance_accuracy": attack["chance_accuracy"],
+                "original_bytes": defended_original,
+                "observed_bytes": defended_observed,
+                "byte_overhead_ratio": (
+                    defended_observed / defended_original - 1
+                    if defended_original else 0
+                ),
+            })
     return {
         "schema_version": 1,
         "experiment": "synthetic_path_and_website_fingerprinting",
@@ -211,6 +241,11 @@ def run_evaluation(seed: int = 20261014) -> dict[str, Any]:
                 "byte_overhead_ratio": (observed_bytes / original_bytes - 1) if original_bytes else 0,
             },
             "warning": "synthetic labels and a simple classifier; not Deep Fingerprinting or Tor comparison",
+            "defense_sweep": defense_sweep,
+            "defense_sweep_interpretation": (
+                "Synthetic parameter exploration only; choose settings using held-out "
+                "realistic traces and a declared privacy/overhead objective."
+            ),
         },
     }
 
