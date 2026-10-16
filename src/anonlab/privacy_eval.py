@@ -431,22 +431,30 @@ def run_external_trace_evaluation(
     *,
     seed: int = 20261016,
     train_fraction: float = 0.65,
+    bucket_bytes: int = 256,
+    cover_rate: float = 0.25,
 ) -> dict[str, Any]:
     """Evaluate the baseline attacker on validated external traces with group isolation.
 
-    This intentionally reports an undefended baseline only. It does not claim the
-    dataset is representative, and it does not compare AEGIS defenses or Tor.
+    Compare an undefended baseline with a toy size-bucketing/cover transform on
+    the same group-disjoint holdout. This is not a production defense model and
+    does not claim the dataset is representative or compare against Tor.
     """
     dataset = load_normalized_jsonl(dataset_path)
     traces = dataset["traces"]
     split_result = grouped_train_test_split(
         traces, seed=seed, train_fraction=train_fraction
     )
-    attack = evaluate_nearest_centroid(
-        traces,
-        seed=seed,
-        split=(split_result["train_indices"], split_result["test_indices"]),
-    )
+    split = (split_result["train_indices"], split_result["test_indices"])
+    attack = evaluate_nearest_centroid(traces, seed=seed, split=split)
+    defended = [
+        pad_trace(trace, bucket_bytes=bucket_bytes, cover_rate=cover_rate, seed=seed + index)
+        for index, trace in enumerate(traces)
+    ]
+    defended_attack = evaluate_nearest_centroid(defended, seed=seed, split=split)
+    original_bytes = sum(item["original_bytes"] for item in defended)
+    observed_bytes = sum(item["observed_bytes"] for item in defended)
+    byte_overhead = observed_bytes / original_bytes - 1 if original_bytes else 0
     return {
         "schema_version": 1,
         "experiment": "external_trace_fingerprinting_baseline",
@@ -479,8 +487,23 @@ def run_external_trace_evaluation(
             "warning": split_result["warning"],
         },
         "attacker": attack,
+        "toy_defense": {
+            "model": "size bucketing plus probabilistic cover packets; abstract first-hop model only",
+            "bucket_bytes": bucket_bytes,
+            "cover_rate": cover_rate,
+            "original_bytes": original_bytes,
+            "observed_bytes": observed_bytes,
+            "byte_overhead_ratio": byte_overhead,
+            "attacker": defended_attack,
+            "accuracy_delta_vs_undefended": defended_attack["accuracy"] - attack["accuracy"],
+            "same_group_disjoint_holdout": attack["split"] == defended_attack["split"],
+            "warning": (
+                "toy transform and simple classifier only; packet timing, real protocol behavior, "
+                "traffic adaptation, and stronger attackers are not modeled"
+            ),
+        },
         "not_measured": {
-            "defense_effectiveness": "no defended traces were evaluated",
+            "defense_effectiveness": "only this toy transform and this simple attacker were evaluated; no privacy guarantee",
             "tor_comparison": "no Tor or matched baseline comparison was performed",
             "dataset_representativeness": "not independently assessed",
             "capture_provenance": "dataset provenance and authenticity are not independently verified; only file digest and counts are recorded",
@@ -573,6 +596,18 @@ def main() -> None:
         default=0.65,
         help="target training fraction for --trace-dataset (0.4..0.8; groups remain intact)",
     )
+    parser.add_argument(
+        "--trace-bucket-bytes",
+        type=int,
+        default=256,
+        help="toy external-trace defense packet-size bucket (minimum 64 bytes)",
+    )
+    parser.add_argument(
+        "--trace-cover-rate",
+        type=float,
+        default=0.25,
+        help="toy external-trace cover packet probability per observed packet (0..1)",
+    )
     parser.add_argument("--max-padding-overhead", type=float, help="optional acceptance threshold, e.g. 0.50 for <=50%% byte overhead")
     parser.add_argument("--max-fingerprinting-accuracy", type=float, help="optional acceptance threshold in [0,1] for the padded synthetic attack")
     parser.add_argument(
@@ -585,7 +620,11 @@ def main() -> None:
             parser.error("--trace-dataset cannot be combined with synthetic-only stability or acceptance options")
         try:
             external_result = run_external_trace_evaluation(
-                args.trace_dataset, seed=args.seed, train_fraction=args.train_fraction
+                args.trace_dataset,
+                seed=args.seed,
+                train_fraction=args.train_fraction,
+                bucket_bytes=args.trace_bucket_bytes,
+                cover_rate=args.trace_cover_rate,
             )
         except (OSError, ValueError) as exc:
             parser.error(str(exc))
