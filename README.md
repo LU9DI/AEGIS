@@ -98,11 +98,21 @@ Run a reproducible simulation of constrained path selection and a simple website
 aegis-privacy-eval --seed 20261014 --output experiments/privacy-eval.json
 # Optional fail-able experiment gates:
 aegis-privacy-eval --seed 20261014 --max-padding-overhead 0.50 --max-fingerprinting-accuracy 0.60
+# Multi-seed stability report (comma-separated, at least two seeds):
+aegis-privacy-eval --seed 20261014 --stability-seeds 20261015,20261016,20261017,20261020 --output experiments/privacy-eval.json
 ```
 
 The harness uses synthetic latency-detour/ASN candidates and synthetic traffic traces. It reports randomized eligible-path selection, a nearest-centroid classifier's holdout accuracy, a chance baseline, and byte overhead for a toy size-bucketing/cover model on the client-to-entry link. It also runs a 20-point sweep across four packet-size buckets and five cover rates, reporting accuracy and byte overhead for each setting so one arbitrary configuration is not mistaken for a successful defense. It refuses to overwrite an existing output file. Optional thresholds are explicit experimental gates: the command exits with status 2 when a configured threshold fails and includes the observed values in its JSON output. Thresholds must be calibrated against a real dataset before being treated as meaningful targets.
 
-**Interpretation limit:** this is a harness smoke test, not a realistic Internet/AS topology model, not Deep Fingerprinting, not a Tor comparison, and not evidence that padding improves anonymity. Its value is a reproducible place to plug in trace datasets, calibrated route data, stronger attackers and explicit budget/accuracy targets.
+Artifact schema 2 (current) adds, on top of schema 1:
+
+- one shared stratified train/test split used by the plain, padded and sweep measurements, recorded with train/test digests and validated at runtime (overlap or out-of-range indices abort the run), so measurements cannot silently train on test data;
+- a confusion matrix and per-class precision/recall/f1 for every measured configuration (the legacy `per_class_accuracy` field is preserved);
+- `--stability-seeds`, which re-runs the evaluation under extra seeds and reports min/max/mean/pstdev spreads. This is sampling-seed spread only — not a confidence interval and not evidence about real traffic;
+- a stricter default AS policy for path selection: candidate paths are rejected whenever any autonomous system appears at more than one path position (entry AS reappearing as a middle relay, entry = exit, repeated middle relay AS, …). Rejections are counted in `as_conflict_rejections` and cross-checked by `selected_paths_with_as_conflict` so a relaxed policy would be visible in the artifact;
+- a `not_measured` block naming properties this harness does not measure (real packet captures, latency, throughput), so synthetic model parameters cannot be mistaken for measurements.
+
+**Interpretation limit:** this is a harness smoke test, not a realistic Internet/AS topology model, not Deep Fingerprinting, not a Tor comparison, and not evidence that padding improves anonymity. Synthetic accuracies near 1.0 — and the mid-range dips at one sweep corner — are properties of the toy features and the nearest-centroid classifier, not measurements of a defense. Its value is a reproducible place to plug in trace datasets, calibrated route data, stronger attackers and explicit budget/accuracy targets.
 
 ### 6. Run the test suite
 
