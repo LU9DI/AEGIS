@@ -107,7 +107,7 @@ def load_normalized_jsonl(path: str | Path) -> dict[str, Any]:
             direction = packet["direction"]
             size = packet["size_bytes"]
             delta_ms = packet["delta_ms"]
-            if isinstance(direction, bool) or direction not in (-1, 1):
+            if isinstance(direction, bool) or not isinstance(direction, int) or direction not in (-1, 1):
                 raise ValueError(
                     f"line {line_number}, packet {packet_number}: direction must be -1 or 1"
                 )
