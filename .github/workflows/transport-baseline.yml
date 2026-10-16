@@ -6,6 +6,8 @@ on:
       - "scripts/run_transport_baseline.py"
       - "src/anonlab/local_benchmark.py"
       - "src/anonlab/trace_dataset.py"
+      - "src/anonlab/privacy_eval.py"
+      - "tests/test_privacy_eval.py"
       - "tests/test_transport_baseline_runner.py"
       - "tests/test_trace_dataset.py"
       - "docs/experiments/NORMALIZED-TRACE-DATASET.md"
@@ -69,7 +71,7 @@ jobs:
       - name: Run baseline and normalized trace dataset regression tests
         env:
           PYTHONPATH: src
-        run: python -m pytest -q tests/test_transport_baseline_runner.py tests/test_trace_dataset.py
+        run: python -m pytest -q tests/test_transport_baseline_runner.py tests/test_trace_dataset.py tests/test_privacy_eval.py
 
       - name: Capture a smoke-sized loopback artifact
         if: github.event_name != 'workflow_dispatch' || inputs.full_baseline != true
