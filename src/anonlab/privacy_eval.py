@@ -1,17 +1,22 @@
 """Reproducible synthetic path and traffic-fingerprinting evaluation harness.
 
 This is a research simulation, not a network measurement or an anonymity proof.
+Reported numbers describe a synthetic model with a deliberately simple
+classifier; they do not measure latency, throughput, or real Tor comparison
+performance, and they are not evidence that a defense works on real traffic.
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import random
+import statistics
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 
 @dataclass(frozen=True)
@@ -23,22 +28,62 @@ class CandidatePath:
     capacity_mbps: float = 100.0
 
 
+def repeated_as_observers(relay_asns: Sequence[str]) -> tuple[str, ...]:
+    """Return autonomous systems occupying more than one position of the path.
+
+    A single AS that hosts several relays of one circuit observes multiple
+    points of that route. Comparing only the entry and exit ASes misses
+    partial-route observers such as an AS hosting the entry hop and a middle
+    hop. This helper names those observers so the selector can reject them.
+    """
+    counts: dict[str, int] = defaultdict(int)
+    for asn in relay_asns:
+        counts[asn] += 1
+    return tuple(sorted(asn for asn, count in counts.items() if count > 1))
+
+
 def select_path(
     candidates: list[CandidatePath],
     *,
     max_detour_ms: float,
     rng: random.Random,
     avoid_entry_exit_as: bool = True,
+    require_distinct_as_observers: bool = True,
 ) -> CandidatePath:
-    """Randomize among feasible paths; reject candidates that fail hard constraints."""
+    """Randomize among feasible paths; reject candidates that fail hard constraints.
+
+    Threat-model notes (synthetic data, no BGP or geolocation inference):
+
+    - ``avoid_entry_exit_as`` rejects a shared entry/exit AS, because an
+      observer in that AS sees both ends of the circuit and can correlate
+      them directly.
+    - ``require_distinct_as_observers`` additionally rejects any AS that
+      appears at more than one position of the path. That covers
+      partial-route observers (for example, entry + middle, or middle +
+      exit) that a first-vs-last comparison alone would accept, and it
+      matches the ``max_same_asn=1`` diversity constraint used by the
+      offline route scorer.
+
+    These are necessary-but-not-sufficient constraints: they do not model
+    route asymmetry, upstream transit sharing, or real AS topology, and they
+    do not by themselves provide anonymity against a global observer.
+    """
+
+    def as_feasible(path: CandidatePath) -> bool:
+        asns = path.relay_asns
+        if require_distinct_as_observers and repeated_as_observers(asns):
+            return False
+        if avoid_entry_exit_as and len(asns) >= 2 and asns[0] == asns[-1]:
+            return False
+        return True
+
     feasible = [
         path for path in candidates
         if path.detour_ms >= 0
         and path.detour_ms <= max_detour_ms
         and path.hops >= 2
         and path.capacity_mbps > 0
-        and (not avoid_entry_exit_as or len(path.relay_asns) < 2
-             or path.relay_asns[0] != path.relay_asns[-1])
+        and as_feasible(path)
     ]
     if not feasible:
         raise ValueError("no path satisfies the configured latency and AS constraints")
@@ -117,49 +162,147 @@ def features(trace: dict[str, Any], *, bins: int = 24) -> tuple[float, ...]:
     )
 
 
-def evaluate_nearest_centroid(
-    traces: list[dict[str, Any]], *, seed: int = 20261014, train_fraction: float = 0.65
-) -> dict[str, Any]:
-    """Evaluate a deterministic nearest-centroid fingerprinting attacker on a holdout set."""
+def stratified_split_indices(
+    labels: Sequence[int], *, seed: int = 20261014, train_fraction: float = 0.65
+) -> tuple[tuple[int, ...], tuple[int, ...]]:
+    """Split trace indices per class into train/test sets.
+
+    The split is derived once from the *undefended* traces and then reused for
+    every defense configuration, so all attackers train and are tested on the
+    exact same holdout (paired comparison) and no trace index appears in both
+    sets. Each class keeps at least two training traces and at least one test
+    trace, mirroring the previous inline split logic.
+    """
     if not 0.4 <= train_fraction <= 0.8:
         raise ValueError("train_fraction must be between 0.4 and 0.8")
-    grouped: dict[int, list[dict[str, Any]]] = defaultdict(list)
-    for trace in traces:
-        grouped[int(trace["label"])].append(trace)
+    grouped: dict[int, list[int]] = defaultdict(list)
+    for index, label in enumerate(labels):
+        grouped[int(label)].append(index)
     rng = random.Random(seed)
-    train, test = [], []
-    for label, group in sorted(grouped.items()):
+    train: list[int] = []
+    test: list[int] = []
+    for label in sorted(grouped):
+        group = grouped[label]
         if len(group) < 4:
             raise ValueError("each class needs at least 4 traces")
-        group = list(group)
         rng.shuffle(group)
         split = max(2, min(len(group) - 1, int(len(group) * train_fraction)))
         train.extend(group[:split])
         test.extend(group[split:])
+    return tuple(train), tuple(test)
+
+
+def _split_digest(indices: tuple[int, ...]) -> str:
+    joined = ",".join(str(index) for index in indices)
+    return hashlib.sha256(joined.encode("ascii")).hexdigest()[:16]
+
+
+def _validate_split(total: int, split: tuple[Sequence[int], Sequence[int]]) -> tuple[tuple[int, ...], tuple[int, ...]]:
+    train_indices, test_indices = (tuple(split[0]), tuple(split[1]))
+    seen: set[int] = set()
+    for index in train_indices + test_indices:
+        if not isinstance(index, int) or isinstance(index, bool) or not 0 <= index < total:
+            raise ValueError("split indices must be integers within the trace range")
+        if index in seen:
+            raise ValueError("split reuses a trace index; train/test data would leak")
+        seen.add(index)
+    if not train_indices or not test_indices:
+        raise ValueError("split must leave at least one training and one test trace")
+    return train_indices, test_indices
+
+
+def evaluate_nearest_centroid(
+    traces: list[dict[str, Any]],
+    *,
+    seed: int = 20261014,
+    train_fraction: float = 0.65,
+    split: tuple[Sequence[int], Sequence[int]] | None = None,
+) -> dict[str, Any]:
+    """Evaluate a deterministic nearest-centroid fingerprinting attacker on a holdout set.
+
+    Reports accuracy next to the chance baseline, a confusion matrix, and
+    per-class precision/recall/F1. When ``split`` is provided it is reused
+    verbatim (``train_fraction`` is then ignored) so several defense
+    configurations can be compared on an identical holdout.
+    """
+    if not traces:
+        raise ValueError("no traces to evaluate")
+    labels = [int(trace["label"]) for trace in traces]
+    if split is None:
+        train_indices, test_indices = stratified_split_indices(
+            labels, seed=seed, train_fraction=train_fraction
+        )
+    else:
+        train_indices, test_indices = _validate_split(len(traces), split)
+    train = [traces[index] for index in train_indices]
+    test = [traces[index] for index in test_indices]
+
     vectors = [(int(t["label"]), features(t)) for t in train]
+    centroid_labels = sorted({label for label, _ in vectors})
     centroids = {}
-    for label in grouped:
+    for label in centroid_labels:
         rows = [vector for y, vector in vectors if y == label]
         centroids[label] = tuple(sum(row[i] for row in rows) / len(rows) for i in range(len(rows[0])))
-    correct = 0
-    per_class = defaultdict(lambda: [0, 0])
-    for trace in test:
+    test_labels = sorted({int(t["label"]) for t in test})
+    missing = [label for label in test_labels if label not in centroids]
+    if missing:
+        raise ValueError(f"split leaves classes without training traces: {missing}")
+
+    predictions = {}
+    for index, trace in zip(test_indices, test):
         vector = features(trace)
-        prediction = min(
+        predictions[index] = min(
             centroids,
             key=lambda label: sum((a - b) ** 2 for a, b in zip(vector, centroids[label])),
         )
-        label = int(trace["label"])
-        per_class[label][1] += 1
-        per_class[label][0] += int(prediction == label)
-        correct += int(prediction == label)
+
+    matrix_labels = sorted(set(centroid_labels) | set(test_labels))
+    confusion: dict[int, dict[int, int]] = {
+        actual: {predicted: 0 for predicted in matrix_labels} for actual in matrix_labels
+    }
+    correct = 0
+    for index, trace in zip(test_indices, test):
+        actual = int(trace["label"])
+        predicted = predictions[index]
+        confusion[actual][predicted] += 1
+        correct += int(predicted == actual)
+
+    per_class: dict[str, dict[str, float | int]] = {}
+    for label in matrix_labels:
+        support = sum(confusion[label].values())
+        predicted_count = sum(confusion[actual][label] for actual in matrix_labels)
+        true_positive = confusion[label][label]
+        precision = true_positive / predicted_count if predicted_count else 0.0
+        recall = true_positive / support if support else 0.0
+        f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+        per_class[str(label)] = {
+            "precision": precision,
+            "recall": recall,
+            "f1": f1,
+            "support": support,
+        }
+
     return {
         "classifier": "nearest-centroid synthetic baseline",
         "train_samples": len(train),
         "test_samples": len(test),
         "accuracy": correct / len(test),
-        "chance_accuracy": 1 / len(grouped),
-        "per_class_accuracy": {str(k): v[0] / v[1] for k, v in sorted(per_class.items())},
+        "chance_accuracy": 1 / len(centroids),
+        "per_class_accuracy": {
+            str(label): (confusion[label][label] / sum(confusion[label].values())) if sum(confusion[label].values()) else 0.0
+            for label in matrix_labels
+        },
+        "per_class": per_class,
+        "confusion_matrix": {
+            str(actual): {str(predicted): count for predicted, count in row.items()}
+            for actual, row in confusion.items()
+        },
+        "split": {
+            "train_size": len(train_indices),
+            "test_size": len(test_indices),
+            "train_digest": _split_digest(train_indices),
+            "test_digest": _split_digest(test_indices),
+        },
     }
 
 
@@ -170,6 +313,10 @@ def run_evaluation(seed: int = 20261014) -> dict[str, Any]:
         CandidatePath("regional-b", 6.0, ("AS64504", "AS64505", "AS64506"), 3, 60),
         CandidatePath("regional-c", 8.0, ("AS64507", "AS64508", "AS64509"), 3, 120),
         CandidatePath("bad-shared-as", 2.0, ("AS64510", "AS64511", "AS64510"), 3, 200),
+        # Entry and exit differ, but AS64520 sits at the entry and at a middle
+        # hop: it observes two positions and could anchor the circuit. The
+        # previous entry-vs-exit-only check would have accepted this path.
+        CandidatePath("bad-repeated-middle-as", 3.0, ("AS64520", "AS64521", "AS64520", "AS64522"), 4, 150),
         CandidatePath("too-slow", 45.0, ("AS64512", "AS64513", "AS64514"), 3, 40),
     ]
     selections = [select_path(candidates, max_detour_ms=12, rng=rng) for _ in range(500)]
@@ -178,8 +325,12 @@ def run_evaluation(seed: int = 20261014) -> dict[str, Any]:
         pad_trace(t, bucket_bytes=256, cover_rate=0.25, seed=seed + index)
         for index, t in enumerate(traces)
     ]
-    plain_attack = evaluate_nearest_centroid(traces, seed=seed)
-    padded_attack = evaluate_nearest_centroid(padded, seed=seed)
+    # One split for every attacker, derived from the undefended traces, so no
+    # defense configuration sees a different holdout and no trace leaks across
+    # the train/test boundary.
+    split = stratified_split_indices([int(t["label"]) for t in traces], seed=seed)
+    plain_attack = evaluate_nearest_centroid(traces, seed=seed, split=split)
+    padded_attack = evaluate_nearest_centroid(padded, seed=seed, split=split)
     original_bytes = sum(t["original_bytes"] for t in padded)
     observed_bytes = sum(t["observed_bytes"] for t in padded)
 
@@ -199,12 +350,14 @@ def run_evaluation(seed: int = 20261014) -> dict[str, Any]:
             ]
             defended_original = sum(item["original_bytes"] for item in defended)
             defended_observed = sum(item["observed_bytes"] for item in defended)
-            attack = evaluate_nearest_centroid(defended, seed=seed)
+            attack = evaluate_nearest_centroid(defended, seed=seed, split=split)
             defense_sweep.append({
                 "bucket_bytes": bucket_bytes,
                 "cover_rate": cover_rate,
                 "fingerprinting_accuracy": attack["accuracy"],
                 "chance_accuracy": attack["chance_accuracy"],
+                "per_class_accuracy": attack["per_class_accuracy"],
+                "test_samples": attack["test_samples"],
                 "original_bytes": defended_original,
                 "observed_bytes": defended_observed,
                 "byte_overhead_ratio": (
@@ -212,17 +365,38 @@ def run_evaluation(seed: int = 20261014) -> dict[str, Any]:
                     if defended_original else 0
                 ),
             })
+    as_conflicts = {
+        path.path_id: list(repeated_as_observers(path.relay_asns))
+        for path in candidates
+        if repeated_as_observers(path.relay_asns)
+    }
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "experiment": "synthetic_path_and_website_fingerprinting",
         "seed": seed,
         "is_live_network_test": False,
         "is_security_proof": False,
+        "not_measured": {
+            "latency": "synthetic delay values are model parameters, not measurements",
+            "throughput": "no transport simulation is performed by this harness",
+            "real_traffic": "no packet capture or external dataset is loaded",
+        },
         "path_selection": {
             "candidate_count": len(candidates),
             "selection_count": len(selections),
             "max_detour_ms": 12,
-            "as_entry_exit_constraint": "entry ASN must differ from exit ASN",
+            "as_policy": {
+                "entry_exit_disjoint": True,
+                "all_positions_distinct": True,
+                "note": (
+                    "rejects any autonomous system appearing at more than one path position; "
+                    "synthetic AS labels, not BGP or geolocation inference"
+                ),
+            },
+            "as_conflict_rejections": as_conflicts,
+            "selected_paths_with_as_conflict": sum(
+                bool(repeated_as_observers(selected.relay_asns)) for selected in selections
+            ),
             "selected_path_counts": {
                 path.path_id: sum(selected.path_id == path.path_id for selected in selections)
                 for path in candidates
@@ -250,18 +424,98 @@ def run_evaluation(seed: int = 20261014) -> dict[str, Any]:
     }
 
 
+def _spread(values: Sequence[float]) -> dict[str, float]:
+    return {
+        "min": min(values),
+        "max": max(values),
+        "mean": statistics.fmean(values),
+        "pstdev": statistics.pstdev(values),
+    }
+
+
+def run_seed_stability(seeds: Sequence[int]) -> dict[str, Any]:
+    """Repeat the full evaluation across seeds and report the observed spread.
+
+    Each seed regenerates synthetic traces (same class layout, different
+    packet content), so the spread quantifies how sensitive the synthetic
+    results are to trace sampling. It is not a substitute for independent
+    replicated datasets, and a small spread here does not mean the defense is
+    robust on real traffic.
+    """
+    cleaned: list[int] = []
+    for value in seeds:
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise ValueError("stability seeds must be integers")
+        cleaned.append(value)
+    if len(cleaned) < 2:
+        raise ValueError("at least two seeds are required for a stability report")
+    runs = []
+    sweep_accuracy: dict[tuple[int, float], list[float]] = defaultdict(list)
+    sweep_overhead: dict[tuple[int, float], list[float]] = defaultdict(list)
+    for seed in cleaned:
+        result = run_evaluation(seed)
+        fingerprinting = result["fingerprinting"]
+        runs.append({
+            "seed": seed,
+            "plain_accuracy": fingerprinting["plain"]["accuracy"],
+            "padded_accuracy": fingerprinting["padded"]["accuracy"],
+            "padded_byte_overhead_ratio": fingerprinting["padding"]["byte_overhead_ratio"],
+        })
+        for row in fingerprinting["defense_sweep"]:
+            key = (row["bucket_bytes"], row["cover_rate"])
+            sweep_accuracy[key].append(row["fingerprinting_accuracy"])
+            sweep_overhead[key].append(row["byte_overhead_ratio"])
+    return {
+        "seeds": cleaned,
+        "runs": runs,
+        "plain_accuracy_spread": _spread([run["plain_accuracy"] for run in runs]),
+        "padded_accuracy_spread": _spread([run["padded_accuracy"] for run in runs]),
+        "padded_byte_overhead_ratio_spread": _spread(
+            [run["padded_byte_overhead_ratio"] for run in runs]
+        ),
+        "defense_sweep_spread": [
+            {
+                "bucket_bytes": bucket_bytes,
+                "cover_rate": cover_rate,
+                "accuracy_spread": _spread(sweep_accuracy[(bucket_bytes, cover_rate)]),
+                "byte_overhead_ratio_spread": _spread(sweep_overhead[(bucket_bytes, cover_rate)]),
+            }
+            for bucket_bytes, cover_rate in sorted(sweep_accuracy)
+        ],
+        "warning": (
+            "spread across synthetic sampling seeds only; not a confidence interval "
+            "and not evidence of behavior on real traffic"
+        ),
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", type=int, default=20261014)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--max-padding-overhead", type=float, help="optional acceptance threshold, e.g. 0.50 for <=50%% byte overhead")
     parser.add_argument("--max-fingerprinting-accuracy", type=float, help="optional acceptance threshold in [0,1] for the padded synthetic attack")
+    parser.add_argument(
+        "--stability-seeds",
+        help="optional comma-separated integer seeds (at least two) to repeat the full evaluation and report the observed spread, e.g. 20261014,20261015",
+    )
     args = parser.parse_args()
     if args.max_padding_overhead is not None and args.max_padding_overhead < 0:
         parser.error("--max-padding-overhead must be >= 0")
     if args.max_fingerprinting_accuracy is not None and not 0 <= args.max_fingerprinting_accuracy <= 1:
         parser.error("--max-fingerprinting-accuracy must be in [0,1]")
+    stability_seeds: list[int] | None = None
+    if args.stability_seeds is not None:
+        parts = [part.strip() for part in args.stability_seeds.split(",")]
+        if len(parts) < 2 or any(not part for part in parts):
+            parser.error("--stability-seeds needs at least two comma-separated integer seeds")
+        try:
+            stability_seeds = [int(part) for part in parts]
+        except ValueError:
+            parser.error("--stability-seeds values must be integers")
     result = run_evaluation(args.seed)
+    if stability_seeds is not None:
+        result["seed_stability"] = run_seed_stability(stability_seeds)
     checks = []
     overhead = result["fingerprinting"]["padding"]["byte_overhead_ratio"]
     accuracy = result["fingerprinting"]["padded"]["accuracy"]

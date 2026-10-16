@@ -1,0 +1,1018 @@
+{
+  "acceptance_checks": {
+    "checks": [],
+    "passed": true
+  },
+  "experiment": "synthetic_path_and_website_fingerprinting",
+  "fingerprinting": {
+    "defense_sweep": [
+      {
+        "bucket_bytes": 128,
+        "byte_overhead_ratio": 0.09660040938244485,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.0,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 5622528,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 128,
+        "byte_overhead_ratio": 0.14513183031399968,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.25,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 5871360,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 128,
+        "byte_overhead_ratio": 0.19328878040503317,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.5,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 6118272,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 128,
+        "byte_overhead_ratio": 0.24092147131933683,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.75,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 6362496,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 128,
+        "byte_overhead_ratio": 0.29032665754544107,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 1.0,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 6615808,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 256,
+        "byte_overhead_ratio": 0.1915162850932326,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.0,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 6109184,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 256,
+        "byte_overhead_ratio": 0.288579126956342,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.25,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 6606848,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 256,
+        "byte_overhead_ratio": 0.384893027138409,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.5,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 7100672,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 256,
+        "byte_overhead_ratio": 0.48015840896701634,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.75,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 7589120,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 256,
+        "byte_overhead_ratio": 0.578968781419225,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 1.0,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 8095744,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 512,
+        "byte_overhead_ratio": 0.40341685138286043,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.0,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 7195648,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 512,
+        "byte_overhead_ratio": 0.5975425351090793,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.25,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 8190976,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 512,
+        "byte_overhead_ratio": 0.7901703354732132,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.5,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 9178624,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 512,
+        "byte_overhead_ratio": 0.9807010991304279,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.75,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 10155520,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 512,
+        "byte_overhead_ratio": 1.178321844034845,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 1.0,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 11168768,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 1024,
+        "byte_overhead_ratio": 0.5520068809016945,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.0,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 7957504,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 1024,
+        "byte_overhead_ratio": 0.9402582483541324,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.25,
+        "fingerprinting_accuracy": 0.8928571428571429,
+        "observed_bytes": 9948160,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 0.8928571428571429,
+          "1": 0.8571428571428571,
+          "2": 0.6428571428571429,
+          "3": 1.0,
+          "4": 0.9642857142857143,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 1024,
+        "byte_overhead_ratio": 1.3255138490824003,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.5,
+        "fingerprinting_accuracy": 0.8869047619047619,
+        "observed_bytes": 11923456,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 0.8928571428571429,
+          "1": 0.8571428571428571,
+          "2": 0.7142857142857143,
+          "3": 1.0,
+          "4": 0.8571428571428571,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 1024,
+        "byte_overhead_ratio": 1.7065753763968297,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.75,
+        "fingerprinting_accuracy": 0.9583333333333334,
+        "observed_bytes": 13877248,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 0.9285714285714286,
+          "2": 0.9642857142857143,
+          "3": 0.9642857142857143,
+          "4": 0.8928571428571429,
+          "5": 1.0
+        },
+        "test_samples": 168
+      },
+      {
+        "bucket_bytes": 1024,
+        "byte_overhead_ratio": 2.1018168662056644,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 1.0,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 15903744,
+        "original_bytes": 5127235,
+        "per_class_accuracy": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0,
+          "5": 1.0
+        },
+        "test_samples": 168
+      }
+    ],
+    "defense_sweep_interpretation": "Synthetic parameter exploration only; choose settings using held-out realistic traces and a declared privacy/overhead objective.",
+    "padded": {
+      "accuracy": 1.0,
+      "chance_accuracy": 0.16666666666666666,
+      "classifier": "nearest-centroid synthetic baseline",
+      "confusion_matrix": {
+        "0": {
+          "0": 28,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0
+        },
+        "1": {
+          "0": 0,
+          "1": 28,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0
+        },
+        "2": {
+          "0": 0,
+          "1": 0,
+          "2": 28,
+          "3": 0,
+          "4": 0,
+          "5": 0
+        },
+        "3": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 28,
+          "4": 0,
+          "5": 0
+        },
+        "4": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 28,
+          "5": 0
+        },
+        "5": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 28
+        }
+      },
+      "per_class": {
+        "0": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 28
+        },
+        "1": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 28
+        },
+        "2": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 28
+        },
+        "3": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 28
+        },
+        "4": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 28
+        },
+        "5": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 28
+        }
+      },
+      "per_class_accuracy": {
+        "0": 1.0,
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0,
+        "5": 1.0
+      },
+      "split": {
+        "test_digest": "c51d7d8490b4d522",
+        "test_size": 168,
+        "train_digest": "fed7b7435c3790c5",
+        "train_size": 312
+      },
+      "test_samples": 168,
+      "train_samples": 312
+    },
+    "padding": {
+      "bucket_bytes": 256,
+      "byte_overhead_ratio": 0.288579126956342,
+      "cover_rate": 0.25,
+      "observed_bytes": 6606848,
+      "original_bytes": 5127235,
+      "placement": "client-to-entry only (synthetic model)"
+    },
+    "plain": {
+      "accuracy": 1.0,
+      "chance_accuracy": 0.16666666666666666,
+      "classifier": "nearest-centroid synthetic baseline",
+      "confusion_matrix": {
+        "0": {
+          "0": 28,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0
+        },
+        "1": {
+          "0": 0,
+          "1": 28,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0
+        },
+        "2": {
+          "0": 0,
+          "1": 0,
+          "2": 28,
+          "3": 0,
+          "4": 0,
+          "5": 0
+        },
+        "3": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 28,
+          "4": 0,
+          "5": 0
+        },
+        "4": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 28,
+          "5": 0
+        },
+        "5": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 28
+        }
+      },
+      "per_class": {
+        "0": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 28
+        },
+        "1": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 28
+        },
+        "2": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 28
+        },
+        "3": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 28
+        },
+        "4": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 28
+        },
+        "5": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 28
+        }
+      },
+      "per_class_accuracy": {
+        "0": 1.0,
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0,
+        "5": 1.0
+      },
+      "split": {
+        "test_digest": "c51d7d8490b4d522",
+        "test_size": 168,
+        "train_digest": "fed7b7435c3790c5",
+        "train_size": 312
+      },
+      "test_samples": 168,
+      "train_samples": 312
+    },
+    "warning": "synthetic labels and a simple classifier; not Deep Fingerprinting or Tor comparison"
+  },
+  "is_live_network_test": false,
+  "is_security_proof": false,
+  "not_measured": {
+    "latency": "synthetic delay values are model parameters, not measurements",
+    "real_traffic": "no packet capture or external dataset is loaded",
+    "throughput": "no transport simulation is performed by this harness"
+  },
+  "path_selection": {
+    "as_conflict_rejections": {
+      "bad-repeated-middle-as": [
+        "AS64520"
+      ],
+      "bad-shared-as": [
+        "AS64510"
+      ]
+    },
+    "as_policy": {
+      "all_positions_distinct": true,
+      "entry_exit_disjoint": true,
+      "note": "rejects any autonomous system appearing at more than one path position; synthetic AS labels, not BGP or geolocation inference"
+    },
+    "candidate_count": 6,
+    "max_detour_ms": 12,
+    "selected_path_counts": {
+      "bad-repeated-middle-as": 0,
+      "bad-shared-as": 0,
+      "regional-a": 177,
+      "regional-b": 178,
+      "regional-c": 145,
+      "too-slow": 0
+    },
+    "selected_paths_with_as_conflict": 0,
+    "selection_count": 500,
+    "warning": "synthetic detour/ASN data; not geolocation or BGP inference"
+  },
+  "schema_version": 2,
+  "seed": 20261014,
+  "seed_stability": {
+    "defense_sweep_spread": [
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "pstdev": 0.0
+        },
+        "bucket_bytes": 128,
+        "byte_overhead_ratio_spread": {
+          "max": 0.09723485603246029,
+          "mean": 0.09674980100476556,
+          "min": 0.09618352663695395,
+          "pstdev": 0.0003919763350710346
+        },
+        "cover_rate": 0.0
+      },
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "pstdev": 0.0
+        },
+        "bucket_bytes": 128,
+        "byte_overhead_ratio_spread": {
+          "max": 0.1466458965850559,
+          "mean": 0.14574376970422423,
+          "min": 0.14513183031399968,
+          "pstdev": 0.0005926682362669523
+        },
+        "cover_rate": 0.25
+      },
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "pstdev": 0.0
+        },
+        "bucket_bytes": 128,
+        "byte_overhead_ratio_spread": {
+          "max": 0.1946183115232225,
+          "mean": 0.19391858218985086,
+          "min": 0.19328878040503317,
+          "pstdev": 0.0005273409694550475
+        },
+        "cover_rate": 0.5
+      },
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "pstdev": 0.0
+        },
+        "bucket_bytes": 128,
+        "byte_overhead_ratio_spread": {
+          "max": 0.24158874620543846,
+          "mean": 0.24131940920008726,
+          "min": 0.24092147131933683,
+          "pstdev": 0.00022074566821327343
+        },
+        "cover_rate": 0.75
+      },
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "pstdev": 0.0
+        },
+        "bucket_bytes": 128,
+        "byte_overhead_ratio_spread": {
+          "max": 0.29108201209319917,
+          "mean": 0.2905280502431862,
+          "min": 0.28999055237577887,
+          "pstdev": 0.00038672914465707705
+        },
+        "cover_rate": 1.0
+      },
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 0.9988095238095237,
+          "min": 0.9940476190476191,
+          "pstdev": 0.0023809523809523725
+        },
+        "bucket_bytes": 256,
+        "byte_overhead_ratio_spread": {
+          "max": 0.1937613680753032,
+          "mean": 0.19249520139530393,
+          "min": 0.1915162850932326,
+          "pstdev": 0.0008607906208366738
+        },
+        "cover_rate": 0.0
+      },
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 0.9988095238095237,
+          "min": 0.9940476190476191,
+          "pstdev": 0.0023809523809523725
+        },
+        "bucket_bytes": 256,
+        "byte_overhead_ratio_spread": {
+          "max": 0.2924131401975143,
+          "mean": 0.29048313879422116,
+          "min": 0.288579126956342,
+          "pstdev": 0.0013520510920643845
+        },
+        "cover_rate": 0.25
+      },
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 0.9988095238095237,
+          "min": 0.9940476190476191,
+          "pstdev": 0.0023809523809523725
+        },
+        "bucket_bytes": 256,
+        "byte_overhead_ratio_spread": {
+          "max": 0.3897662054462179,
+          "mean": 0.38683276376547454,
+          "min": 0.384893027138409,
+          "pstdev": 0.0018330385961384372
+        },
+        "cover_rate": 0.5
+      },
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "pstdev": 0.0
+        },
+        "bucket_bytes": 256,
+        "byte_overhead_ratio_spread": {
+          "max": 0.4845718072122718,
+          "mean": 0.4816344177859472,
+          "min": 0.48008298925241943,
+          "pstdev": 0.001629669258453966
+        },
+        "cover_rate": 0.75
+      },
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "pstdev": 0.0
+        },
+        "bucket_bytes": 256,
+        "byte_overhead_ratio_spread": {
+          "max": 0.581375419552953,
+          "mean": 0.5800516998721452,
+          "min": 0.578968781419225,
+          "pstdev": 0.0008497539695875944
+        },
+        "cover_rate": 1.0
+      },
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 0.9988095238095237,
+          "min": 0.9940476190476191,
+          "pstdev": 0.0023809523809523725
+        },
+        "bucket_bytes": 512,
+        "byte_overhead_ratio_spread": {
+          "max": 0.40609994189379406,
+          "mean": 0.40457261292746854,
+          "min": 0.4028262228300905,
+          "pstdev": 0.0012677585454799328
+        },
+        "cover_rate": 0.0
+      },
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 0.9988095238095237,
+          "min": 0.9940476190476191,
+          "pstdev": 0.0023809523809523725
+        },
+        "bucket_bytes": 512,
+        "byte_overhead_ratio_spread": {
+          "max": 0.6034034861382163,
+          "mean": 0.600548487725303,
+          "min": 0.5973495940892732,
+          "pstdev": 0.0026647805161870352
+        },
+        "cover_rate": 0.25
+      },
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 0.9964285714285716,
+          "min": 0.9940476190476191,
+          "pstdev": 0.0029160592175990112
+        },
+        "bucket_bytes": 512,
+        "byte_overhead_ratio_spread": {
+          "max": 0.7981096166356234,
+          "mean": 0.7932477376678098,
+          "min": 0.7897748704350289,
+          "pstdev": 0.0030766544626862993
+        },
+        "cover_rate": 0.5
+      },
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 0.9988095238095237,
+          "min": 0.9940476190476191,
+          "pstdev": 0.0023809523809523725
+        },
+        "bucket_bytes": 512,
+        "byte_overhead_ratio_spread": {
+          "max": 0.9877208201677314,
+          "mean": 0.9828510457087551,
+          "min": 0.9807010991304279,
+          "pstdev": 0.002501272851029226
+        },
+        "cover_rate": 0.75
+      },
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "pstdev": 0.0
+        },
+        "bucket_bytes": 512,
+        "byte_overhead_ratio_spread": {
+          "max": 1.1813280448490935,
+          "mean": 1.179685609881151,
+          "min": 1.1781222479822522,
+          "pstdev": 0.0013385602692151215
+        },
+        "cover_rate": 1.0
+      },
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 0.9952380952380953,
+          "min": 0.9761904761904762,
+          "pstdev": 0.009523809523809535
+        },
+        "bucket_bytes": 1024,
+        "byte_overhead_ratio_spread": {
+          "max": 0.5536530228300025,
+          "mean": 0.5526232850386187,
+          "min": 0.5516909278921838,
+          "pstdev": 0.0007232537895136544
+        },
+        "cover_rate": 0.0
+      },
+      {
+        "accuracy_spread": {
+          "max": 0.9345238095238095,
+          "mean": 0.9023809523809524,
+          "min": 0.8869047619047619,
+          "pstdev": 0.01708654773143729
+        },
+        "bucket_bytes": 1024,
+        "byte_overhead_ratio_spread": {
+          "max": 0.9484636820538181,
+          "mean": 0.9445750346342876,
+          "min": 0.9402582483541324,
+          "pstdev": 0.003348727290523203
+        },
+        "cover_rate": 0.25
+      },
+      {
+        "accuracy_spread": {
+          "max": 0.9285714285714286,
+          "mean": 0.9035714285714285,
+          "min": 0.8869047619047619,
+          "pstdev": 0.015703459474134453
+        },
+        "bucket_bytes": 1024,
+        "byte_overhead_ratio_spread": {
+          "max": 1.3376723723136612,
+          "mean": 1.3299735345193011,
+          "min": 1.3255138490824003,
+          "pstdev": 0.004356560260534938
+        },
+        "cover_rate": 0.5
+      },
+      {
+        "accuracy_spread": {
+          "max": 0.9642857142857143,
+          "mean": 0.95,
+          "min": 0.9285714285714286,
+          "pstdev": 0.013363062095621223
+        },
+        "bucket_bytes": 1024,
+        "byte_overhead_ratio_spread": {
+          "max": 1.7168947793778773,
+          "mean": 1.7091801506011919,
+          "min": 1.704826316976904,
+          "pstdev": 0.004392196677958353
+        },
+        "cover_rate": 0.75
+      },
+      {
+        "accuracy_spread": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "pstdev": 0.0
+        },
+        "bucket_bytes": 1024,
+        "byte_overhead_ratio_spread": {
+          "max": 2.104109228740602,
+          "mean": 2.1028492789459836,
+          "min": 2.101185407424206,
+          "pstdev": 0.0011618986789854874
+        },
+        "cover_rate": 1.0
+      }
+    ],
+    "padded_accuracy_spread": {
+      "max": 1.0,
+      "mean": 0.9988095238095237,
+      "min": 0.9940476190476191,
+      "pstdev": 0.0023809523809523725
+    },
+    "padded_byte_overhead_ratio_spread": {
+      "max": 0.2924131401975143,
+      "mean": 0.29048313879422116,
+      "min": 0.288579126956342,
+      "pstdev": 0.0013520510920643845
+    },
+    "plain_accuracy_spread": {
+      "max": 1.0,
+      "mean": 1.0,
+      "min": 1.0,
+      "pstdev": 0.0
+    },
+    "runs": [
+      {
+        "padded_accuracy": 1.0,
+        "padded_byte_overhead_ratio": 0.288579126956342,
+        "plain_accuracy": 1.0,
+        "seed": 20261014
+      },
+      {
+        "padded_accuracy": 0.9940476190476191,
+        "padded_byte_overhead_ratio": 0.2924131401975143,
+        "plain_accuracy": 1.0,
+        "seed": 20261015
+      },
+      {
+        "padded_accuracy": 1.0,
+        "padded_byte_overhead_ratio": 0.2913618779321483,
+        "plain_accuracy": 1.0,
+        "seed": 20261016
+      },
+      {
+        "padded_accuracy": 1.0,
+        "padded_byte_overhead_ratio": 0.2894791428642234,
+        "plain_accuracy": 1.0,
+        "seed": 20261017
+      },
+      {
+        "padded_accuracy": 1.0,
+        "padded_byte_overhead_ratio": 0.2905824060208777,
+        "plain_accuracy": 1.0,
+        "seed": 20261020
+      }
+    ],
+    "seeds": [
+      20261014,
+      20261015,
+      20261016,
+      20261017,
+      20261020
+    ],
+    "warning": "spread across synthetic sampling seeds only; not a confidence interval and not evidence of behavior on real traffic"
+  }
+}

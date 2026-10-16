@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import random
 import subprocess
 import sys
 from pathlib import Path
@@ -11,8 +12,11 @@ from anonlab.privacy_eval import (
     evaluate_nearest_centroid,
     make_synthetic_traces,
     pad_trace,
+    repeated_as_observers,
     run_evaluation,
+    run_seed_stability,
     select_path,
+    stratified_split_indices,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -97,3 +101,154 @@ def test_acceptance_threshold_fails_with_machine_readable_evidence() -> None:
     assert data["acceptance_checks"]["passed"] is False
     assert data["acceptance_checks"]["checks"][0]["metric"] == "padding_byte_overhead_ratio"
     assert data["acceptance_checks"]["checks"][0]["passed"] is False
+
+
+def test_repeated_as_observers_rejects_partial_route_observers() -> None:
+    # Entry and exit ASes differ, but AS64520 hosts the entry and a middle hop,
+    # so that AS observes two positions of the path.
+    repeated = CandidatePath("repeated", 3, ("AS64520", "AS64521", "AS64520", "AS64522"), 4)
+    distinct = CandidatePath("distinct", 5, ("AS64530", "AS64531", "AS64532", "AS64533"), 4)
+    assert repeated_as_observers(repeated.relay_asns) == ("AS64520",)
+    assert repeated_as_observers(distinct.relay_asns) == ()
+    chosen = select_path([repeated, distinct], max_detour_ms=10, rng=random.Random(5))
+    assert chosen.path_id == "distinct"
+    # Document the gap the stricter policy closes: entry-vs-exit-only accepts it.
+    legacy = select_path(
+        [repeated], max_detour_ms=10, rng=random.Random(5),
+        require_distinct_as_observers=False,
+    )
+    assert legacy.path_id == "repeated"
+
+
+def test_path_selector_fails_closed_when_only_partial_route_observers_exist() -> None:
+    paths = [CandidatePath("repeated-only", 2, ("AS1", "AS2", "AS1", "AS3"), 4)]
+    try:
+        select_path(paths, max_detour_ms=10, rng=random.Random(1))
+    except ValueError as exc:
+        assert "no path satisfies" in str(exc)
+    else:
+        raise AssertionError("expected repeated-AS path to be rejected")
+
+
+def test_split_indices_are_disjoint_covering_and_deterministic() -> None:
+    traces = make_synthetic_traces(classes=3, samples_per_class=10, seed=3)
+    labels = [int(trace["label"]) for trace in traces]
+    train, test = stratified_split_indices(labels, seed=3)
+    assert set(train) & set(test) == set()
+    assert sorted(train + test) == list(range(len(traces)))
+    assert (train, test) == stratified_split_indices(labels, seed=3)
+
+
+def test_evaluation_reuses_the_same_holdout_for_plain_and_padded() -> None:
+    traces = make_synthetic_traces(classes=4, samples_per_class=10, seed=8)
+    split = stratified_split_indices([int(t["label"]) for t in traces], seed=8)
+    plain = evaluate_nearest_centroid(traces, seed=8, split=split)
+    padded = [
+        pad_trace(trace, bucket_bytes=256, cover_rate=0.5, seed=8 + index)
+        for index, trace in enumerate(traces)
+    ]
+    defended = evaluate_nearest_centroid(padded, seed=8, split=split)
+    assert plain["split"] == defended["split"]
+    assert plain["test_samples"] == defended["test_samples"]
+
+
+def test_split_rejects_leakage_and_out_of_range_indices() -> None:
+    traces = make_synthetic_traces(classes=3, samples_per_class=8, seed=4)
+    try:
+        evaluate_nearest_centroid(traces, split=((0, 1), (1, 2)))
+    except ValueError as exc:
+        assert "leak" in str(exc)
+    else:
+        raise AssertionError("expected an overlapping split to be rejected")
+    try:
+        evaluate_nearest_centroid(traces, split=((0,), (1, len(traces))))
+    except ValueError as exc:
+        assert "within the trace range" in str(exc)
+    else:
+        raise AssertionError("expected an out-of-range split to be rejected")
+
+
+def test_confusion_matrix_and_per_class_metrics_are_consistent() -> None:
+    traces = make_synthetic_traces(classes=3, samples_per_class=12, seed=6)
+    result = evaluate_nearest_centroid(traces, seed=6)
+    confusion = result["confusion_matrix"]
+    total = 0
+    diagonal = 0
+    for actual, row in confusion.items():
+        assert sum(row.values()) == result["per_class"][actual]["support"]
+        total += sum(row.values())
+        diagonal += row[actual]
+    assert total == result["test_samples"]
+    assert abs(diagonal / total - result["accuracy"]) < 1e-12
+    for label, metrics in result["per_class"].items():
+        assert 0 <= metrics["precision"] <= 1
+        assert 0 <= metrics["recall"] <= 1
+        assert 0 <= metrics["f1"] <= 1
+        # Legacy per-class accuracy field stays consistent with recall.
+        assert metrics["recall"] == result["per_class_accuracy"][label]
+
+
+def test_seed_stability_reports_spread_for_every_sweep_point() -> None:
+    stability = run_seed_stability([7, 8, 9])
+    assert stability["seeds"] == [7, 8, 9]
+    assert len(stability["runs"]) == 3
+    rows = stability["defense_sweep_spread"]
+    assert len(rows) == 20
+    for row in rows:
+        assert set(row) == {
+            "bucket_bytes", "cover_rate", "accuracy_spread", "byte_overhead_ratio_spread",
+        }
+        spread = row["accuracy_spread"]
+        assert spread["min"] <= spread["mean"] <= spread["max"]
+        assert spread["pstdev"] >= 0
+    for spread in (stability["plain_accuracy_spread"], stability["padded_accuracy_spread"]):
+        assert 0 <= spread["min"] <= 1
+        assert 0 <= spread["max"] <= 1
+
+
+def test_seed_stability_requires_at_least_two_integer_seeds() -> None:
+    try:
+        run_seed_stability([1])
+    except ValueError as exc:
+        assert "two seeds" in str(exc)
+    else:
+        raise AssertionError("expected a single seed to be rejected")
+    try:
+        run_seed_stability([1, "two"])  # type: ignore[list-item]
+    except ValueError as exc:
+        assert "integers" in str(exc)
+    else:
+        raise AssertionError("expected a non-integer seed to be rejected")
+
+
+def test_run_evaluation_records_as_policy_evidence_and_scope_limits() -> None:
+    data = run_evaluation(55)
+    assert data["schema_version"] == 2
+    selection = data["path_selection"]
+    assert selection["selected_paths_with_as_conflict"] == 0
+    assert selection["as_conflict_rejections"] == {
+        "bad-repeated-middle-as": ["AS64520"],
+        "bad-shared-as": ["AS64510"],
+    }
+    assert selection["selected_path_counts"]["bad-repeated-middle-as"] == 0
+    assert selection["as_policy"]["all_positions_distinct"] is True
+    assert set(data["not_measured"]) == {"latency", "throughput", "real_traffic"}
+
+
+def test_cli_stability_flag_repeats_evaluation_across_seeds() -> None:
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(ROOT / "src") + os.pathsep + env.get("PYTHONPATH", "")
+    completed = subprocess.run(
+        [sys.executable, "-m", "anonlab.privacy_eval", "--seed", "5",
+         "--stability-seeds", "5,6"],
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=30, check=False,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    stability = json.loads(completed.stdout)["seed_stability"]
+    assert stability["seeds"] == [5, 6]
+    assert len(stability["defense_sweep_spread"]) == 20
+    invalid = subprocess.run(
+        [sys.executable, "-m", "anonlab.privacy_eval", "--stability-seeds", "5"],
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=10, check=False,
+    )
+    assert invalid.returncode == 2
