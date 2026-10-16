@@ -584,7 +584,7 @@ def main() -> None:
             )
         except (OSError, ValueError) as exc:
             parser.error(str(exc))
-        rendered = json.dumps(external_result, indent=2, sort_keys=True) + "\\n"
+        rendered = json.dumps(external_result, indent=2, sort_keys=True) + "\n"
         if args.output:
             if args.output.exists():
                 parser.error(f"refusing to overwrite existing artifact: {args.output}")
