@@ -14,6 +14,7 @@ from anonlab.privacy_eval import (
     pad_trace,
     repeated_as_observers,
     run_evaluation,
+    run_external_trace_evaluation,
     run_seed_stability,
     select_path,
     stratified_split_indices,
@@ -252,3 +253,80 @@ def test_cli_stability_flag_repeats_evaluation_across_seeds() -> None:
         cwd=ROOT, env=env, capture_output=True, text=True, timeout=10, check=False,
     )
     assert invalid.returncode == 2
+
+
+
+def _write_external_dataset(path: Path, *, groups: int = 8) -> Path:
+    records = []
+    for group in range(groups):
+        for label in (0, 1):
+            records.append({
+                "trace_id": f"trace-{group}-{label}",
+                "group_id": f"session-{group}",
+                "label": label,
+                "packets": [
+                    {"direction": 1, "size_bytes": 400 + label * 200, "delta_ms": 0},
+                    {"direction": -1, "size_bytes": 900 + label * 100, "delta_ms": 10 + label},
+                ],
+            })
+    path.write_text(
+        "\n".join(json.dumps(record) for record in records) + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def test_external_trace_evaluation_uses_group_disjoint_holdout(tmp_path: Path) -> None:
+    dataset_path = _write_external_dataset(tmp_path / "external.jsonl")
+    result = run_external_trace_evaluation(dataset_path, seed=42)
+    assert result["experiment"] == "external_trace_fingerprinting_baseline"
+    assert result["is_synthetic_dataset"] is False
+    assert result["is_live_network_test"] is False
+    assert result["is_security_proof"] is False
+    assert result["dataset"]["trace_count"] == 16
+    assert len(result["dataset"]["sha256"]) == 64
+    split = result["split"]
+    assert split["group_disjoint"] is True
+    assert split["all_classes_in_both_sets"] is True
+    assert set(split["train_group_ids"]).isdisjoint(split["test_group_ids"])
+    assert split["train_trace_count"] + split["test_trace_count"] == 16
+    assert result["attacker"]["test_samples"] == split["test_trace_count"]
+    assert "not Deep Fingerprinting" in result["warning"]
+
+
+def test_external_trace_cli_writes_machine_readable_report(tmp_path: Path) -> None:
+    dataset_path = _write_external_dataset(tmp_path / "external.jsonl")
+    output_path = tmp_path / "external-eval.json"
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(ROOT / "src") + os.pathsep + env.get("PYTHONPATH", "")
+    completed = subprocess.run(
+        [
+            sys.executable, "-m", "anonlab.privacy_eval",
+            "--trace-dataset", str(dataset_path),
+            "--seed", "42",
+            "--output", str(output_path),
+        ],
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=10, check=False,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    stdout_result = json.loads(completed.stdout)
+    file_result = json.loads(output_path.read_text(encoding="utf-8"))
+    assert stdout_result == file_result
+    assert stdout_result["experiment"] == "external_trace_fingerprinting_baseline"
+    assert completed.stdout.endswith("\n")
+
+
+def test_external_trace_cli_rejects_synthetic_only_flags(tmp_path: Path) -> None:
+    dataset_path = _write_external_dataset(tmp_path / "external.jsonl")
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(ROOT / "src") + os.pathsep + env.get("PYTHONPATH", "")
+    completed = subprocess.run(
+        [
+            sys.executable, "-m", "anonlab.privacy_eval",
+            "--trace-dataset", str(dataset_path),
+            "--max-padding-overhead", "0.5",
+        ],
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=10, check=False,
+    )
+    assert completed.returncode == 2
+    assert "cannot be combined" in completed.stderr
