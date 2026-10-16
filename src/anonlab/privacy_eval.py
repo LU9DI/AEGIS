@@ -483,7 +483,7 @@ def run_external_trace_evaluation(
             "defense_effectiveness": "no defended traces were evaluated",
             "tor_comparison": "no Tor or matched baseline comparison was performed",
             "dataset_representativeness": "not independently assessed",
-            "capture_provenance": "only caller-provided source name and file digest are recorded",
+            "capture_provenance": "dataset provenance and authenticity are not independently verified; only file digest and counts are recorded",
             "network_performance": "no live network latency or throughput was measured",
         },
         "warning": (
