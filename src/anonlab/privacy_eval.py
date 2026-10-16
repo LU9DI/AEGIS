@@ -453,9 +453,8 @@ def run_external_trace_evaluation(
         "seed": seed,
         "is_live_network_test": False,
         "is_security_proof": False,
-        "is_synthetic_dataset": False,
+        "dataset_origin": "caller-provided file; provenance and authenticity are not independently verified",
         "dataset": {
-            "source_name": dataset["source_name"],
             "sha256": dataset["sha256"],
             "byte_size": dataset["byte_size"],
             "trace_count": dataset["trace_count"],
