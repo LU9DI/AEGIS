@@ -160,3 +160,112 @@ def load_normalized_jsonl(path: str | Path) -> dict[str, Any]:
             "privacy, or defense effectiveness is established"
         ),
     }
+
+
+
+def grouped_train_test_split(
+    traces: list[dict[str, Any]],
+    *,
+    seed: int = 20261016,
+    train_fraction: float = 0.65,
+    attempts: int = 2048,
+) -> dict[str, Any]:
+    """Split normalized traces by group, never placing one group in both sets.
+
+    The randomized search prefers a split close to train_fraction while
+    requiring every label to occur in both train and test. It fails closed when
+    it cannot find such a split; it never silently falls back to trace-level
+    splitting, which can leak capture/session-specific fingerprints.
+    """
+    import random
+
+    if not 0.4 <= train_fraction <= 0.8:
+        raise ValueError("train_fraction must be between 0.4 and 0.8")
+    if isinstance(attempts, bool) or not isinstance(attempts, int) or not 1 <= attempts <= 100_000:
+        raise ValueError("attempts must be an integer in [1, 100000]")
+    if not isinstance(traces, list) or len(traces) < 4:
+        raise ValueError("at least 4 traces are required for a grouped split")
+
+    group_indices: dict[str, list[int]] = {}
+    group_labels: dict[str, set[int]] = {}
+    all_labels: set[int] = set()
+    for index, trace in enumerate(traces):
+        if not isinstance(trace, dict):
+            raise ValueError(f"trace {index} must be an object")
+        group_id = trace.get("group_id")
+        label = trace.get("label")
+        if not isinstance(group_id, str) or not group_id.strip():
+            raise ValueError(f"trace {index} has invalid group_id")
+        if isinstance(label, bool) or not isinstance(label, int) or label < 0:
+            raise ValueError(f"trace {index} has invalid label")
+        group_indices.setdefault(group_id, []).append(index)
+        group_labels.setdefault(group_id, set()).add(label)
+        all_labels.add(label)
+
+    if len(all_labels) < 2:
+        raise ValueError("grouped split requires at least two label classes")
+    if len(group_indices) < 2:
+        raise ValueError("grouped split requires at least two distinct groups")
+
+    groups = list(group_indices)
+    rng = random.Random(seed)
+    best: tuple[float, tuple[str, ...], tuple[str, ...]] | None = None
+    target_train_count = len(traces) * train_fraction
+
+    for _ in range(attempts):
+        shuffled = groups[:]
+        rng.shuffle(shuffled)
+        test_groups = {group for group in shuffled if rng.random() >= train_fraction}
+        if not test_groups or len(test_groups) == len(groups):
+            continue
+        train_groups = set(groups) - test_groups
+        train_labels = set().union(*(group_labels[g] for g in train_groups))
+        test_labels = set().union(*(group_labels[g] for g in test_groups))
+        if train_labels != all_labels or test_labels != all_labels:
+            continue
+
+        train_indices = tuple(
+            index for group in groups if group in train_groups
+            for index in group_indices[group]
+        )
+        score = abs(len(train_indices) - target_train_count)
+        candidate = (score, tuple(sorted(train_groups)), tuple(sorted(test_groups)))
+        if best is None or candidate < best:
+            best = candidate
+
+    if best is None:
+        raise ValueError(
+            "could not create a group-disjoint split containing every label in "
+            "both sets; collect more independent groups or revise the dataset"
+        )
+
+    _, train_group_ids, test_group_ids = best
+    train_group_set = set(train_group_ids)
+    test_group_set = set(test_group_ids)
+    train_indices = tuple(
+        index for group in groups if group in train_group_set
+        for index in group_indices[group]
+    )
+    test_indices = tuple(
+        index for group in groups if group in test_group_set
+        for index in group_indices[group]
+    )
+    if set(train_indices) & set(test_indices) or len(train_indices) + len(test_indices) != len(traces):
+        raise RuntimeError("internal error: grouped split indices are not a partition")
+
+    return {
+        "seed": seed,
+        "train_fraction_target": train_fraction,
+        "train_indices": train_indices,
+        "test_indices": test_indices,
+        "train_group_ids": train_group_ids,
+        "test_group_ids": test_group_ids,
+        "train_trace_count": len(train_indices),
+        "test_trace_count": len(test_indices),
+        "group_disjoint": True,
+        "all_classes_in_both_sets": True,
+        "warning": (
+            "group-disjoint split only; dataset representativeness, provenance, "
+            "independence of groups, and attacker validity remain unverified"
+        ),
+    }
