@@ -288,7 +288,12 @@ def test_external_trace_evaluation_uses_group_disjoint_holdout(tmp_path: Path) -
     split = result["split"]
     assert split["group_disjoint"] is True
     assert split["all_classes_in_both_sets"] is True
-    assert set(split["train_group_ids"]).isdisjoint(split["test_group_ids"])
+    assert split["train_group_count"] > 0
+    assert split["test_group_count"] > 0
+    assert len(split["train_groups_sha256"]) == 64
+    assert len(split["test_groups_sha256"]) == 64
+    assert "train_group_ids" not in split
+    assert "test_group_ids" not in split
     assert split["train_trace_count"] + split["test_trace_count"] == 16
     assert result["attacker"]["test_samples"] == split["test_trace_count"]
     assert "not Deep Fingerprinting" in result["warning"]
