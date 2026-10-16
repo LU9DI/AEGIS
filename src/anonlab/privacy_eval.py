@@ -467,8 +467,14 @@ def run_external_trace_evaluation(
             "target_train_fraction": train_fraction,
             "train_trace_count": split_result["train_trace_count"],
             "test_trace_count": split_result["test_trace_count"],
-            "train_group_ids": list(split_result["train_group_ids"]),
-            "test_group_ids": list(split_result["test_group_ids"]),
+            "train_group_count": len(split_result["train_group_ids"]),
+            "test_group_count": len(split_result["test_group_ids"]),
+            "train_groups_sha256": hashlib.sha256(
+                "\n".join(split_result["train_group_ids"]).encode("utf-8")
+            ).hexdigest(),
+            "test_groups_sha256": hashlib.sha256(
+                "\n".join(split_result["test_group_ids"]).encode("utf-8")
+            ).hexdigest(),
             "group_disjoint": split_result["group_disjoint"],
             "all_classes_in_both_sets": split_result["all_classes_in_both_sets"],
             "warning": split_result["warning"],
