@@ -114,6 +114,8 @@ Artifact schema 2 (current) adds, on top of schema 1:
 
 **Interpretation limit:** this is a harness smoke test, not a realistic Internet/AS topology model, not Deep Fingerprinting, not a Tor comparison, and not evidence that padding improves anonymity. Synthetic accuracies near 1.0 — and the mid-range dips at one sweep corner — are properties of the toy features and the nearest-centroid classifier, not measurements of a defense. Its value is a reproducible place to plug in trace datasets, calibrated route data, stronger attackers and explicit budget/accuracy targets.
 
+**External trace ingestion (validation only):** the new `anonlab.trace_dataset.load_normalized_jsonl(path)` loader validates normalized JSONL packet traces, rejects duplicate/unknown fields and malformed values, enforces input limits, and records the exact file SHA-256. The format and example are documented in [Normalized external trace dataset format](docs/experiments/NORMALIZED-TRACE-DATASET.md). This loader is not yet wired into the evaluator and does not run an attack on real traces. A group-aware split, documented dataset provenance/licensing, and a stronger attacker are still required before real-trace results can be reported. Do not commit sensitive packet captures or identifying metadata.
+
 ### 6. Run the test suite
 
 ```bash
