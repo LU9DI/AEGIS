@@ -48,12 +48,17 @@ aegis-privacy-eval --trace-dataset path/to/traces.jsonl --seed 42 --output exper
 The evaluator uses a group-disjoint train/test split: all traces with the same `group_id`
 stay together, and every label must occur in both sets. If labels are confounded with groups
 or a suitable split cannot be found, evaluation fails rather than falling back to a trace-level
-split. The output records the input SHA-256, counts, hashed group assignments, confusion matrix,
-per-class metrics, and the simple baseline attack result. Raw group IDs are not included in
-the report. Existing output files are never overwritten.
+split. It runs a simple nearest-centroid attacker on both the undefended traces and a toy
+size-bucketing/cover transform, reusing the exact same holdout for a paired comparison. You can
+change the toy parameters with `--trace-bucket-bytes` (minimum 64) and `--trace-cover-rate`
+(0..1). The output records the input SHA-256, counts, hashed group assignments, confusion matrix,
+per-class metrics, byte overhead, and the difference in attacker accuracy. Raw group IDs are not
+included in the report. Existing output files are never overwritten.
 
-This is only an **undefended baseline**. Padding/cover defenses, alternative attackers,
-calibration, and comparisons remain future work. A group ID is only as meaningful as the
+This remains an **experimental toy comparison**, not a production defense evaluation. Packet
+timing effects, adaptive attackers, alternative classifiers, realistic capture diversity, and
+comparisons remain future work. A change in this classifier's accuracy is not by itself proof
+that privacy improved. A group ID is only as meaningful as the
 dataset curator's definition: unrelated sessions must not share a group, and correlated traces
 must not be assigned separate groups. Before publishing results, document the dataset publisher,
 collection method, licensing/consent, preprocessing, class mapping, and known biases. Remove or
