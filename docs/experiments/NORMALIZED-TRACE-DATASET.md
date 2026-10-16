@@ -51,9 +51,9 @@ or a suitable split cannot be found, evaluation fails rather than falling back t
 split. It runs a simple nearest-centroid attacker on both the undefended traces and a toy
 size-bucketing/cover transform, reusing the exact same holdout for a paired comparison. You can
 change the toy parameters with `--trace-bucket-bytes` (minimum 64) and `--trace-cover-rate`
-(0..1). The output records the input SHA-256, counts, hashed group assignments, confusion matrix,
-per-class metrics, byte overhead, and the difference in attacker accuracy. Raw group IDs are not
-included in the report. Existing output files are never overwritten.
+(0..1). The output records the input SHA-256, counts, train/test index digests, confusion matrix,
+per-class metrics, byte overhead, and the difference in attacker accuracy. Raw group IDs and
+group-ID hashes are omitted from the report. Existing output files are never overwritten.
 
 This remains an **experimental toy comparison**, not a production defense evaluation. Packet
 timing effects, adaptive attackers, alternative classifiers, realistic capture diversity, and
