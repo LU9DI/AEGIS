@@ -106,6 +106,7 @@ def test_transport_baseline_runner_records_timeout_without_losing_partial_output
 
     calls = 0
     killed_groups: list[tuple[int, int]] = []
+    killed_processes: list[int] = []
 
     def fake_run(command, **kwargs):
         nonlocal calls
@@ -128,16 +129,22 @@ def test_transport_baseline_runner_records_timeout_without_losing_partial_output
                 )
             return ('{"partial":', "still running")
 
+        def kill(self):
+            killed_processes.append(self.pid)
+
     # Keep host metadata and process-group termination deterministic.
     monkeypatch.setattr(runner.platform, "platform", lambda: "test-platform")
     monkeypatch.setattr(runner.platform, "machine", lambda: "test-machine")
     monkeypatch.setattr(runner.platform, "processor", lambda: "test-processor")
     monkeypatch.setattr(runner.subprocess, "run", fake_run)
     monkeypatch.setattr(runner.subprocess, "Popen", FakeProcess)
-    monkeypatch.setattr(
-        runner.os, "killpg",
-        lambda pid, sig: killed_groups.append((pid, sig)),
-    )
+    if runner.os.name == "posix":
+        # Process groups are POSIX-only; on Windows the runner falls back to
+        # process.kill(), and os.killpg does not exist to be patched.
+        monkeypatch.setattr(
+            runner.os, "killpg",
+            lambda pid, sig: killed_groups.append((pid, sig)),
+        )
     result = runner._run(Namespace(
         hops=1,
         payload_bytes=1024,
@@ -149,7 +156,13 @@ def test_transport_baseline_runner_records_timeout_without_losing_partial_output
 
     assert calls == 2
     if runner.os.name == "posix":
+        # POSIX termination targets the whole process group.
         assert killed_groups == [(4321, runner.signal.SIGKILL)]
+        assert killed_processes == []
+    else:
+        # Windows falls back to killing the benchmark process itself.
+        assert killed_groups == []
+        assert killed_processes == [4321]
     assert result["timed_out"] is True
     assert result["exit_code"] == 124
     assert result["raw_stdout"] == '{"partial":'
