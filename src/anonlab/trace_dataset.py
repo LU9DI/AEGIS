@@ -115,16 +115,21 @@ def load_normalized_jsonl(path: str | Path) -> dict[str, Any]:
                 raise ValueError(
                     f"line {line_number}, packet {packet_number}: size_bytes must be in [1, 65535]"
                 )
-            if (
-                isinstance(delta_ms, bool)
-                or not isinstance(delta_ms, (int, float))
-                or not math.isfinite(delta_ms)
-                or delta_ms < 0
-            ):
+            if isinstance(delta_ms, bool) or not isinstance(delta_ms, (int, float)) or delta_ms < 0:
                 raise ValueError(
                     f"line {line_number}, packet {packet_number}: delta_ms must be finite and >= 0"
                 )
-            normalized_packets.append((direction, size, float(delta_ms)))
+            try:
+                delay_value = float(delta_ms)
+            except (OverflowError, ValueError) as exc:
+                raise ValueError(
+                    f"line {line_number}, packet {packet_number}: delta_ms must be finite and >= 0"
+                ) from exc
+            if not math.isfinite(delay_value):
+                raise ValueError(
+                    f"line {line_number}, packet {packet_number}: delta_ms must be finite and >= 0"
+                )
+            normalized_packets.append((direction, size, delay_value))
 
         seen_ids.add(trace_id)
         labels.add(label)
