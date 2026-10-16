@@ -296,6 +296,15 @@ def test_external_trace_evaluation_uses_group_disjoint_holdout(tmp_path: Path) -
     assert "test_group_ids" not in split
     assert split["train_trace_count"] + split["test_trace_count"] == 16
     assert result["attacker"]["test_samples"] == split["test_trace_count"]
+    defense = result["toy_defense"]
+    assert defense["same_group_disjoint_holdout"] is True
+    assert defense["attacker"]["split"] == result["attacker"]["split"]
+    assert defense["original_bytes"] > 0
+    assert defense["observed_bytes"] >= defense["original_bytes"]
+    assert defense["byte_overhead_ratio"] >= 0
+    assert defense["accuracy_delta_vs_undefended"] == (
+        defense["attacker"]["accuracy"] - result["attacker"]["accuracy"]
+    )
     assert "not Deep Fingerprinting" in result["warning"]
 
 
