@@ -18,6 +18,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
 
+from anonlab.trace_dataset import grouped_train_test_split, load_normalized_jsonl
+
 
 @dataclass(frozen=True)
 class CandidatePath:
@@ -424,6 +426,68 @@ def run_evaluation(seed: int = 20261014) -> dict[str, Any]:
     }
 
 
+def run_external_trace_evaluation(
+    dataset_path: str | Path,
+    *,
+    seed: int = 20261016,
+    train_fraction: float = 0.65,
+) -> dict[str, Any]:
+    """Evaluate the baseline attacker on validated external traces with group isolation.
+
+    This intentionally reports an undefended baseline only. It does not claim the
+    dataset is representative, and it does not compare AEGIS defenses or Tor.
+    """
+    dataset = load_normalized_jsonl(dataset_path)
+    traces = dataset["traces"]
+    split_result = grouped_train_test_split(
+        traces, seed=seed, train_fraction=train_fraction
+    )
+    attack = evaluate_nearest_centroid(
+        traces,
+        seed=seed,
+        split=(split_result["train_indices"], split_result["test_indices"]),
+    )
+    return {
+        "schema_version": 1,
+        "experiment": "external_trace_fingerprinting_baseline",
+        "seed": seed,
+        "is_live_network_test": False,
+        "is_security_proof": False,
+        "is_synthetic_dataset": False,
+        "dataset": {
+            "source_name": dataset["source_name"],
+            "sha256": dataset["sha256"],
+            "byte_size": dataset["byte_size"],
+            "trace_count": dataset["trace_count"],
+            "class_count": dataset["class_count"],
+            "schema_version": dataset["schema_version"],
+        },
+        "split": {
+            "method": "group-disjoint randomized split",
+            "target_train_fraction": train_fraction,
+            "train_trace_count": split_result["train_trace_count"],
+            "test_trace_count": split_result["test_trace_count"],
+            "train_group_ids": list(split_result["train_group_ids"]),
+            "test_group_ids": list(split_result["test_group_ids"]),
+            "group_disjoint": split_result["group_disjoint"],
+            "all_classes_in_both_sets": split_result["all_classes_in_both_sets"],
+            "warning": split_result["warning"],
+        },
+        "attacker": attack,
+        "not_measured": {
+            "defense_effectiveness": "no defended traces were evaluated",
+            "tor_comparison": "no Tor or matched baseline comparison was performed",
+            "dataset_representativeness": "not independently assessed",
+            "capture_provenance": "only caller-provided source name and file digest are recorded",
+            "network_performance": "no live network latency or throughput was measured",
+        },
+        "warning": (
+            "external input validated and evaluated with a simple nearest-centroid baseline; "
+            "this is not Deep Fingerprinting, not a Tor comparison, and not a privacy guarantee"
+        ),
+    }
+
+
 def _spread(values: Sequence[float]) -> dict[str, float]:
     return {
         "min": min(values),
@@ -493,6 +557,17 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", type=int, default=20261014)
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--trace-dataset",
+        type=Path,
+        help="evaluate a normalized external JSONL dataset using a group-disjoint holdout (baseline attacker only)",
+    )
+    parser.add_argument(
+        "--train-fraction",
+        type=float,
+        default=0.65,
+        help="target training fraction for --trace-dataset (0.4..0.8; groups remain intact)",
+    )
     parser.add_argument("--max-padding-overhead", type=float, help="optional acceptance threshold, e.g. 0.50 for <=50%% byte overhead")
     parser.add_argument("--max-fingerprinting-accuracy", type=float, help="optional acceptance threshold in [0,1] for the padded synthetic attack")
     parser.add_argument(
@@ -500,6 +575,23 @@ def main() -> None:
         help="optional comma-separated integer seeds (at least two) to repeat the full evaluation and report the observed spread, e.g. 20261014,20261015",
     )
     args = parser.parse_args()
+    if args.trace_dataset is not None:
+        if args.stability_seeds is not None or args.max_padding_overhead is not None or args.max_fingerprinting_accuracy is not None:
+            parser.error("--trace-dataset cannot be combined with synthetic-only stability or acceptance options")
+        try:
+            external_result = run_external_trace_evaluation(
+                args.trace_dataset, seed=args.seed, train_fraction=args.train_fraction
+            )
+        except (OSError, ValueError) as exc:
+            parser.error(str(exc))
+        rendered = json.dumps(external_result, indent=2, sort_keys=True) + "\\n"
+        if args.output:
+            if args.output.exists():
+                parser.error(f"refusing to overwrite existing artifact: {args.output}")
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(rendered, encoding="utf-8")
+        print(rendered, end="")
+        return
     if args.max_padding_overhead is not None and args.max_padding_overhead < 0:
         parser.error("--max-padding-overhead must be >= 0")
     if args.max_fingerprinting_accuracy is not None and not 0 <= args.max_fingerprinting_accuracy <= 1:
