@@ -1,10 +1,10 @@
 # Normalized external trace dataset format
 
 AEGIS now has a strict input validator at `anonlab.trace_dataset.load_normalized_jsonl`.
-This is infrastructure for future research with legally obtained, consented, or otherwise
-appropriately licensed traces. It does **not** turn the synthetic fingerprinting harness
-into a real-trace evaluation, and no external dataset is bundled or claimed to have been
-evaluated.
+This supports research with legally obtained, consented, or otherwise appropriately licensed
+traces. No external dataset is bundled or claimed to have been evaluated. The evaluator uses
+a deliberately simple nearest-centroid baseline; it is not Deep Fingerprinting and does not
+evaluate AEGIS defenses yet.
 
 ## JSONL schema
 
@@ -36,8 +36,26 @@ packet values, non-finite numbers, invalid UTF-8, single-class datasets, and ove
 (64 MiB total, 16 MiB per line, 100,000 traces, 100,000 packets per trace). It returns the
 SHA-256 of the exact input bytes and retains `group_id`.
 
-The loader is not yet connected to `privacy_eval.py`; it does not select a group-aware split,
-run an attacker, evaluate padding, or establish representativeness. Dataset publishers,
-collection method, licensing/consent, preprocessing steps, class mapping, and a leakage-safe
-group split must be reviewed before reporting real-trace results. Remove or pseudonymize
-identifiers and do not commit sensitive raw captures to the repository.
+## Run the baseline evaluation
+
+Install the project in editable mode, then run:
+
+```bash
+python -m pip install -e .
+aegis-privacy-eval --trace-dataset path/to/traces.jsonl --seed 42 --output experiments/external-baseline.json
+```
+
+The evaluator uses a group-disjoint train/test split: all traces with the same `group_id`
+stay together, and every label must occur in both sets. If labels are confounded with groups
+or a suitable split cannot be found, evaluation fails rather than falling back to a trace-level
+split. The output records the input SHA-256, counts, hashed group assignments, confusion matrix,
+per-class metrics, and the simple baseline attack result. Raw group IDs are not included in
+the report. Existing output files are never overwritten.
+
+This is only an **undefended baseline**. Padding/cover defenses, alternative attackers,
+calibration, and comparisons remain future work. A group ID is only as meaningful as the
+dataset curator's definition: unrelated sessions must not share a group, and correlated traces
+must not be assigned separate groups. Before publishing results, document the dataset publisher,
+collection method, licensing/consent, preprocessing, class mapping, and known biases. Remove or
+pseudonymize identifiers and do not commit sensitive raw captures to the repository. A dataset
+digest and group-disjoint split do not establish dataset representativeness or anonymity.
