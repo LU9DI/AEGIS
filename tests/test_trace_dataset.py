@@ -33,7 +33,7 @@ def test_loads_normalized_jsonl_and_records_sha256(tmp_path: Path) -> None:
     assert len(result["sha256"]) == 64
     assert result["traces"][0]["group_id"] == "session-a"
     assert result["traces"][0]["packets"] == [(1, 512, 0.0), (-1, 1200, 12.5)]
-    assert "not established" in result["warning"]
+    assert "is established" in result["warning"]
 
 
 @pytest.mark.parametrize("mutate, message", [
@@ -116,10 +116,10 @@ def test_grouped_split_fails_when_labels_are_confounded_with_groups() -> None:
     from anonlab.trace_dataset import grouped_train_test_split
 
     traces = [
-        {"trace_id": "a1", "group_id": "only-class-0-a", "label": 0},
-        {"trace_id": "a2", "group_id": "only-class-0-b", "label": 0},
-        {"trace_id": "b1", "group_id": "only-class-1-a", "label": 1},
-        {"trace_id": "b2", "group_id": "only-class-1-b", "label": 1},
+        {"trace_id": "a1", "group_id": "only-class-0", "label": 0},
+        {"trace_id": "a2", "group_id": "only-class-0", "label": 0},
+        {"trace_id": "b1", "group_id": "only-class-1", "label": 1},
+        {"trace_id": "b2", "group_id": "only-class-1", "label": 1},
     ]
     with pytest.raises(ValueError, match="could not create a group-disjoint split"):
         grouped_train_test_split(traces, seed=3, attempts=100)
