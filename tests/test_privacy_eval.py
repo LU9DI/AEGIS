@@ -290,10 +290,12 @@ def test_external_trace_evaluation_uses_group_disjoint_holdout(tmp_path: Path) -
     assert split["all_classes_in_both_sets"] is True
     assert split["train_group_count"] > 0
     assert split["test_group_count"] > 0
-    assert len(split["train_groups_sha256"]) == 64
-    assert len(split["test_groups_sha256"]) == 64
+    assert "train_groups_sha256" not in split
+    assert "test_groups_sha256" not in split
     assert "train_group_ids" not in split
     assert "test_group_ids" not in split
+    assert len(result["attacker"]["split"]["train_digest"]) == 16
+    assert len(result["attacker"]["split"]["test_digest"]) == 16
     assert split["train_trace_count"] + split["test_trace_count"] == 16
     assert result["attacker"]["test_samples"] == split["test_trace_count"]
     defense = result["toy_defense"]
