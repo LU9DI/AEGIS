@@ -280,7 +280,7 @@ def test_external_trace_evaluation_uses_group_disjoint_holdout(tmp_path: Path) -
     dataset_path = _write_external_dataset(tmp_path / "external.jsonl")
     result = run_external_trace_evaluation(dataset_path, seed=42)
     assert result["experiment"] == "external_trace_fingerprinting_baseline"
-    assert result["is_synthetic_dataset"] is False
+    assert "provenance and authenticity are not independently verified" in result["dataset_origin"]
     assert result["is_live_network_test"] is False
     assert result["is_security_proof"] is False
     assert result["dataset"]["trace_count"] == 16
