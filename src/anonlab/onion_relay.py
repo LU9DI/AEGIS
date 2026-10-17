@@ -112,16 +112,25 @@ async def run_server(
         await server.serve_forever()
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, required=True)
     parser.add_argument("--relay-id", required=True)
     parser.add_argument("--key-file", type=Path, required=True, help="legacy/request-direction 32-byte key file")
-    parser.add_argument("--response-key-file", type=Path, help="optional separate 32-byte relay-to-client AEAD key; omit only for legacy same-key lab mode")
+    parser.add_argument("--response-key-file", type=Path, help="separate 32-byte relay-to-client AEAD key (required unless --legacy-single-key is given)")
     parser.add_argument("--allowed-next-port", type=int, required=True)
     parser.add_argument("--terminal-relay", action="store_true")
-    args = parser.parse_args()
+    parser.add_argument(
+        "--legacy-single-key",
+        action="store_true",
+        help="lab only: use --key-file for both directions (weaker key separation); otherwise --response-key-file is required",
+    )
+    args = parser.parse_args(argv)
+    if args.response_key_file is None and not args.legacy_single_key:
+        parser.error("provide --response-key-file, or pass --legacy-single-key to explicitly accept single-key lab mode")
+    if args.response_key_file is not None and args.legacy_single_key:
+        parser.error("--legacy-single-key cannot be combined with --response-key-file")
     if args.host not in {"127.0.0.1", "::1", "localhost"}:
         parser.error("experimental onion relay is loopback-only")
     if not 1 <= args.port <= 65535:

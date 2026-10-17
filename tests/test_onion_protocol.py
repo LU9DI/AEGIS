@@ -205,5 +205,37 @@ class OnionPrototypeTests(unittest.TestCase):
         self.assertGreater(result["results"]["payload_goodput_mbps_median"], 0)
 
 
+class OnionRelayCliKeyPolicyTests(unittest.TestCase):
+    def _run(self, *extra: str) -> bool:
+        """Return True when the CLI accepted the arguments (and reached the server start)."""
+        import contextlib
+        import io
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+        from anonlab import onion_relay
+
+        with tempfile.TemporaryDirectory() as tmp:
+            key = Path(tmp) / "k"
+            key.write_bytes(b"\x01" * 32)
+            argv = ["--port", "9", "--relay-id", "r", "--key-file", str(key), "--allowed-next-port", "10", *extra]
+            started = mock.Mock()
+            with mock.patch.object(onion_relay, "run_server", mock.Mock()), \
+                    mock.patch.object(onion_relay.asyncio, "run", started), \
+                    contextlib.redirect_stderr(io.StringIO()):
+                try:
+                    onion_relay.main(argv)
+                except SystemExit as exc:
+                    self.assertEqual(exc.code, 2)
+                    return False
+            return started.called
+
+    def test_single_key_requires_explicit_opt_in(self) -> None:
+        self.assertFalse(self._run())
+
+    def test_explicit_legacy_flag_is_accepted(self) -> None:
+        self.assertTrue(self._run("--legacy-single-key"))
+
+
 if __name__ == "__main__":
     unittest.main()

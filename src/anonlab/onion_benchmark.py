@@ -191,6 +191,7 @@ async def run_onion_benchmark(
                 relay_args = module_args + [
                     "anonlab.onion_relay", "--host", HOST, "--port", str(relay_port),
                     "--relay-id", f"relay-{relay_index + 1}", "--key-file", str(key_file),
+                    "--legacy-single-key",  # benchmark measures transport cost, single key is intentional here
                     "--allowed-next-port", str(allowed_next_port),
                 ]
                 if is_terminal:
