@@ -1,0 +1,249 @@
+{
+  "acceptance_checks": {
+    "checks": [],
+    "passed": true
+  },
+  "experiment": "synthetic_path_and_website_fingerprinting",
+  "fingerprinting": {
+    "defense_sweep": [
+      {
+        "bucket_bytes": 128,
+        "byte_overhead_ratio": 0.09660040938244485,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.0,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 5622528,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 128,
+        "byte_overhead_ratio": 0.14513183031399968,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.25,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 5871360,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 128,
+        "byte_overhead_ratio": 0.19328878040503317,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.5,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 6118272,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 128,
+        "byte_overhead_ratio": 0.24092147131933683,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.75,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 6362496,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 128,
+        "byte_overhead_ratio": 0.29032665754544107,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 1.0,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 6615808,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 256,
+        "byte_overhead_ratio": 0.1915162850932326,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.0,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 6109184,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 256,
+        "byte_overhead_ratio": 0.288579126956342,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.25,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 6606848,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 256,
+        "byte_overhead_ratio": 0.384893027138409,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.5,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 7100672,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 256,
+        "byte_overhead_ratio": 0.48015840896701634,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.75,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 7589120,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 256,
+        "byte_overhead_ratio": 0.578968781419225,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 1.0,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 8095744,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 512,
+        "byte_overhead_ratio": 0.40341685138286043,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.0,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 7195648,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 512,
+        "byte_overhead_ratio": 0.5975425351090793,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.25,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 8190976,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 512,
+        "byte_overhead_ratio": 0.7901703354732132,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.5,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 9178624,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 512,
+        "byte_overhead_ratio": 0.9807010991304279,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.75,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 10155520,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 512,
+        "byte_overhead_ratio": 1.178321844034845,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 1.0,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 11168768,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 1024,
+        "byte_overhead_ratio": 0.5520068809016945,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.0,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 7957504,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 1024,
+        "byte_overhead_ratio": 0.9402582483541324,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.25,
+        "fingerprinting_accuracy": 0.8928571428571429,
+        "observed_bytes": 9948160,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 1024,
+        "byte_overhead_ratio": 1.3255138490824003,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.5,
+        "fingerprinting_accuracy": 0.8869047619047619,
+        "observed_bytes": 11923456,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 1024,
+        "byte_overhead_ratio": 1.7065753763968297,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 0.75,
+        "fingerprinting_accuracy": 0.9583333333333334,
+        "observed_bytes": 13877248,
+        "original_bytes": 5127235
+      },
+      {
+        "bucket_bytes": 1024,
+        "byte_overhead_ratio": 2.1018168662056644,
+        "chance_accuracy": 0.16666666666666666,
+        "cover_rate": 1.0,
+        "fingerprinting_accuracy": 1.0,
+        "observed_bytes": 15903744,
+        "original_bytes": 5127235
+      }
+    ],
+    "defense_sweep_interpretation": "Synthetic parameter exploration only; choose settings using held-out realistic traces and a declared privacy/overhead objective.",
+    "padded": {
+      "accuracy": 1.0,
+      "chance_accuracy": 0.16666666666666666,
+      "classifier": "nearest-centroid synthetic baseline",
+      "per_class_accuracy": {
+        "0": 1.0,
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0,
+        "5": 1.0
+      },
+      "test_samples": 168,
+      "train_samples": 312
+    },
+    "padding": {
+      "bucket_bytes": 256,
+      "byte_overhead_ratio": 0.288579126956342,
+      "cover_rate": 0.25,
+      "observed_bytes": 6606848,
+      "original_bytes": 5127235,
+      "placement": "client-to-entry only (synthetic model)"
+    },
+    "plain": {
+      "accuracy": 1.0,
+      "chance_accuracy": 0.16666666666666666,
+      "classifier": "nearest-centroid synthetic baseline",
+      "per_class_accuracy": {
+        "0": 1.0,
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0,
+        "5": 1.0
+      },
+      "test_samples": 168,
+      "train_samples": 312
+    },
+    "warning": "synthetic labels and a simple classifier; not Deep Fingerprinting or Tor comparison"
+  },
+  "is_live_network_test": false,
+  "is_security_proof": false,
+  "path_selection": {
+    "as_entry_exit_constraint": "entry ASN must differ from exit ASN",
+    "candidate_count": 5,
+    "max_detour_ms": 12,
+    "selected_path_counts": {
+      "bad-shared-as": 0,
+      "regional-a": 177,
+      "regional-b": 178,
+      "regional-c": 145,
+      "too-slow": 0
+    },
+    "selection_count": 500,
+    "warning": "synthetic detour/ASN data; not geolocation or BGP inference"
+  },
+  "schema_version": 1,
+  "seed": 20261014
+}

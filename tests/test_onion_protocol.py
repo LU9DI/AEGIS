@@ -6,6 +6,9 @@ import unittest
 
 try:
     from cryptography.exceptions import InvalidTag
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+    from anonlab.ntor_experiment import client_finish, client_start, relay_respond
     from anonlab.onion_protocol import (
         CircuitReplayGuard,
         build_request,
@@ -90,7 +93,18 @@ class OnionPrototypeTests(unittest.TestCase):
         from anonlab.onion_relay import _handle
 
         async def scenario() -> None:
-            key = os.urandom(32)
+            identity = os.urandom(20)
+            relay_private = X25519PrivateKey.generate()
+            relay_public = relay_private.public_key().public_bytes(
+                serialization.Encoding.Raw, serialization.PublicFormat.Raw
+            )
+            client_state, handshake = client_start(identity, relay_public)
+            relay_handshake, relay_keys = relay_respond(handshake, identity, relay_private)
+            client_keys = client_finish(client_state, relay_handshake)
+            self.assertEqual(client_keys, relay_keys)
+            request_key = client_keys.request_key
+            response_key = client_keys.response_key
+            self.assertNotEqual(request_key, response_key)
 
             async def echo(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
                 try:
@@ -106,14 +120,14 @@ class OnionPrototypeTests(unittest.TestCase):
             destination = await asyncio.start_server(echo, "127.0.0.1", 0)
             destination_port = int(destination.sockets[0].getsockname()[1])
             relay = await asyncio.start_server(
-                lambda r, w: _handle(r, w, "relay-1", key, destination_port, True),
+                lambda r, w: _handle(r, w, "relay-1", request_key, destination_port, True, response_key),
                 "127.0.0.1",
                 0,
             )
             relay_port = int(relay.sockets[0].getsockname()[1])
             circuit_id = os.urandom(16)
             packet = build_request(
-                b"payload!", [relay_port], [key], destination_port,
+                b"payload!", [relay_port], [request_key], destination_port,
                 circuit_id=circuit_id, sequence=0,
             )
 
@@ -128,7 +142,7 @@ class OnionPrototypeTests(unittest.TestCase):
                 response = await asyncio.wait_for(read_frame(reader), timeout=2)
                 self.assertEqual(
                     unwrap_response(
-                        key, "relay-1", response,
+                        response_key, "relay-1", response,
                         circuit_id=circuit_id, expected_sequence=0,
                     ),
                     b"payload!",
@@ -189,6 +203,38 @@ class OnionPrototypeTests(unittest.TestCase):
         self.assertTrue(result["results"]["integrity_verified"])
         self.assertEqual(len(result["results"]["transfer_trials"]), 2)
         self.assertGreater(result["results"]["payload_goodput_mbps_median"], 0)
+
+
+class OnionRelayCliKeyPolicyTests(unittest.TestCase):
+    def _run(self, *extra: str) -> bool:
+        """Return True when the CLI accepted the arguments (and reached the server start)."""
+        import contextlib
+        import io
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+        from anonlab import onion_relay
+
+        with tempfile.TemporaryDirectory() as tmp:
+            key = Path(tmp) / "k"
+            key.write_bytes(b"\x01" * 32)
+            argv = ["--port", "9", "--relay-id", "r", "--key-file", str(key), "--allowed-next-port", "10", *extra]
+            started = mock.Mock()
+            with mock.patch.object(onion_relay, "run_server", mock.Mock()), \
+                    mock.patch.object(onion_relay.asyncio, "run", started), \
+                    contextlib.redirect_stderr(io.StringIO()):
+                try:
+                    onion_relay.main(argv)
+                except SystemExit as exc:
+                    self.assertEqual(exc.code, 2)
+                    return False
+            return started.called
+
+    def test_single_key_requires_explicit_opt_in(self) -> None:
+        self.assertFalse(self._run())
+
+    def test_explicit_legacy_flag_is_accepted(self) -> None:
+        self.assertTrue(self._run("--legacy-single-key"))
 
 
 if __name__ == "__main__":
