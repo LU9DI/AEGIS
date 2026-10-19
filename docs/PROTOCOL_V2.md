@@ -1,6 +1,6 @@
 # MALEBOLGE experimental envelope protocol v2
 
-**Status:** loopback-only research format; not reviewed for production security.
+**Status:** loopback-only format; not yet reviewed for production security.
 
 ## Goals
 

@@ -330,14 +330,14 @@ def demo_topology() -> dict[str, Any]:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="AEGIS offline route scoring prototype (not a live anonymity route)")
+    parser = argparse.ArgumentParser(description="AEGIS offline route scoring (not a live anonymity route)")
     parser.add_argument("--input", type=Path, help="JSON topology file; omitting it runs a synthetic demo")
     parser.add_argument("--output", type=Path, help="write plan JSON to this path instead of stdout")
     args = parser.parse_args(argv)
     try:
         raw = json.loads(args.input.read_text(encoding="utf-8")) if args.input else demo_topology()
         result = plan_from_json(raw).to_dict()
-        result["metadata"] = {"component": "AEGIS route scoring prototype", "version": __version__, "input_source": "json" if args.input else "synthetic_demo"}
+        result["metadata"] = {"component": "AEGIS route scoring", "version": __version__, "input_source": "json" if args.input else "synthetic_demo"}
         encoded = json.dumps(result, indent=2, sort_keys=True) + "\n"
         if args.output:
             args.output.write_text(encoded, encoding="utf-8")

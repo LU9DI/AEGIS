@@ -1,4 +1,4 @@
-"""Signed snapshot manifests and anti-rollback checkpoints for AEGIS PIR research.
+"""Signed snapshot manifests and anti-rollback checkpoints for AEGIS PIR.
 
 This authenticates *which database snapshot* a client expects. It does not prove
 that a PIR replica evaluated a query correctly. Public keys must be provisioned

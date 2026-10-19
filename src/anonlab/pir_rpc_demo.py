@@ -60,7 +60,7 @@ async def _run_demo(records_count: int, index: int, record_bytes: int) -> dict[s
             "is_live_remote_network_test": False,
             "is_security_proof": False,
             "warning": (
-                "Loopback-only research transport. HMAC authenticates message possession of a shared key but does not encrypt traffic; "
+                "Loopback-only transport. HMAC authenticates message possession of a shared key but does not encrypt traffic; "
                 "the shared key is unsuitable for untrusted public clients. Deployments need authenticated confidential transport, "
                 "independent operators, identical database snapshots, and a separate anonymity layer. Two colluding replicas recover the index."
             ),

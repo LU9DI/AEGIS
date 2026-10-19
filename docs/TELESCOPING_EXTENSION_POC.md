@@ -1,6 +1,6 @@
 # MALEBOLGE telescoping extension proof of concept (v0.6.0)
 
-**Status: loopback-only prototype; not a production anonymity protocol.**
+**Status: loopback-only implementation; not yet a production anonymity protocol.**
 
 ## What now runs
 

@@ -1,4 +1,4 @@
-"""Benchmark the research-only ntor key-agreement module on loopback."""
+"""Benchmark the ntor key-agreement module on loopback."""
 from __future__ import annotations
 
 import argparse

@@ -1,4 +1,4 @@
-"""Two-server XOR PIR reference prototype for fixed-width replicated records.
+"""Two-server XOR PIR reference implementation for fixed-width replicated records.
 
 This is an educational, information-theoretic two-server construction. The
 servers must hold identical databases and must not collude. The prototype is

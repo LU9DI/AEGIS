@@ -1,4 +1,4 @@
-"""Local-only concurrent circuit benchmark for the AEGIS research lab."""
+"""Local-only concurrent circuit benchmark for AEGIS."""
 from __future__ import annotations
 
 import argparse
@@ -14,7 +14,7 @@ from typing import Any
 
 try:
     from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-except ImportError as exc:  # pragma: no cover - optional research dependency
+except ImportError as exc:  # pragma: no cover - optional dependency
     raise RuntimeError(
         "The concurrency benchmark requires: python -m pip install 'rea-anon-lab[onion-lab]'"
     ) from exc

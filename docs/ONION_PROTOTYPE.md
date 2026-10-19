@@ -1,8 +1,8 @@
-# MALEBOLGE encrypted onion prototype — lab stage only
+# MALEBOLGE encrypted onion — loopback stage
 
 ## Purpose
 
-This prototype tests whether per-hop authenticated encryption and relay processing can be measured independently from WAN latency. It uses ChaCha20-Poly1305 from the `cryptography` package and puts an authenticated encrypted binary envelope around each hop's routing instruction. The binary header prevents the repeated JSON/base64 expansion used by the first internal draft. The return path is onion-wrapped in reverse: the exit wraps the destination response, and each preceding relay adds its own response layer; the client removes the layers in route order.
+This stage tests whether per-hop authenticated encryption and relay processing can be measured independently from WAN latency. It uses ChaCha20-Poly1305 from the `cryptography` package and puts an authenticated encrypted binary envelope around each hop's routing instruction. The binary header prevents the repeated JSON/base64 expansion used by the first internal draft. The return path is onion-wrapped in reverse: the exit wraps the destination response, and each preceding relay adds its own response layer; the client removes the layers in route order.
 
 ## How to run
 

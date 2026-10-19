@@ -1,6 +1,6 @@
 # Using REA for this research program
 
-The `morluto/rea` repository is the **reverse-engineering agent** (CLI/MCP), not the anonymous network's protocol implementation. Keep the network prototype in a separate research repository so experiments, threat-model decisions, dependencies, and security claims do not get mixed into REA's provider-neutral tooling.
+The `morluto/rea` repository is the **reverse-engineering agent** (CLI/MCP), not the anonymous network's protocol implementation. Keep the network implementation in a separate research repository so experiments, threat-model decisions, dependencies, and security claims do not get mixed into REA's provider-neutral tooling.
 
 ## Recommended analysis loop
 

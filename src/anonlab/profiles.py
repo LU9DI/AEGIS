@@ -20,7 +20,7 @@ TOR_LIKE = NetworkProfile(
     description="Simplified three-hop onion-routing reference; illustrative parameters, not live Tor measurements.",
 )
 
-# An optimistic research target: dedicated/high-capacity hops, not an implemented
+# An optimistic target: dedicated/high-capacity hops, not an implemented
 # protocol and not a claim that such a network already exists at these rates.
 CANDIDATE_FAST = NetworkProfile(
     name="candidate_fast_hypothesis",

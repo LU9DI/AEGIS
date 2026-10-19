@@ -1,6 +1,6 @@
 # MALEBOLGE one-hop ntor-derived handshake experiment
 
-**Status: research-only, local test harness. Not a production protocol.**
+**Status: local test harness, loopback only. Not yet a production protocol.**
 
 This experiment adds an ephemeral per-hop key agreement based on the Tor `ntor`
 Curve25519/SHA-256 handshake transcript. It does **not** make MALEBOLGE

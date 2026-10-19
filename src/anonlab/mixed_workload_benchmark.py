@@ -96,7 +96,7 @@ async def run_mixed_workload_benchmark(
     proxies: list[TcpImpairmentProxy] = []
     destination_server: asyncio.AbstractServer | None = None
     # Keep detailed instrumentation opt-in for general clients, but enable it
-    # in this research benchmark so the A/B comparison can explain latency.
+    # in this benchmark so the A/B comparison can explain latency.
     client = TelescopingClient(
         max_active_streams=8,
         fair_write_scheduling=fair_write_scheduling,
