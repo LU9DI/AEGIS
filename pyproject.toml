@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "aegis-anon-lab"
 version = "0.26.0"
-description = "AEGIS: Anonymous Encrypted Garlic-routed Internet Shield — experimental anonymous-network research lab"
+description = "AEGIS: Anonymous Encrypted Garlic-routed Internet Shield — anonymous routing project (pre-1.0)"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }

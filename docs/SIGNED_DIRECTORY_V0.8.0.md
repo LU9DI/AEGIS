@@ -2,7 +2,7 @@
 
 ## Scope
 
-This is a local research primitive, not a production directory service. It intentionally rejects DNS names, IPv6, and any endpoint that is not a literal IPv4 loopback address. It uses the `cryptography` package from the optional `onion-lab` extra.
+This is a local primitive, not yet a production directory service. It intentionally rejects DNS names, IPv6, and any endpoint that is not a literal IPv4 loopback address. It uses the `cryptography` package from the optional `onion-lab` extra.
 
 ## Two signatures, two purposes
 

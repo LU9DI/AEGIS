@@ -1,4 +1,4 @@
-"""Loopback-only authenticated onion relay for the REA research lab."""
+"""Loopback-only authenticated onion relay for AEGIS."""
 from __future__ import annotations
 
 import argparse

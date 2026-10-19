@@ -125,7 +125,7 @@ async def run_onion_benchmark(
     persistent: bool = False,
 ) -> dict[str, Any]:
     if not 1 <= hop_count <= 4:
-        raise ValueError("hop_count must be between 1 and 4 for the nested-frame research prototype")
+        raise ValueError("hop_count must be between 1 and 4 for the nested-frame onion implementation")
     if payload_bytes < 1 or payload_bytes > 10_000_000:
         raise ValueError("payload_bytes must be between 1 and 10,000,000")
     if not 1 <= trials <= 20:

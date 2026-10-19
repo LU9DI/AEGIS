@@ -46,7 +46,7 @@ def main() -> None:
             "is_live_network_test": False,
             "is_security_proof": False,
             "seeded_rng_is_not_cryptographic": args.seed is not None,
-            "warning": "Requires identical replicas and non-colluding servers. This prototype is bandwidth-inefficient and does not fetch complete websites.",
+            "warning": "Requires identical replicas and non-colluding servers. This PIR implementation is bandwidth-inefficient and does not fetch complete websites.",
         },
         "result": {
             "retrieval_correct": obtained_digest == expected_digest,

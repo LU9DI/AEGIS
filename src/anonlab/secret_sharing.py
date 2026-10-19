@@ -1,4 +1,4 @@
-"""Chunk-level 2-of-2 XOR secret-sharing prototype for independent paths.
+"""Chunk-level 2-of-2 XOR secret-sharing implementation for independent paths.
 
 Each share is individually uniformly random when the random source is secure.
 This module does not provide a transport, path independence, traffic-analysis
@@ -51,7 +51,7 @@ class SplitSummary:
     reconstructed_sha256: str
     integrity_verified: bool
     warning: str = (
-        "Prototype only: any relay/common guard or global observer seeing both shares can reconstruct; "
+        "Limitation: any relay/common guard or global observer seeing both shares can reconstruct; "
         "size bucket and timing leak, and path independence is not implemented."
     )
 
@@ -79,7 +79,7 @@ def split_payload(
     if not isinstance(payload, bytes):
         raise ValueError("payload must be bytes")
     if len(payload) > _MAX_PAYLOAD_BYTES:
-        raise ValueError("payload exceeds the configured research limit")
+        raise ValueError("payload exceeds the configured limit")
     if not isinstance(chunk_size, int) or isinstance(chunk_size, bool) or not 1 <= chunk_size <= _MAX_CHUNK_SIZE:
         raise ValueError(f"chunk_size must be within 1..{_MAX_CHUNK_SIZE}")
     chunks_a: list[bytes] = []

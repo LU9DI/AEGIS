@@ -1,4 +1,4 @@
-"""Small, transparent two-server information-theoretic PIR reference prototype.
+"""Small, transparent two-server information-theoretic PIR reference implementation.
 
 Two servers hold identical fixed-length records and are assumed not to collude.
 Each server receives an individually uniform random bitmask; XORing the two

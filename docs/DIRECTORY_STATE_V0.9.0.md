@@ -2,7 +2,7 @@
 
 ## Scope
 
-This is a local research implementation for IPv4 loopback endpoints. It is not a public directory, production trust store, or a guarantee of anonymity.
+This is a local implementation for IPv4 loopback endpoints. It is not a public directory, production trust store, or a guarantee of anonymity.
 
 ## Persistent trust state
 

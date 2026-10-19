@@ -1,6 +1,6 @@
 """Flow-level simulation for latency, overhead, and timing-correlation studies.
 
-Important: this is a research model, not packet-accurate emulation and not a
+Important: this is a model, not packet-accurate emulation and not a
 cryptographic or anonymity proof. Assumptions are documented in README.md.
 """
 

@@ -1,7 +1,7 @@
 """Configuration matrix for mixed-workload scheduler experiments.
 
 Runs paired baseline/round-robin comparisons across a small, declared set of
-profiles and pipeline settings. This is exploratory loopback research, not a
+profiles and pipeline settings. This is an exploratory loopback benchmark, not a
 real-WAN benchmark.
 """
 from __future__ import annotations

@@ -30,7 +30,7 @@ try:
         Ed25519PrivateKey,
         Ed25519PublicKey,
     )
-except ImportError as exc:  # pragma: no cover - optional research dependency
+except ImportError as exc:  # pragma: no cover - optional dependency
     raise RuntimeError(
         "The signed-directory experiment requires: "
         "python -m pip install 'rea-anon-lab[onion-lab]'"
@@ -701,7 +701,7 @@ class DirectoryVerifier:
             if not isinstance(descriptors, list) or not descriptors:
                 raise ValueError("a circuit must contain a non-empty descriptor list")
             if not isinstance(max_hops, int) or isinstance(max_hops, bool) or not 1 <= max_hops <= 5:
-                raise ValueError("max_hops must be within 1..5 in the research lab")
+                raise ValueError("max_hops must be within 1..5 in this release")
             if len(descriptors) > max_hops:
                 raise ValueError("circuit exceeds the configured maximum hop count")
 

@@ -1,4 +1,4 @@
-"""CLI for the AEGIS anonymous-network research simulator."""
+"""CLI for the AEGIS anonymous-network simulator."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from .simulator import run_suite
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="aegis",
-        description="AEGIS research simulator: explore anonymous-network latency, traffic overhead, and simple timing correlation.",
+        description="AEGIS simulator: explore anonymous-network latency, traffic overhead, and simple timing correlation.",
     )
     parser.add_argument("--duration", type=float, default=180.0, help="workload duration in seconds (default: 180)")
     parser.add_argument("--request-rate", type=float, default=1.4, help="mean requests per second (default: 1.4)")

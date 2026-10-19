@@ -1,4 +1,4 @@
-"""Authenticated RPC for the two-server XOR PIR research protocol.
+"""Authenticated RPC for the two-server XOR PIR protocol.
 
 Two modes are supported:
 - Legacy loopback mode uses per-endpoint HMAC keys and is kept for regression tests.
@@ -8,7 +8,7 @@ Two modes are supported:
   layer. Nonces and a bounded replay cache remain active at the application layer.
 
 Remote binds are permitted only in TLS mode, with explicit ``allow_remote=True``.
-This is a research transport, not a production distributed PIR service.
+This transport is not yet a production distributed PIR service.
 """
 
 from __future__ import annotations

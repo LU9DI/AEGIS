@@ -2,7 +2,7 @@
 
 ## Identity
 
-**MALEBOLGE** is the working name of the open-source research effort to investigate a high-performance anonymous communication network. **REA (Reverse Engineer Anything)** is a separate reverse-engineering agent that can help inspect existing implementations; it is not the network protocol.
+**MALEBOLGE** is the working name of the effort to investigate a high-performance anonymous communication network. **REA (Reverse Engineer Anything)** is a separate reverse-engineering agent that can help inspect existing implementations; it is not the network protocol.
 
 ## North-star objective
 

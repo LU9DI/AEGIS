@@ -1,4 +1,4 @@
-"""Experimental authenticated-database commitments for AEGIS PIR research.
+"""Experimental authenticated-database commitments for AEGIS PIR.
 
 This module provides Merkle inclusion proofs as a building block only. A proof
 reveals the record index and therefore MUST NOT be attached to the private PIR

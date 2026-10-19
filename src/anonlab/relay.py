@@ -93,7 +93,7 @@ def main() -> None:
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING)
     if args.host not in {"127.0.0.1", "::1", "localhost"}:
-        parser.error("this research relay is loopback-only; do not expose it to a network")
+        parser.error("this relay is loopback-only; do not expose it to a network")
     asyncio.run(run_server(args.host, args.listen_port, args.upstream_host, args.upstream_port))
 
 

@@ -1,4 +1,4 @@
-# AEGIS research architecture (historical notes through v0.22.0)
+# AEGIS architecture (historical notes through v0.22.0)
 
 ## Phase 0 — flow simulator (implemented)
 
