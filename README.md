@@ -1,6 +1,6 @@
-# AEGIS / MALEBOLGE — recovered research archive
+# AEGIS — Anonymous Encrypted Garlic-routed Internet Shield
 
-**AEGIS** stands for **Anonymous Encrypted Garlic-routed Internet Shield**. This repository contains recovered research code and is not a production anonymity network.
+**AEGIS** stands for **Anonymous Encrypted Garlic-routed Internet Shield**. AEGIS is an actively developed privacy and anonymity network intended for **production use**. The project is currently under construction and testing: the present repository contains recovered code, prototypes, simulations, and local testbeds that are being developed toward that production goal. The production objective is real; production readiness has not yet been established.
 
 The v0.27.4 recovered Python source, tests, design documents, examples, experiment results, and reports are now published as normal Git files. The repository also retains the consolidated recovery ZIP. Eight pre-existing files intentionally differ from the snapshot and were preserved rather than overwritten; their reconciliation is tracked in [Issue #1](https://github.com/LU9DI/AEGIS/issues/1). The original historical Git commit graph has not been reconstructed.
 
@@ -8,7 +8,7 @@ The v0.27.4 recovered Python source, tests, design documents, examples, experime
 
 This section is the shortest path from a fresh checkout to an executable local run. It separates the **simulator** from the **real loopback testbeds**: neither is a public anonymity service, and neither should receive sensitive traffic.
 
-> **Warning:** AEGIS is an unaudited research prototype. Do not route personal, sensitive or production traffic through it, and do not expose its relays to the Internet.
+> **Current status — under construction and testing:** AEGIS is being engineered toward production, but the current implementation is **not yet production-ready** and has not received an independent security audit. Do not route personal, sensitive, or production traffic through it, and do not expose its relays to the Internet. This is a temporary engineering and validation status, not the project's intended end state.
 >
 > **Version note:** the recovered snapshot, reports and design notes are labelled **v0.27.4**, but the package metadata (`pyproject.toml`, `anonlab.__version__`) and `CHANGELOG.md` still report **0.26.0**. `pip show aegis-anon-lab` will therefore print 0.26.0. This mismatch is known and not yet reconciled.
 
@@ -134,13 +134,15 @@ For only the baseline runner regression tests:
 python -m pytest -q tests/test_transport_baseline_runner.py
 ```
 
-### What “running AEGIS” means today
+### Production objective and current implementation status
 
-- **Runnable now:** the research simulator, local TCP relay benchmark, experimental loopback onion/handshake tools, and automated tests.
-- **Not available as a safe public service:** a production-ready multi-operator anonymity network, a browser proxy, a deployable Internet relay network, or cryptographically verifiable remote PIR.
-- **Do not expose the research relay to the Internet or route personal/sensitive traffic through it.** The local relay intentionally restricts its bind address to loopback; changing that guard is not a deployment step.
+AEGIS is being built as a real anonymity-network product, not as a hobby project. The intended destination is a deployable, multi-operator network with a defined client/server experience, authenticated relay discovery and key management, a reviewed protocol, abuse controls, adversarial testing, deployment automation, operational observability, and independent security review.
 
-If the goal is a service that real users can rely on, the next engineering stage is not merely hosting this code: it requires a defined client/server product, authenticated relay discovery and key management, protocol threat review, abuse controls, integration and adversarial tests, deployment automation, observability, and independent security review. Until those are implemented and validated, treat this repository as an executable research lab rather than a secure anonymity product.
+- **Runnable now:** the simulator, local TCP relay benchmark, experimental loopback onion/handshake tools, and automated tests. These are development and validation components, not the finished network.
+- **Still under development:** a production-ready multi-operator anonymity network, a safe browser proxy, a deployable Internet relay network, and cryptographically verifiable remote PIR.
+- **Current safety boundary:** do not expose the current relay testbed to the Internet or route personal, sensitive, or production traffic through it. The local relay intentionally restricts its bind address to loopback; removing that guard is not a substitute for production hardening.
+
+The production goal requires implementation and verification, not simply hosting the current code. The README distinguishes the project's intended destination from the capabilities that have actually been implemented and validated today.
 
 ## Current upload status
 
@@ -186,7 +188,7 @@ The CI workflow runs on every push to `main`, pull requests, and manual dispatch
 
 ## Security caveats
 
-AEGIS is a research prototype, not a production-ready or independently audited anonymity system. Remote PIR retrieval is refused by default because TLS does not prove correct PIR computation; callers can explicitly opt into unverified research mode, which remains unsafe for sensitive data. The two-server XOR PIR prototype assumes non-colluding replicas; colluding replicas can recover the requested index. The four-server consistency check is not a cryptographic proof of correct computation and cannot prevent collusion or common-mode failures. Garlic-clove delivery/batching semantics are not implemented. The relay testbed and RPC/TLS demos do not establish security on a live multi-operator network. The cryptographic verifiable-PIR blocker remains tracked in [Issue #2](https://github.com/LU9DI/AEGIS/issues/2).
+AEGIS is intended for production use but is currently under construction and testing; it is **not yet a production-ready or independently audited anonymity system**. Remote PIR retrieval is refused by default because TLS does not prove correct PIR computation; callers can explicitly opt into unverified research mode, which remains unsafe for sensitive data. The two-server XOR PIR prototype assumes non-colluding replicas; colluding replicas can recover the requested index. The four-server consistency check is not a cryptographic proof of correct computation and cannot prevent collusion or common-mode failures. Garlic-clove delivery/batching semantics are not implemented. The relay testbed and RPC/TLS demos do not establish security on a live multi-operator network. The cryptographic verifiable-PIR blocker remains tracked in [Issue #2](https://github.com/LU9DI/AEGIS/issues/2).
 
 Simulator outputs and route-selection examples are hypothetical or synthetic, not measurements of Tor or a live network. **Do not use this prototype for sensitive or production communications.**
 
