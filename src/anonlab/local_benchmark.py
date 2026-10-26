@@ -7,23 +7,50 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
 import hashlib
 import json
 import os
 import platform
 import random
+import shutil
 import socket
 import statistics
 import subprocess
 import sys
 import tempfile
 import time
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
 HOST = "127.0.0.1"
 CHUNK = 64 * 1024
 SRC_ROOT = Path(__file__).resolve().parents[1]
+
+
+@contextlib.contextmanager
+def _benchmark_tempdir(prefix: str) -> Iterator[Path]:
+    """Temporary directory that tolerates delayed handle release on Windows.
+
+    Child testbed processes write their logs into this directory. After the
+    children are terminated and reaped, the operating system may still hold the
+    inherited log handles for a moment (observed on Windows), so an immediate
+    rmtree can raise PermissionError. Retry briefly instead of failing the
+    benchmark after the measurement itself has already succeeded.
+    """
+    path = Path(tempfile.mkdtemp(prefix=prefix))
+    try:
+        yield path
+    finally:
+        for attempt in range(50):
+            try:
+                shutil.rmtree(path)
+                break
+            except PermissionError:
+                if attempt == 49:
+                    raise
+                time.sleep(0.02)
 
 
 def _free_port() -> int:
@@ -149,8 +176,7 @@ async def run_local_benchmark(
     processes: list[subprocess.Popen[bytes]] = []
     rng = random.Random(seed)
     payload = rng.randbytes(payload_bytes)
-    with tempfile.TemporaryDirectory(prefix="rea-anon-lab-") as tmp:
-        tmp_path = Path(tmp)
+    with _benchmark_tempdir("rea-anon-lab-") as tmp_path:
         env = os.environ.copy()
         env["PYTHONPATH"] = str(SRC_ROOT) + os.pathsep + env.get("PYTHONPATH", "")
         module_args = [sys.executable, "-m"]

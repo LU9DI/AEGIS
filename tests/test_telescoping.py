@@ -773,7 +773,12 @@ class TelescopingCircuitTests(unittest.IsolatedAsyncioTestCase):
             try:
                 writer.write(first)
                 await writer.drain()
-                await asyncio.sleep(0.02)
+                # The gap must outlast stream setup (which itself can take tens
+                # of milliseconds on slower platforms); otherwise both chunks
+                # are already buffered before the first read and the timer path
+                # this test exercises is never reached. It stays far below the
+                # 5 s read timeout above.
+                await asyncio.sleep(0.2)
                 writer.write(second)
                 await writer.drain()
                 writer.close()
