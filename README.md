@@ -2,6 +2,8 @@
 
 **AEGIS** stands for **Anonymous Encrypted Garlic-routed Internet Shield**. AEGIS is an actively developed privacy and anonymity network intended for **production use**. The project is currently under construction and testing. This repository includes recovered source code, prototypes, simulations, and validation artifacts that support development toward that production goal. The production objective is real; production readiness has not yet been established.
 
+The repository currently has no open-source license file, and `pyproject.toml` intentionally omits a license declaration pending an explicit licensing decision. Public visibility alone does not grant reuse rights.
+
 The v0.27.4 recovered Python source, tests, design documents, examples, experiment results, and reports are now published as normal Git files. The repository also retains the consolidated recovery ZIP. Eight pre-existing files intentionally differ from the snapshot and were preserved rather than overwritten; their reconciliation is tracked in [Issue #1](https://github.com/LU9DI/AEGIS/issues/1). The original historical Git commit graph has not been reconstructed.
 
 ## Repository recovery status
