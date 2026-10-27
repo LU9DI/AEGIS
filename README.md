@@ -46,6 +46,10 @@ The remaining blockers are tracked explicitly:
 
 The CI workflow runs on every push to `main`, pull requests, and manual dispatch. It validates archive checksums, extracts the recovered snapshot, applies the explicit remote-PIR safety overlay, installs the package, checks dependencies and console scripts, compiles code, and runs the complete test suite against both the recovered snapshot and the checked-out source. Check the latest [GitHub Actions runs](https://github.com/LU9DI/AEGIS/actions) for the current result.
 
+## Licensing status
+
+The project license decision is intentionally deferred until AEGIS reaches a release-ready state. No license is declared in package metadata at this stage. Before distribution, choose the intended license, add its complete text, and reconcile metadata and notices. Public visibility alone does not grant reuse rights.
+
 ## Security caveats
 
 AEGIS is being developed as a real anonymity-network product intended for production use, not merely as a research archive or hobby project. It is currently under construction and testing and is **not yet production-ready or independently audited**. Remote PIR retrieval is refused by default because TLS does not prove correct PIR computation; callers can explicitly opt into unverified research mode, which remains unsafe for sensitive data. The two-server XOR PIR prototype assumes non-colluding replicas; colluding replicas can recover the requested index. The four-server consistency check is not a cryptographic proof of correct computation and cannot prevent collusion or common-mode failures. Garlic-clove delivery/batching semantics are not implemented. The relay testbed and RPC/TLS demos do not establish security on a live multi-operator network. The cryptographic verifiable-PIR blocker remains tracked in [Issue #2](https://github.com/LU9DI/AEGIS/issues/2).
