@@ -52,6 +52,10 @@ AEGIS is being developed as a real anonymity-network product intended for produc
 
 Simulator outputs and route-selection examples are hypothetical or synthetic, not measurements of Tor or a live network. **Until the required protocol, network, and independent security validation gates have passed, do not use the current implementation for sensitive or production communications.**
 
+## Contribution and vulnerability reporting
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution requirements, security/privacy invariants, and testing expectations. See [SECURITY.md](SECURITY.md) for safe-use boundaries and private vulnerability disclosure guidance. These policies do not change the current readiness assessment: AEGIS remains under construction and is not yet suitable for sensitive or production communications.
+
 ## Recovery integrity
 
 Historical ZIP snapshots are not a reconstructed original Git commit graph. The recovered Git bundle contains a recovery baseline, not all original commits. Missing artifacts and checksum discrepancies are documented in `recovery/`. Keep an independent copy of the recovery archives outside this repository and outside temporary workspaces.
