@@ -48,7 +48,7 @@ The CI workflow runs on every push to `main`, pull requests, and manual dispatch
 
 ## Licensing status
 
-The project license decision is intentionally deferred until AEGIS reaches a release-ready state. No license is declared in package metadata at this stage. Before distribution, choose the intended license, add its complete text, and reconcile metadata and notices. Public visibility alone does not grant reuse rights.
+The project license decision is intentionally deferred until AEGIS reaches a release-ready state. No license is declared in package metadata at this stage. Before distribution, choose the intended license, add its complete text, and reconcile metadata and notices. Public visibility alone does not grant reuse rights. Removing the current metadata does not retroactively change earlier commits, releases, or rights that may already have been granted.
 
 ## Security caveats
 
