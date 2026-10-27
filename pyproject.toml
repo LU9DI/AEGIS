@@ -8,7 +8,6 @@ version = "0.26.0"
 description = "AEGIS: Anonymous Encrypted Garlic-routed Internet Shield — experimental anonymous-network research lab"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
 authors = [{ name = "REA Research" }]
 dependencies = []
 
