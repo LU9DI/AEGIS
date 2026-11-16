@@ -3,16 +3,20 @@ from __future__ import annotations
 import os
 import unittest
 
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+try:
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 
-from anonlab.mixed_workload_benchmark import (
-    run_mixed_scheduler_comparison,
-    run_mixed_workload_benchmark,
-)
-from anonlab.network_impairment import DEFAULT_PROFILES
-from anonlab.telescoping import RelayNode
+    from anonlab.mixed_workload_benchmark import (
+        run_mixed_scheduler_comparison,
+        run_mixed_workload_benchmark,
+    )
+    from anonlab.network_impairment import DEFAULT_PROFILES
+    from anonlab.telescoping import RelayNode
+except ImportError:  # optional research dependency; the suite still collects
+    X25519PrivateKey = None  # type: ignore[assignment,misc]
 
 
+@unittest.skipIf(X25519PrivateKey is None, "install aegis-anon-lab[onion-lab] for mixed-workload tests")
 class MixedWorkloadBenchmarkTests(unittest.IsolatedAsyncioTestCase):
     async def test_mixed_workload_preserves_data_and_cleans_up(self) -> None:
         result = await run_mixed_workload_benchmark(

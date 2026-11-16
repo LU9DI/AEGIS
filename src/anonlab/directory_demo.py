@@ -2,15 +2,12 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import tempfile
 import time
+from pathlib import Path
 from typing import Any
 
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-from cryptography.hazmat.primitives import serialization
-
+from ._crypto import missing_symbol, requires_crypto
 from .directory import (
     DirectoryAuthority,
     DirectoryVerifier,
@@ -19,13 +16,26 @@ from .directory import (
     descriptor_to_json,
 )
 
+FEATURE = "the signed-directory demonstration"
 
+try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+except ImportError:  # pragma: no cover - depends on the installed extras
+    Ed25519PrivateKey = missing_symbol("Ed25519PrivateKey", FEATURE)  # type: ignore[assignment,misc]
+    X25519PrivateKey = missing_symbol("X25519PrivateKey", FEATURE)  # type: ignore[assignment,misc]
+    serialization = missing_symbol("serialization", FEATURE)  # type: ignore[assignment,misc]
+
+
+@requires_crypto(FEATURE)
 def _raw_x25519_public(key: X25519PrivateKey) -> bytes:
     return key.public_key().public_bytes(
         serialization.Encoding.Raw, serialization.PublicFormat.Raw
     )
 
 
+@requires_crypto(FEATURE)
 def run_demo() -> dict[str, Any]:
     """Exercise issuance, rotation, persistent reload, route invalidation and revocation."""
     now = int(time.time())

@@ -12,14 +12,8 @@ import time
 from pathlib import Path
 from typing import Any
 
-try:
-    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-except ImportError as exc:  # pragma: no cover - optional research dependency
-    raise RuntimeError(
-        "The concurrency benchmark requires: python -m pip install 'rea-anon-lab[onion-lab]'"
-    ) from exc
-
 from . import __version__
+from ._crypto import missing_symbol, requires_crypto
 from .onion_protocol import frame
 from .telescoping import (
     DEFAULT_MAX_ACTIVE_CONNECTIONS,
@@ -29,6 +23,13 @@ from .telescoping import (
     serve_node,
 )
 from .telescoping_benchmark import _percentile
+
+FEATURE = "the concurrency benchmark"
+
+try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+except ImportError:  # pragma: no cover - depends on the installed extras
+    X25519PrivateKey = missing_symbol("X25519PrivateKey", FEATURE)  # type: ignore[assignment,misc]
 
 
 async def _echo_handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
@@ -65,6 +66,7 @@ async def _request_direct(host: str, port: int, payload: bytes) -> float:
     return (time.perf_counter_ns() - started) / 1_000_000
 
 
+@requires_crypto(FEATURE)
 async def run_concurrency_benchmark(
     *, clients_count: int = 8, payload_bytes: int = 65_536, seed: int = 20261009
 ) -> dict[str, Any]:

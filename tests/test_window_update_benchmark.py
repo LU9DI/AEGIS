@@ -10,6 +10,16 @@ from anonlab.window_update_benchmark import (
     summarize_batch_sensitivity,
 )
 
+try:
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+except ImportError:  # optional research dependency
+    X25519PrivateKey = None  # type: ignore[assignment,misc]
+
+requires_crypto = unittest.skipIf(
+    X25519PrivateKey is None,
+    "install aegis-anon-lab[onion-lab] for window-update benchmarks",
+)
+
 
 class WindowUpdateBenchmarkTests(unittest.IsolatedAsyncioTestCase):
     def test_batch_size_validation_is_bounded_and_requires_default_control(self) -> None:
@@ -51,6 +61,7 @@ class WindowUpdateBenchmarkTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["32768"]["metrics"]["bulk_goodput_mbps"]["wins_vs_control"], 1)
         self.assertEqual(result["32768"]["metrics"]["bulk_goodput_mbps"]["losses_vs_control"], 1)
 
+    @requires_crypto
     async def test_sensitivity_smoke_checks_integrity_cleanup_and_configuration(self) -> None:
         result = await run_window_update_sensitivity(
             profile_name="loopback",

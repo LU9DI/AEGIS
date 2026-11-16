@@ -2,11 +2,19 @@ import time
 from dataclasses import replace
 
 import pytest
+
+pytest.importorskip(
+    "cryptography.hazmat.primitives.asymmetric.ed25519",
+    reason="install aegis-anon-lab[onion-lab] for signed manifest tests",
+)
+
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from anonlab.pir_commitment import AuthenticatedSnapshot
 from anonlab.pir_manifest import (
-    ManifestError, SnapshotCheckpoint, sign_snapshot_manifest,
+    ManifestError,
+    SnapshotCheckpoint,
+    sign_snapshot_manifest,
     verify_snapshot_manifest,
 )
 

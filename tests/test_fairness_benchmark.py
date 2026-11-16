@@ -6,6 +6,16 @@ import unittest
 from anonlab.fairness_benchmark import _parse_stream_counts, run_fairness_matrix
 from anonlab.network_impairment_benchmark import _jain_index
 
+try:
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+except ImportError:  # optional research dependency
+    X25519PrivateKey = None  # type: ignore[assignment,misc]
+
+requires_crypto = unittest.skipIf(
+    X25519PrivateKey is None,
+    "install aegis-anon-lab[onion-lab] for fairness matrix benchmarks",
+)
+
 
 class JainFairnessIndexTests(unittest.TestCase):
     def test_equal_rates_have_perfect_index(self) -> None:
@@ -32,6 +42,7 @@ class JainFairnessIndexTests(unittest.TestCase):
             _parse_stream_counts("33")
 
 
+@requires_crypto
 class FairnessMatrixTests(unittest.IsolatedAsyncioTestCase):
     async def test_small_matrix_reports_per_stream_and_cleanup_results(self) -> None:
         result = await run_fairness_matrix(

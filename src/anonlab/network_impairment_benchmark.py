@@ -19,9 +19,8 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-
 from . import __version__
+from ._crypto import missing_symbol, requires_crypto
 from .network_impairment import DEFAULT_PROFILES, LinkImpairmentProfile, TcpImpairmentProxy
 from .telescoping import (
     STREAM_CHUNK_BYTES,
@@ -32,6 +31,13 @@ from .telescoping import (
     _raw_public_key,
     serve_node,
 )
+
+FEATURE = "the network-impairment benchmark"
+
+try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+except ImportError:  # pragma: no cover - depends on the installed extras
+    X25519PrivateKey = missing_symbol("X25519PrivateKey", FEATURE)  # type: ignore[assignment,misc]
 
 
 def _percentile(values: list[float], p: float) -> float:
@@ -58,6 +64,7 @@ def _jain_index(values: list[float]) -> float:
     return (total * total) / (len(values) * squared)
 
 
+@requires_crypto(FEATURE)
 async def run_network_impairment_benchmark(
     *,
     profile: LinkImpairmentProfile,

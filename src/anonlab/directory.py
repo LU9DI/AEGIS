@@ -23,18 +23,24 @@ import threading
 import time
 from typing import Any, Mapping
 
-try:
+from ._crypto import MissingCryptographyError, missing_symbol, requires_crypto
+
+FEATURE = "the signed relay directory"
+
+try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
     from cryptography.exceptions import InvalidSignature
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric.ed25519 import (
         Ed25519PrivateKey,
         Ed25519PublicKey,
     )
-except ImportError as exc:  # pragma: no cover - optional research dependency
-    raise RuntimeError(
-        "The signed-directory experiment requires: "
-        "python -m pip install 'rea-anon-lab[onion-lab]'"
-    ) from exc
+except ImportError:  # pragma: no cover - depends on the installed extras
+    # Descriptor encoding, parsing, validation and directory state handling stay
+    # importable; signing and verification raise MissingCryptoDependency.
+    InvalidSignature = MissingCryptographyError  # type: ignore[assignment,misc]
+    serialization = missing_symbol("serialization", FEATURE)  # type: ignore[assignment,misc]
+    Ed25519PrivateKey = missing_symbol("Ed25519PrivateKey", FEATURE)  # type: ignore[assignment,misc]
+    Ed25519PublicKey = missing_symbol("Ed25519PublicKey", FEATURE)  # type: ignore[assignment,misc]
 
 SCHEMA_VERSION = 1
 IDENTITY_DIGEST_BYTES = 20
@@ -78,6 +84,7 @@ def _now_seconds(now: int | None) -> int:
     return value
 
 
+@requires_crypto(FEATURE)
 def _public_bytes(key: Ed25519PublicKey) -> bytes:
     return key.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
 
@@ -173,6 +180,7 @@ def _authority_descriptor_payload(descriptor: Mapping[str, Any]) -> bytes:
     return _AUTHORITY_DOMAIN + _canonical(signed)
 
 
+@requires_crypto(FEATURE)
 def _verify_signature(public_key: bytes, signature_hex: Any, payload: bytes, label: str) -> None:
     signature = _hex_field(signature_hex, f"{label} signature", _HEX_64)
     try:
@@ -181,6 +189,7 @@ def _verify_signature(public_key: bytes, signature_hex: Any, payload: bytes, lab
         raise ValueError(f"{label} signature verification failed") from exc
 
 
+@requires_crypto(FEATURE)
 def create_relay_descriptor(
     identity_private_key: Ed25519PrivateKey,
     onion_public_key: bytes,
@@ -230,13 +239,16 @@ class DirectoryAuthority:
     private_key: Ed25519PrivateKey
 
     @classmethod
+    @requires_crypto(FEATURE)
     def generate(cls) -> "DirectoryAuthority":
         return cls(Ed25519PrivateKey.generate())
 
     @property
+    @requires_crypto(FEATURE)
     def public_key_bytes(self) -> bytes:
         return _public_bytes(self.private_key.public_key())
 
+    @requires_crypto(FEATURE)
     def certify(self, relay_signed_descriptor: Mapping[str, Any], *, now: int | None = None) -> dict[str, Any]:
         if set(relay_signed_descriptor) != _UNSIGNED_DESCRIPTOR_KEYS:
             raise ValueError("expected a relay-signed descriptor without authority_signature")
@@ -255,6 +267,7 @@ class DirectoryAuthority:
         ).hex()
         return {**to_sign, "authority_signature": authority_signature}
 
+    @requires_crypto(FEATURE)
     def sign_revocations(
         self,
         revoked_relay_ids: list[str] | tuple[str, ...] | set[str],
@@ -374,6 +387,7 @@ class DirectoryVerifier:
     without a configured state file.
     """
 
+    @requires_crypto(FEATURE)
     def __init__(
         self,
         trusted_authority_public_key: bytes,

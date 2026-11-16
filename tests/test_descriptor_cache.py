@@ -2,11 +2,16 @@ from __future__ import annotations
 
 import unittest
 
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+try:
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 
-from anonlab.telescoping import RelayNode, serve_node
+    from anonlab.telescoping import RelayNode, serve_node
+except ImportError:  # optional research dependency; the suite still collects
+    X25519PrivateKey = None  # type: ignore[assignment,misc]
+    RelayNode = serve_node = None  # type: ignore[assignment,misc]
 
 
+@unittest.skipIf(X25519PrivateKey is None, "install aegis-anon-lab[onion-lab] for descriptor cache tests")
 class RelayDescriptorCacheTests(unittest.IsolatedAsyncioTestCase):
     async def test_descriptor_is_cached_after_binding(self) -> None:
         node = RelayNode(identity_digest=b"m" * 20, onion_private_key=X25519PrivateKey.generate())

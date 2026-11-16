@@ -12,17 +12,19 @@ import time
 from pathlib import Path
 from typing import Any
 
-try:
-    from cryptography.hazmat.primitives import serialization
-    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-except ImportError as exc:  # pragma: no cover - optional research dependency
-    raise RuntimeError(
-        "The telescoping benchmark requires: python -m pip install 'rea-anon-lab[onion-lab]'"
-    ) from exc
-
 from . import __version__
+from ._crypto import missing_symbol, requires_crypto
 from .onion_protocol import MAX_FRAME_BYTES, frame
 from .telescoping import RelayNode, TelescopingClient, read_frame, serve_node
+
+FEATURE = "the telescoping benchmark"
+
+try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+except ImportError:  # pragma: no cover - depends on the installed extras
+    serialization = missing_symbol("serialization", FEATURE)  # type: ignore[assignment,misc]
+    X25519PrivateKey = missing_symbol("X25519PrivateKey", FEATURE)  # type: ignore[assignment,misc]
 
 
 def _raw_public(key: X25519PrivateKey) -> bytes:
@@ -69,6 +71,7 @@ async def _direct_echo(host: str, port: int, payload: bytes) -> tuple[bytes, flo
     return reply, (time.perf_counter_ns() - started) / 1_000_000
 
 
+@requires_crypto(FEATURE)
 async def run_telescoping_benchmark(
     *, payload_bytes: int = 65_536, trials: int = 5, seed: int = 20261009
 ) -> dict[str, Any]:

@@ -16,11 +16,19 @@ import time
 from pathlib import Path
 from typing import Any
 
-try:
+from ._crypto import MissingCryptographyError, missing_symbol, requires_crypto
+
+FEATURE = "signed PIR snapshot manifests"
+
+try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
     from cryptography.exceptions import InvalidSignature
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
-except ImportError as exc:  # pragma: no cover - depends on optional extra
-    raise ImportError("Signed PIR manifests require the optional 'cryptography' package") from exc
+except ImportError:  # pragma: no cover - depends on the optional extra
+    # Manifest validation and checkpoint persistence stay usable; signing and
+    # verification raise MissingCryptoDependency.
+    InvalidSignature = MissingCryptographyError  # type: ignore[assignment,misc]
+    Ed25519PrivateKey = missing_symbol("Ed25519PrivateKey", FEATURE)  # type: ignore[assignment,misc]
+    Ed25519PublicKey = missing_symbol("Ed25519PublicKey", FEATURE)  # type: ignore[assignment,misc]
 
 _MANIFEST_DOMAIN = b"AEGIS-PIR-SNAPSHOT-MANIFEST-v1\x00"
 SCHEMA_VERSION = 1
@@ -79,6 +87,7 @@ def _validate_fields(
         raise ManifestError("merkle_root must be a 32-byte SHA-256 digest")
 
 
+@requires_crypto(FEATURE)
 def sign_snapshot_manifest(
     *, private_key: Ed25519PrivateKey, snapshot_id: str, sequence: int,
     created_at: int, record_count: int, merkle_root: bytes,
@@ -91,6 +100,7 @@ def sign_snapshot_manifest(
     return SnapshotManifest(**{**unsigned.__dict__, "signature": signature})
 
 
+@requires_crypto(FEATURE)
 def verify_snapshot_manifest(
     manifest: SnapshotManifest, public_key: Ed25519PublicKey, *,
     now: int | None = None, max_age_seconds: int | None = None,
@@ -128,6 +138,7 @@ class SnapshotCheckpoint:
     sequence: int = -1
     manifest_digest: bytes | None = None
 
+    @requires_crypto(FEATURE)
     def verify_and_advance(
         self, manifest: SnapshotManifest, public_key: Ed25519PublicKey, *,
         now: int | None = None, max_age_seconds: int | None = None,

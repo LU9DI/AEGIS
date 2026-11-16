@@ -9,13 +9,17 @@ from __future__ import annotations
 import os
 import struct
 
-try:
+from ._crypto import missing_symbol
+
+try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
     from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
-except ImportError as exc:  # pragma: no cover - exercised without optional extra
-    raise RuntimeError(
-        "The encrypted onion prototype requires the optional dependency: "
-        "python -m pip install 'rea-anon-lab[onion-lab]'"
-    ) from exc
+except ImportError:  # pragma: no cover - depends on the installed extras
+    # Framing and parsing below stay importable; sealing raises
+    # MissingCryptoDependency instead of pretending to encrypt.
+    ChaCha20Poly1305 = missing_symbol(  # type: ignore[assignment,misc]
+        "ChaCha20Poly1305",
+        "the encrypted onion prototype (AEAD envelope sealing)",
+    )
 
 VERSION = 2
 NONCE_BYTES = 12

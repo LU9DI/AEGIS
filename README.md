@@ -44,6 +44,8 @@ python -m pip install pytest
 
 The optional `onion-lab` extra installs the `cryptography` dependency used by experimental encrypted-onion and handshake demos. The core simulator and raw TCP relay benchmark do not require that extra, but installing it enables more of the research tools.
 
+Both installations are supported and tested. Without `cryptography`, every module still imports so parsing, validation, reporting and the deterministic simulator keep working; the operations that need real primitives (key generation, Ed25519 signing/verification, AEAD sealing, ntor handshakes and the encrypted benchmarks) raise `anonlab._crypto.MissingCryptoDependency` with the exact install command instead of falling back to simulated cryptography. Test the dependency-free path with `python -m pip install -e .` in a separate environment.
+
 ### 3. Run the simulator
 
 This is a deterministic model, not a network connection. It writes a JSON report you can inspect or feed into your own analysis.
