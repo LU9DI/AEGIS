@@ -1,6 +1,8 @@
 # AEGIS — Anonymous Encrypted Garlic-routed Internet Shield
 
-**AEGIS** stands for **Anonymous Encrypted Garlic-routed Internet Shield**. AEGIS is an actively developed privacy and anonymity network intended for **production use**. The project is currently under construction and testing: the present repository contains recovered code, prototypes, simulations, and local testbeds that are being developed toward that production goal. The production objective is real; production readiness has not yet been established.
+**AEGIS** stands for **Anonymous Encrypted Garlic-routed Internet Shield**. AEGIS is an actively developed privacy and anonymity network intended for **production use**. The project is currently under construction and testing. This repository includes recovered source code, prototypes, simulations, and validation artifacts that support development toward that production goal. The production objective is real; production readiness has not yet been established.
+
+The repository currently has no open-source license file, and `pyproject.toml` intentionally omits a license declaration pending an explicit licensing decision. Public visibility alone does not grant reuse rights.
 
 The v0.27.4 recovered Python source, tests, design documents, examples, experiment results, and reports are now published as normal Git files. The repository also retains the consolidated recovery ZIP. Eight pre-existing files intentionally differ from the snapshot and were preserved rather than overwritten; their reconciliation is tracked in [Issue #1](https://github.com/LU9DI/AEGIS/issues/1). The original historical Git commit graph has not been reconstructed.
 
@@ -146,7 +148,7 @@ AEGIS is being built as a real anonymity-network product, not as a hobby project
 
 The production goal requires implementation and verification, not simply hosting the current code. The README distinguishes the project's intended destination from the capabilities that have actually been implemented and validated today.
 
-## Current upload status
+## Repository recovery status
 
 Published and verified:
 - package metadata (`pyproject.toml`), ignore rules, validation notes and recovery reports;
@@ -188,11 +190,19 @@ The remaining blockers are tracked explicitly:
 
 The CI workflow runs on every push to `main`, pull requests, and manual dispatch. It validates archive checksums, extracts the recovered snapshot, applies the explicit remote-PIR safety overlay, installs the package, checks dependencies and console scripts, compiles code, and runs the complete test suite against both the recovered snapshot and the checked-out source. Check the latest [GitHub Actions runs](https://github.com/LU9DI/AEGIS/actions) for the current result.
 
+## Licensing status
+
+The project license decision is intentionally deferred until AEGIS reaches a release-ready state. No license is declared in package metadata at this stage. Before distribution, choose the intended license, add its complete text, and reconcile metadata and notices. Public visibility alone does not grant reuse rights. Removing the current metadata does not retroactively change earlier commits, releases, or rights that may already have been granted.
+
 ## Security caveats
 
-AEGIS is intended for production use but is currently under construction and testing; it is **not yet a production-ready or independently audited anonymity system**. Remote PIR retrieval is refused by default because TLS does not prove correct PIR computation; callers can explicitly opt into unverified research mode, which remains unsafe for sensitive data. The two-server XOR PIR prototype assumes non-colluding replicas; colluding replicas can recover the requested index. The four-server consistency check is not a cryptographic proof of correct computation and cannot prevent collusion or common-mode failures. Garlic-clove delivery/batching semantics are not implemented. The relay testbed and RPC/TLS demos do not establish security on a live multi-operator network. The cryptographic verifiable-PIR blocker remains tracked in [Issue #2](https://github.com/LU9DI/AEGIS/issues/2).
+AEGIS is being developed as a real anonymity-network product intended for production use, not merely as a research archive or hobby project. It is currently under construction and testing and is **not yet production-ready or independently audited**. Remote PIR retrieval is refused by default because TLS does not prove correct PIR computation; callers can explicitly opt into unverified research mode, which remains unsafe for sensitive data. The two-server XOR PIR prototype assumes non-colluding replicas; colluding replicas can recover the requested index. The four-server consistency check is not a cryptographic proof of correct computation and cannot prevent collusion or common-mode failures. Garlic-clove delivery/batching semantics are not implemented. The relay testbed and RPC/TLS demos do not establish security on a live multi-operator network. The cryptographic verifiable-PIR blocker remains tracked in [Issue #2](https://github.com/LU9DI/AEGIS/issues/2).
 
-Simulator outputs and route-selection examples are hypothetical or synthetic, not measurements of Tor or a live network. **Do not use this prototype for sensitive or production communications.**
+Simulator outputs and route-selection examples are hypothetical or synthetic, not measurements of Tor or a live network. **Until the required protocol, network, and independent security validation gates have passed, do not use the current implementation for sensitive or production communications.**
+
+## Contribution and vulnerability reporting
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution requirements, security/privacy invariants, and testing expectations. See [SECURITY.md](SECURITY.md) for safe-use boundaries and private vulnerability disclosure guidance. These policies do not change the current readiness assessment: AEGIS remains under construction and is not yet suitable for sensitive or production communications.
 
 ## Recovery integrity
 
