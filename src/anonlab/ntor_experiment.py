@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 import hashlib
 import hmac
 
-from ._crypto import missing_symbol, requires_crypto
+from ._crypto import import_fallbacks, requires_crypto
 
 FEATURE = "the ntor key-agreement experiment"
 
@@ -23,14 +23,15 @@ try:  # pragma: no cover - the fallback is exercised in the crypto-free environm
         X25519PublicKey,
     )
     from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-except ImportError:  # pragma: no cover - depends on the installed extras
-    # Placeholders keep annotations, module import and pure helpers working;
-    # the guarded public entry points below fail with MissingCryptoDependency.
-    hashes = missing_symbol("hashes", FEATURE)  # type: ignore[assignment,misc]
-    serialization = missing_symbol("serialization", FEATURE)  # type: ignore[assignment,misc]
-    X25519PrivateKey = missing_symbol("X25519PrivateKey", FEATURE)  # type: ignore[assignment,misc]
-    X25519PublicKey = missing_symbol("X25519PublicKey", FEATURE)  # type: ignore[assignment,misc]
-    HKDF = missing_symbol("HKDF", FEATURE)  # type: ignore[assignment,misc]
+except ImportError as exc:  # pragma: no cover - depends on the installed extras
+    # Placeholders keep annotations, module import and pure helpers working; the
+    # guarded public entry points fail with MissingCryptoDependency (absent) or
+    # BrokenCryptoDependency (installed but broken).
+    hashes, serialization, X25519PrivateKey, X25519PublicKey, HKDF = import_fallbacks(  # type: ignore[misc]
+        exc,
+        FEATURE,
+        ("hashes", "serialization", "X25519PrivateKey", "X25519PublicKey", "HKDF"),
+    )
 
 PROTOID = b"ntor-curve25519-sha256-1"
 _T_MAC = PROTOID + b":mac"

@@ -8,20 +8,39 @@ try:
     from cryptography.exceptions import InvalidTag
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-    from anonlab.ntor_experiment import client_finish, client_start, relay_respond
-    from anonlab.onion_protocol import (
-        CircuitReplayGuard,
-        build_request,
-        frame,
-        open_sealed,
-        parse_request_layer,
-        seal,
-        unwrap_response,
-        wrap_response,
-    )
-    from anonlab.onion_benchmark import run_onion_benchmark
-except (ImportError, RuntimeError):  # optional research dependency
-    InvalidTag = None  # type: ignore[assignment,misc]
+except ImportError:  # optional research dependency
+    InvalidTag = serialization = X25519PrivateKey = None  # type: ignore[assignment,misc]
+
+# These modules import without the optional extra, so the pure replay-guard
+# coverage below runs in the dependency-free environment too.
+from anonlab.ntor_experiment import client_finish, client_start, relay_respond
+from anonlab.onion_benchmark import run_onion_benchmark
+from anonlab.onion_protocol import (
+    CircuitReplayGuard,
+    build_request,
+    frame,
+    open_sealed,
+    parse_request_layer,
+    seal,
+    unwrap_response,
+    wrap_response,
+)
+
+
+class CircuitReplayGuardTests(unittest.TestCase):
+    """Process-local circuit-ID bookkeeping; it uses no AEAD primitives."""
+
+    def test_replay_guard_rejects_duplicate_ids_and_fails_closed_when_full(self) -> None:
+        guard = CircuitReplayGuard(max_circuits=2)
+        first = b"a" * 16
+        second = b"b" * 16
+        guard.claim(first)
+        with self.assertRaisesRegex(ValueError, "replayed"):
+            guard.claim(first)
+        guard.claim(second)
+        with self.assertRaisesRegex(ValueError, "full"):
+            guard.claim(b"c" * 16)
+        self.assertEqual(guard.count, 2)
 
 
 @unittest.skipIf(InvalidTag is None, "install aegis-anon-lab[onion-lab] to run AEAD prototype tests")
@@ -213,6 +232,7 @@ class OnionRelayCliKeyPolicyTests(unittest.TestCase):
         import tempfile
         from pathlib import Path
         from unittest import mock
+
         from anonlab import onion_relay
 
         with tempfile.TemporaryDirectory() as tmp:

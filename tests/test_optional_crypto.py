@@ -90,13 +90,39 @@ def _run_without_cryptography(body: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+def _run_in_subprocess(body: str, pythonpath: str) -> subprocess.CompletedProcess[str]:
+    env = dict(os.environ)
+    env["PYTHONPATH"] = pythonpath
+    env.pop("AEGIS_SIGNED", None)
+    return subprocess.run(
+        [sys.executable, "-c", textwrap.dedent(body)],
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=180,
+        check=False,
+    )
+
+
+def _run_with_broken_cryptography(tmp_path: Path, body: str) -> subprocess.CompletedProcess[str]:
+    """Run ``body`` where a fake ``cryptography`` is installed but unimportable."""
+    package = tmp_path / "cryptography"
+    package.mkdir()
+    (package / "__init__.py").write_text(
+        'raise ImportError("libssl.so.3: cannot open shared object file")\n',
+        encoding="utf-8",
+    )
+    return _run_in_subprocess(body, os.pathsep.join((str(tmp_path), str(SRC_ROOT))))
+
+
 def test_crypto_modules_import_without_dependency() -> None:
     module_list = ", ".join(repr(name) for name in MIXED_MODULES)
     completed = _run_without_cryptography(
         f"""
         import importlib
-        from anonlab._crypto import available
+        from anonlab._crypto import available, installed
 
+        assert installed() is False, "the absence probe must not see the package"
         assert available() is False, "the optional dependency leaked into the test process"
         for name in ({module_list},):
             importlib.import_module(name)
@@ -288,6 +314,109 @@ def test_requires_crypto_preserves_metadata_and_signature() -> None:
         "(identity_private_key"
     )
     assert "relay_signed_descriptor" in str(inspect.signature(directory.DirectoryAuthority.certify))
+
+
+def test_broken_install_is_not_reported_as_missing(tmp_path: Path) -> None:
+    """A present but unimportable ``cryptography`` must not look like an absent extra."""
+    completed = _run_with_broken_cryptography(
+        tmp_path,
+        """
+        from anonlab import directory
+        from anonlab._crypto import (
+            BrokenCryptoDependency, MissingCryptoDependency, available, installed,
+        )
+
+        assert installed() is True, "a present package must be discoverable"
+        assert available() is True, "a broken install still lets guarded bodies run"
+        # Pure helpers keep working while the install stays broken.
+        assert len(directory.relay_identity_digest(b"k" * 32)) == 20
+        try:
+            directory.DirectoryAuthority.generate()
+        except BrokenCryptoDependency as exc:
+            assert not isinstance(exc, MissingCryptoDependency)
+            assert "installed and failed to import" in str(exc), str(exc)
+            assert "cannot open shared object file" in str(exc), str(exc)
+            assert isinstance(exc.__cause__, ImportError), repr(exc.__cause__)
+            assert "cannot open shared object file" in str(exc.__cause__)
+        else:
+            raise AssertionError("a broken install produced a working authority")
+        print("broken-install-ok")
+        """,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert completed.stdout.strip() == "broken-install-ok"
+
+
+def test_broken_install_is_reported_by_every_guarded_module(tmp_path: Path) -> None:
+    completed = _run_with_broken_cryptography(
+        tmp_path,
+        """
+        from anonlab._crypto import BrokenCryptoDependency
+        from anonlab import ntor_experiment, onion_protocol, pir_manifest
+
+        attempts = {
+            "client_start": lambda: ntor_experiment.client_start(b"\\x03" * 20, b"\\x04" * 32),
+            "seal": lambda: onion_protocol.seal(b"k" * 32, b"payload", b"aad"),
+            "sign_manifest": lambda: pir_manifest.sign_snapshot_manifest(
+                private_key=pir_manifest.Ed25519PrivateKey, snapshot_id="s",
+                sequence=1, created_at=1, record_count=1, merkle_root=b"\\x05" * 32,
+            ),
+        }
+        for label, call in attempts.items():
+            try:
+                call()
+            except BrokenCryptoDependency as exc:
+                assert exc.__cause__ is not None, label
+            else:
+                raise AssertionError(f"{label} did not report the broken install")
+        print("reported", len(attempts))
+        """,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert completed.stdout.strip() == "reported 3"
+
+
+def test_every_optional_dependency_skip_documents_its_reason() -> None:
+    """No test may be skipped without a reason that names the missing extra.
+
+    Skips conditioned on key material must name the ``onion-lab`` extra; other
+    environmental skips (for example a missing OpenSSL CLI) only have to carry a
+    non-empty, human-readable reason.
+    """
+    import re
+
+    tests_root = Path(__file__).resolve().parent
+    skip_call = re.compile(
+        r"(?:skipIf|skipUnless|skipif|skipunless)\((?P<body>[^()]*(?:\([^()]*\)[^()]*)*)\)",
+        re.DOTALL,
+    )
+    crypto_condition = re.compile(
+        r"cryptography|Ed25519|X25519|InvalidTag|InvalidSignature|HAS_CRYPTO|CRYPTO_AVAILABLE|needs_crypto"
+    )
+    reason_literal = re.compile(r"\"[^\"]{10,}\"|'[^']{10,}'")
+    importorskip = re.compile(r"importorskip\((?P<body>[^)]*)\)", re.DOTALL)
+
+    inspected = crypto_inspected = 0
+    for path in sorted(tests_root.glob("test_*.py")):
+        source = path.read_text(encoding="utf-8")
+        for match in skip_call.finditer(source):
+            inspected += 1
+            body = match.group("body")
+            reason = reason_literal.search(body)
+            assert reason, f"{path.name}: skip without a usable reason: {body.strip()[:80]}"
+            if crypto_condition.search(body):
+                crypto_inspected += 1
+                assert "onion-lab" in reason.group(0), f"{path.name}: {reason.group(0)}"
+        for match in importorskip.finditer(source):
+            inspected += 1
+            body = match.group("body")
+            assert "reason=" in body, f"{path.name}: importorskip without a reason"
+            if "cryptography" in body:
+                crypto_inspected += 1
+                assert "onion-lab" in body, f"{path.name}: {body}"
+
+    assert inspected >= 15, f"the scanner only found {inspected} skip declarations"
+    assert crypto_inspected >= 12, f"the scanner only found {crypto_inspected} crypto skips"
 
 
 def test_guarded_callable_exceptions_propagate_unchanged() -> None:

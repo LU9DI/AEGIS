@@ -22,7 +22,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
 
-from ._crypto import MissingCryptographyError, missing_symbol, requires_crypto
+from ._crypto import import_fallbacks, requires_crypto
 from .ntor_experiment import (
     CLIENT_HANDSHAKE_BYTES,
     NtorClientState,
@@ -42,14 +42,29 @@ try:  # pragma: no cover - the fallback is exercised in the crypto-free environm
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
     from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-except ImportError:  # pragma: no cover - depends on the installed extras
+except ImportError as exc:  # pragma: no cover - depends on the installed extras
     # Framing, descriptors and validation stay importable without the extra;
     # key generation, link authentication and sealing raise instead.
-    InvalidSignature = InvalidTag = MissingCryptographyError  # type: ignore[assignment,misc]
-    serialization = missing_symbol("serialization", FEATURE)  # type: ignore[assignment,misc]
-    Ed25519PrivateKey = missing_symbol("Ed25519PrivateKey", FEATURE)  # type: ignore[assignment,misc]
-    Ed25519PublicKey = missing_symbol("Ed25519PublicKey", FEATURE)  # type: ignore[assignment,misc]
-    X25519PrivateKey = missing_symbol("X25519PrivateKey", FEATURE)  # type: ignore[assignment,misc]
+    (
+        InvalidSignature,  # type: ignore[misc]
+        InvalidTag,  # type: ignore[misc]
+        serialization,
+        Ed25519PrivateKey,  # type: ignore[misc]
+        Ed25519PublicKey,  # type: ignore[misc]
+        X25519PrivateKey,  # type: ignore[misc]
+    ) = import_fallbacks(
+        exc,
+        FEATURE,
+        (
+            "InvalidSignature",
+            "InvalidTag",
+            "serialization",
+            "Ed25519PrivateKey",
+            "Ed25519PublicKey",
+            "X25519PrivateKey",
+        ),
+        exception_names=("InvalidSignature", "InvalidTag"),
+    )
 
 BOOTSTRAP_CREATE = b"C"
 BOOTSTRAP_CREATED = b"c"

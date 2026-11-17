@@ -23,7 +23,7 @@ import threading
 import time
 from typing import Any, Mapping
 
-from ._crypto import MissingCryptographyError, missing_symbol, requires_crypto
+from ._crypto import import_fallbacks, requires_crypto
 
 FEATURE = "the signed relay directory"
 
@@ -34,13 +34,26 @@ try:  # pragma: no cover - the fallback is exercised in the crypto-free environm
         Ed25519PrivateKey,
         Ed25519PublicKey,
     )
-except ImportError:  # pragma: no cover - depends on the installed extras
+except ImportError as exc:  # pragma: no cover - depends on the installed extras
     # Descriptor encoding, parsing, validation and directory state handling stay
-    # importable; signing and verification raise MissingCryptoDependency.
-    InvalidSignature = MissingCryptographyError  # type: ignore[assignment,misc]
-    serialization = missing_symbol("serialization", FEATURE)  # type: ignore[assignment,misc]
-    Ed25519PrivateKey = missing_symbol("Ed25519PrivateKey", FEATURE)  # type: ignore[assignment,misc]
-    Ed25519PublicKey = missing_symbol("Ed25519PublicKey", FEATURE)  # type: ignore[assignment,misc]
+    # importable; signing and verification raise MissingCryptoDependency when the
+    # extra is absent, or BrokenCryptoDependency when it is installed but broken.
+    (
+        InvalidSignature,  # type: ignore[misc]
+        serialization,
+        Ed25519PrivateKey,  # type: ignore[misc]
+        Ed25519PublicKey,  # type: ignore[misc]
+    ) = import_fallbacks(
+        exc,
+        FEATURE,
+        (
+            "InvalidSignature",
+            "serialization",
+            "Ed25519PrivateKey",
+            "Ed25519PublicKey",
+        ),
+        exception_names=("InvalidSignature",),
+    )
 
 SCHEMA_VERSION = 1
 IDENTITY_DIGEST_BYTES = 20

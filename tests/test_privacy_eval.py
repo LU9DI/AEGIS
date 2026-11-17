@@ -22,6 +22,12 @@ from anonlab.privacy_eval import (
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# The CLI tests start a fresh interpreter that runs the full synthetic sweep:
+# measured ~4s cold on this host, so the previous 10s budget left almost no
+# headroom and failed under load. This is a hang detector, not a latency
+# assertion (the sweep itself is covered by in-process tests).
+CLI_TIMEOUT_SECONDS = 60
+
 
 def test_path_selector_rejects_as_overlap_and_excess_detour() -> None:
     paths = [
@@ -69,7 +75,7 @@ def test_cli_emits_explicit_non_production_flags() -> None:
     env["PYTHONPATH"] = str(ROOT / "src") + os.pathsep + env.get("PYTHONPATH", "")
     completed = subprocess.run(
         [sys.executable, "-m", "anonlab.privacy_eval", "--seed", "123"],
-        cwd=ROOT, env=env, capture_output=True, text=True, timeout=10, check=False,
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=CLI_TIMEOUT_SECONDS, check=False,
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
     data = json.loads(completed.stdout)
@@ -95,7 +101,7 @@ def test_acceptance_threshold_fails_with_machine_readable_evidence() -> None:
     completed = subprocess.run(
         [sys.executable, "-m", "anonlab.privacy_eval", "--seed", "123",
          "--max-padding-overhead", "0"],
-        cwd=ROOT, env=env, capture_output=True, text=True, timeout=10, check=False,
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=CLI_TIMEOUT_SECONDS, check=False,
     )
     assert completed.returncode == 2
     data = json.loads(completed.stdout)
@@ -242,7 +248,7 @@ def test_cli_stability_flag_repeats_evaluation_across_seeds() -> None:
     completed = subprocess.run(
         [sys.executable, "-m", "anonlab.privacy_eval", "--seed", "5",
          "--stability-seeds", "5,6"],
-        cwd=ROOT, env=env, capture_output=True, text=True, timeout=30, check=False,
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=CLI_TIMEOUT_SECONDS, check=False,
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
     stability = json.loads(completed.stdout)["seed_stability"]
@@ -250,7 +256,7 @@ def test_cli_stability_flag_repeats_evaluation_across_seeds() -> None:
     assert len(stability["defense_sweep_spread"]) == 20
     invalid = subprocess.run(
         [sys.executable, "-m", "anonlab.privacy_eval", "--stability-seeds", "5"],
-        cwd=ROOT, env=env, capture_output=True, text=True, timeout=10, check=False,
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=CLI_TIMEOUT_SECONDS, check=False,
     )
     assert invalid.returncode == 2
 
@@ -322,7 +328,7 @@ def test_external_trace_cli_writes_machine_readable_report(tmp_path: Path) -> No
             "--seed", "42",
             "--output", str(output_path),
         ],
-        cwd=ROOT, env=env, capture_output=True, text=True, timeout=10, check=False,
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=CLI_TIMEOUT_SECONDS, check=False,
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
     stdout_result = json.loads(completed.stdout)
@@ -342,7 +348,7 @@ def test_external_trace_cli_rejects_synthetic_only_flags(tmp_path: Path) -> None
             "--trace-dataset", str(dataset_path),
             "--max-padding-overhead", "0.5",
         ],
-        cwd=ROOT, env=env, capture_output=True, text=True, timeout=10, check=False,
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=CLI_TIMEOUT_SECONDS, check=False,
     )
     assert completed.returncode == 2
     assert "cannot be combined" in completed.stderr

@@ -2,14 +2,20 @@
 
 AEGIS keeps a dependency-free core and moves every real cryptographic
 primitive into the optional ``onion-lab`` extra. This module is the single
-place that decides whether that extra is present.
+place that decides whether that extra is *absent* and whether it is *present
+but unusable*, which are reported as different errors on purpose.
 
 Importing a module that *contains* cryptographic code is always allowed: the
-missing symbols are bound to :class:`_UnavailableSymbol` placeholders instead
-of raising at import time, so pure helpers (parsing, canonicalisation,
-validation, reporting) keep working without the extra. Nothing here simulates
-cryptography -- a placeholder never invents a key, a signature or ciphertext,
-it only fails loudly through :class:`MissingCryptoDependency`.
+missing symbols are bound to placeholders instead of raising at import time, so
+pure helpers (parsing, canonicalisation, validation, reporting) keep working
+without the extra. Nothing here simulates cryptography -- a placeholder never
+invents a key, a signature or ciphertext, it only fails loudly:
+
+* :class:`MissingCryptoDependency` when the package is not installed;
+* :class:`BrokenCryptoDependency` when the package is installed but its own
+  import fails (missing shared library, half-written install, broken wheel).
+  The original exception is preserved as ``__cause__`` instead of being
+  swallowed and misreported as "not installed".
 
 This module must stay dependency-free and must not import sibling ``anonlab``
 modules; doing so would create import cycles.
@@ -21,7 +27,7 @@ import importlib
 import importlib.util
 import inspect
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from types import ModuleType
 from typing import Any, TypeVar
 
@@ -33,10 +39,14 @@ __all__ = [
     "EXTRA",
     "INSTALL_COMMAND",
     "PACKAGE",
+    "BrokenCryptoDependency",
     "MissingCryptoDependency",
     "MissingCryptographyError",
     "available",
+    "import_fallback",
+    "import_fallbacks",
     "import_module",
+    "installed",
     "missing_symbol",
     "requires_crypto",
 ]
@@ -59,6 +69,24 @@ class MissingCryptoDependency(RuntimeError):
         )
 
 
+class BrokenCryptoDependency(RuntimeError):
+    """Raised when ``cryptography`` is installed but cannot be imported.
+
+    Distinct from :class:`MissingCryptoDependency` so a broken installation is
+    never reported as a missing optional extra. The original import error is
+    kept in :attr:`cause` and chained as ``__cause__``.
+    """
+
+    def __init__(self, feature: str, cause: BaseException | None = None) -> None:
+        self.feature = feature
+        self.cause = cause
+        detail = f": {cause}" if cause is not None else ""
+        super().__init__(
+            f"{feature} requires the optional '{PACKAGE}' dependency, but it is "
+            f"installed and failed to import{detail}. Reinstall it with: {INSTALL_COMMAND}"
+        )
+
+
 class MissingCryptographyError(Exception):
     """Placeholder for a missing ``cryptography`` exception class.
 
@@ -68,37 +96,60 @@ class MissingCryptographyError(Exception):
     """
 
 
-def available() -> bool:
-    """Return True when the real ``cryptography`` package can be imported."""
+def installed() -> bool:
+    """Return True when a ``cryptography`` package is discoverable on disk.
+
+    A discoverable package may still be broken; :func:`available` and the
+    placeholders returned by :func:`missing_symbol` distinguish the two cases.
+    """
     module = sys.modules.get(PACKAGE, ...)
-    if module is not ...:
-        # A ``None`` entry is how a failed import is remembered.
-        return module is not None
+    if module is None:
+        # An explicit ``None`` entry means the import was blocked or rejected;
+        # treat it as absent so callers get the install hint.
+        return False
     try:
         return importlib.util.find_spec(PACKAGE) is not None
-    except (ImportError, ValueError):  # pragma: no cover - broken parent package
+    except (ImportError, ValueError):  # pragma: no cover - unusable parent package
         return False
 
 
+def available() -> bool:
+    """Return True when real cryptographic primitives may be importable.
+
+    A package that is installed but broken still reports True here: the guarded
+    call then reaches the placeholder and raises :class:`BrokenCryptoDependency`
+    with the original import error attached, which is the accurate diagnosis.
+    """
+    module = sys.modules.get(PACKAGE, ...)
+    if module is not ...:
+        return module is not None
+    return installed()
+
+
 def import_module(name: str, feature: str) -> ModuleType:
-    """Import ``name`` or raise :class:`MissingCryptoDependency`."""
+    """Import ``name``, preserving the difference between absent and broken."""
     try:
         return importlib.import_module(name)
     except ImportError as exc:
+        if installed():
+            raise BrokenCryptoDependency(feature, exc) from exc
         raise MissingCryptoDependency(feature) from exc
 
 
 class _UnavailableSymbol:
-    """Stand-in for a missing ``cryptography`` symbol that fails on use."""
+    """Stand-in for a ``cryptography`` symbol that cannot be used."""
 
-    __slots__ = ("_feature", "_name")
+    __slots__ = ("_cause", "_feature", "_name")
 
-    def __init__(self, name: str, feature: str) -> None:
+    def __init__(self, name: str, feature: str, cause: BaseException | None = None) -> None:
         self._name = name
         self._feature = feature
+        self._cause = cause
 
     def _fail(self) -> Any:
-        raise MissingCryptoDependency(self._feature)
+        if self._cause is None:
+            raise MissingCryptoDependency(self._feature)
+        raise BrokenCryptoDependency(self._feature, self._cause) from self._cause
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         self._fail()
@@ -107,7 +158,8 @@ class _UnavailableSymbol:
         self._fail()
 
     def __repr__(self) -> str:
-        return f"<unavailable cryptography.{self._name} for {self._feature}>"
+        state = "broken" if self._cause is not None else "unavailable"
+        return f"<{state} cryptography.{self._name} for {self._feature}>"
 
 
 def missing_symbol(name: str, feature: str) -> Any:
@@ -119,6 +171,42 @@ def missing_symbol(name: str, feature: str) -> Any:
     :class:`MissingCryptoDependency` instead of degrading to a simulation.
     """
     return _UnavailableSymbol(name, feature)
+
+
+def import_fallbacks(
+    exc: ImportError,
+    feature: str,
+    names: Sequence[str],
+    *,
+    exception_names: Sequence[str] = (),
+) -> tuple[Any, ...]:
+    """Build the ``except ImportError`` fallbacks for one module import block.
+
+    ``names`` are the module-level symbols in assignment order. Names listed in
+    ``exception_names`` are exception classes and get the never-raised
+    :class:`MissingCryptographyError` sentinel so ``except`` clauses stay valid.
+
+    When the package is installed, every other name becomes a placeholder that
+    raises :class:`BrokenCryptoDependency` chained to ``exc``. When it is
+    absent, the placeholders raise :class:`MissingCryptoDependency`. In both
+    cases the failure is reported at use time, so pure helpers in the same
+    module keep working and no internal import error is swallowed.
+    """
+    broken = installed()
+    fallbacks: list[Any] = []
+    for name in names:
+        if name in exception_names:
+            fallbacks.append(MissingCryptographyError)
+        elif broken:
+            fallbacks.append(_UnavailableSymbol(name, feature, exc))
+        else:
+            fallbacks.append(_UnavailableSymbol(name, feature))
+    return tuple(fallbacks)
+
+
+def import_fallback(exc: ImportError, feature: str, name: str) -> Any:
+    """Single-symbol convenience wrapper around :func:`import_fallbacks`."""
+    return import_fallbacks(exc, feature, (name,))[0]
 
 
 def _guard(target: _F, feature: str) -> _F:

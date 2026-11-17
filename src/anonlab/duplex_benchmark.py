@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from . import __version__
-from ._crypto import missing_symbol, requires_crypto
+from ._crypto import import_fallback, requires_crypto
 from .telescoping import (
     MAX_PIPELINE_DEPTH,
     MAX_PIPELINED_WRITE_PAYLOAD_BYTES,
@@ -30,8 +30,8 @@ FEATURE = "the duplex stream benchmark"
 
 try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
     from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-except ImportError:  # pragma: no cover - depends on the installed extras
-    X25519PrivateKey = missing_symbol("X25519PrivateKey", FEATURE)  # type: ignore[assignment,misc]
+except ImportError as exc:  # pragma: no cover - depends on the installed extras
+    X25519PrivateKey = import_fallback(exc, FEATURE, "X25519PrivateKey")  # type: ignore[misc]
 
 
 def _percentile(values: list[float], p: float) -> float:

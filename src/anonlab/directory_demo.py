@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from ._crypto import missing_symbol, requires_crypto
+from ._crypto import import_fallbacks, requires_crypto
 from .directory import (
     DirectoryAuthority,
     DirectoryVerifier,
@@ -22,10 +22,10 @@ try:  # pragma: no cover - the fallback is exercised in the crypto-free environm
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
     from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-except ImportError:  # pragma: no cover - depends on the installed extras
-    Ed25519PrivateKey = missing_symbol("Ed25519PrivateKey", FEATURE)  # type: ignore[assignment,misc]
-    X25519PrivateKey = missing_symbol("X25519PrivateKey", FEATURE)  # type: ignore[assignment,misc]
-    serialization = missing_symbol("serialization", FEATURE)  # type: ignore[assignment,misc]
+except ImportError as exc:  # pragma: no cover - depends on the installed extras
+    Ed25519PrivateKey, X25519PrivateKey, serialization = import_fallbacks(  # type: ignore[misc]
+        exc, FEATURE, ("Ed25519PrivateKey", "X25519PrivateKey", "serialization")
+    )
 
 
 @requires_crypto(FEATURE)

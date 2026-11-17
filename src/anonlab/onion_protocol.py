@@ -9,16 +9,18 @@ from __future__ import annotations
 import os
 import struct
 
-from ._crypto import missing_symbol
+from ._crypto import import_fallback
 
 try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
     from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
-except ImportError:  # pragma: no cover - depends on the installed extras
+except ImportError as exc:  # pragma: no cover - depends on the installed extras
     # Framing and parsing below stay importable; sealing raises
-    # MissingCryptoDependency instead of pretending to encrypt.
-    ChaCha20Poly1305 = missing_symbol(  # type: ignore[assignment,misc]
-        "ChaCha20Poly1305",
+    # MissingCryptoDependency (absent) or BrokenCryptoDependency (broken install)
+    # instead of pretending to encrypt.
+    ChaCha20Poly1305 = import_fallback(  # type: ignore[misc]
+        exc,
         "the encrypted onion prototype (AEAD envelope sealing)",
+        "ChaCha20Poly1305",
     )
 
 VERSION = 2

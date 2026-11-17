@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from ._crypto import missing_symbol, requires_crypto
+from ._crypto import import_fallback, requires_crypto
 from .ntor_experiment import (
     CLIENT_HANDSHAKE_BYTES,
     SERVER_HANDSHAKE_BYTES,
@@ -29,9 +29,9 @@ FEATURE = "the ntor handshake benchmark"
 try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-except ImportError:  # pragma: no cover - depends on the installed extras
-    serialization = missing_symbol("serialization", FEATURE)  # type: ignore[assignment,misc]
-    X25519PrivateKey = missing_symbol("X25519PrivateKey", FEATURE)  # type: ignore[assignment,misc]
+except ImportError as exc:  # pragma: no cover - depends on the installed extras
+    serialization = import_fallback(exc, FEATURE, "serialization")  # type: ignore[misc]
+    X25519PrivateKey = import_fallback(exc, FEATURE, "X25519PrivateKey")  # type: ignore[misc]
 
 
 def _raw_public(key: X25519PrivateKey) -> bytes:

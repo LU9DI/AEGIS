@@ -9,40 +9,45 @@ try:
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
     from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-    from anonlab.telescoping import (
-        RelayDescriptor,
-        RelayNode,
-        STREAM_WRITE_MAX_BYTES,
-        STREAM_CHUNK_BYTES,
-        MAX_STREAM_WINDOW_BYTES,
-        WINDOW_UPDATE_BATCH_BYTES,
-        WINDOW_UPDATE_MAX_DELAY_SECONDS,
-        TelescopingClient,
-        _encode_window_update_body,
-        serve_node,
-        frame,
-        read_frame,
-        _aad,
-        _encode_extension,
-        _open_reply,
-        _decode_link_response,
-        REQUEST_AAD_PREFIX,
-        MAX_COMMANDS_PER_CIRCUIT,
-        MAX_FRAME_BYTES,
-        LINK_AUTH,
-        LINK_SERVER_DOMAIN,
-        _link_hello,
-    )
-    from anonlab.ntor_experiment import client_finish, client_start
-    from anonlab.onion_protocol import seal
-    from anonlab.telescoping_benchmark import run_telescoping_benchmark
-    from anonlab.concurrency_benchmark import run_concurrency_benchmark
-    from anonlab.multiplex_benchmark import run_stream_multiplex_benchmark
-    from anonlab.duplex_benchmark import run_duplex_benchmark
-    from anonlab.write_batch_benchmark import run_write_batch_benchmark
-    from anonlab.pipeline_benchmark import run_pipeline_benchmark
-except (ImportError, RuntimeError):  # optional research dependency
-    X25519PrivateKey = None  # type: ignore[assignment,misc]
+    HAS_CRYPTO = True
+except ImportError:  # optional research dependency
+    serialization = Ed25519PrivateKey = X25519PrivateKey = None  # type: ignore[assignment,misc]
+    HAS_CRYPTO = False
+
+# The package imports without the extra, so pure validation tests below run in
+# the dependency-free environment as well.
+from anonlab.concurrency_benchmark import run_concurrency_benchmark
+from anonlab.duplex_benchmark import run_duplex_benchmark
+from anonlab.multiplex_benchmark import run_stream_multiplex_benchmark
+from anonlab.ntor_experiment import client_finish, client_start
+from anonlab.onion_protocol import seal
+from anonlab.pipeline_benchmark import run_pipeline_benchmark
+from anonlab.telescoping import (
+    LINK_AUTH,
+    LINK_SERVER_DOMAIN,
+    MAX_COMMANDS_PER_CIRCUIT,
+    MAX_FRAME_BYTES,
+    MAX_STREAM_WINDOW_BYTES,
+    REQUEST_AAD_PREFIX,
+    STREAM_CHUNK_BYTES,
+    STREAM_WRITE_MAX_BYTES,
+    WINDOW_UPDATE_BATCH_BYTES,
+    WINDOW_UPDATE_MAX_DELAY_SECONDS,
+    RelayDescriptor,
+    RelayNode,
+    TelescopingClient,
+    _aad,
+    _decode_link_response,
+    _encode_extension,
+    _encode_window_update_body,
+    _link_hello,
+    _open_reply,
+    frame,
+    read_frame,
+    serve_node,
+)
+from anonlab.telescoping_benchmark import run_telescoping_benchmark
+from anonlab.write_batch_benchmark import run_write_batch_benchmark
 
 
 def raw_public(key: X25519PrivateKey) -> bytes:
@@ -51,7 +56,50 @@ def raw_public(key: X25519PrivateKey) -> bytes:
     )
 
 
-@unittest.skipIf(X25519PrivateKey is None, "install aegis-anon-lab[onion-lab] for telescoping tests")
+class TelescopingValidationTests(unittest.TestCase):
+    """Descriptor and limit validation; it needs no keys and no live circuit."""
+
+    def test_descriptor_rejects_non_loopback_endpoint(self) -> None:
+        with self.assertRaisesRegex(ValueError, "loopback-only"):
+            RelayDescriptor(
+                "192.0.2.10", 9000, os.urandom(20), os.urandom(32)
+            )
+
+    def test_window_credit_batch_configuration_and_encoding_are_bounded(self) -> None:
+        self.assertEqual(WINDOW_UPDATE_BATCH_BYTES, 64 * 1024)
+        self.assertEqual(len(_encode_window_update_body(64 * 1024)), 4)
+        self.assertEqual(len(_encode_window_update_body(MAX_STREAM_WINDOW_BYTES)), 4)
+        with self.assertRaisesRegex(ValueError, "window update must be within"):
+            _encode_window_update_body(0)
+        with self.assertRaisesRegex(ValueError, "window update must be within"):
+            _encode_window_update_body(MAX_STREAM_WINDOW_BYTES + 1)
+        with self.assertRaisesRegex(ValueError, "window update must be within"):
+            _encode_window_update_body(True)
+        with self.assertRaisesRegex(ValueError, "window_update_batch_bytes"):
+            TelescopingClient(window_update_batch_bytes=0)
+        with self.assertRaisesRegex(ValueError, "window_update_batch_bytes"):
+            TelescopingClient(window_update_batch_bytes=MAX_STREAM_WINDOW_BYTES + 1)
+        self.assertEqual(WINDOW_UPDATE_MAX_DELAY_SECONDS, 0.002)
+        self.assertEqual(TelescopingClient().window_update_max_delay_seconds, 0.002)
+        for invalid_delay in (0, -0.1, float("inf"), float("nan"), True, 1.01):
+            with self.subTest(invalid_delay=invalid_delay), self.assertRaisesRegex(
+                ValueError, "window_update_max_delay_seconds"
+            ):
+                TelescopingClient(window_update_max_delay_seconds=invalid_delay)
+        self.assertEqual(TelescopingClient(window_update_max_delay_seconds=0.0005).window_update_max_delay_seconds, 0.0005)
+
+    def test_client_rejects_nonpositive_or_nonfinite_lifecycle_limits(self) -> None:
+        for kwargs in (
+            {"idle_timeout_seconds": 0},
+            {"max_lifetime_seconds": -1},
+            {"idle_timeout_seconds": float("inf")},
+            {"max_lifetime_seconds": float("nan")},
+        ):
+            with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+                TelescopingClient(**kwargs)
+
+
+@unittest.skipIf(not HAS_CRYPTO, "install aegis-anon-lab[onion-lab] for telescoping circuit tests")
 class TelescopingCircuitTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.nodes: list[RelayNode] = []
@@ -526,16 +574,6 @@ class TelescopingCircuitTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await client.close()
 
-    async def test_client_rejects_nonpositive_or_nonfinite_lifecycle_limits(self) -> None:
-        for kwargs in (
-            {"idle_timeout_seconds": 0},
-            {"max_lifetime_seconds": -1},
-            {"idle_timeout_seconds": float("inf")},
-            {"max_lifetime_seconds": float("nan")},
-        ):
-            with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
-                TelescopingClient(**kwargs)
-
     async def test_stream_multiplex_benchmark_smoke_checks_integrity_and_cleanup(self) -> None:
         result = await run_stream_multiplex_benchmark(streams_count=4, payload_bytes=1024, seed=13)
         self.assertTrue(result["results"]["integrity_verified"])
@@ -613,12 +651,6 @@ class TelescopingCircuitTests(unittest.IsolatedAsyncioTestCase):
             await self.client.request_echo("127.0.0.1", 12345, b"not sent")
         self.assertEqual(self.client.hops, [])
         self.assertEqual(len(self.nodes[0].observations), before)
-
-    async def test_descriptor_rejects_non_loopback_endpoint(self) -> None:
-        with self.assertRaisesRegex(ValueError, "loopback-only"):
-            RelayDescriptor(
-                "192.0.2.10", 9000, os.urandom(20), os.urandom(32)
-            )
 
     async def test_exit_rejects_unallowlisted_loopback_destination(self) -> None:
         connections = 0
@@ -741,29 +773,6 @@ class TelescopingCircuitTests(unittest.IsolatedAsyncioTestCase):
         finally:
             server.close()
             await server.wait_closed()
-
-    async def test_window_credit_batch_configuration_and_encoding_are_bounded(self) -> None:
-        self.assertEqual(WINDOW_UPDATE_BATCH_BYTES, 64 * 1024)
-        self.assertEqual(len(_encode_window_update_body(64 * 1024)), 4)
-        self.assertEqual(len(_encode_window_update_body(MAX_STREAM_WINDOW_BYTES)), 4)
-        with self.assertRaisesRegex(ValueError, "window update must be within"):
-            _encode_window_update_body(0)
-        with self.assertRaisesRegex(ValueError, "window update must be within"):
-            _encode_window_update_body(MAX_STREAM_WINDOW_BYTES + 1)
-        with self.assertRaisesRegex(ValueError, "window update must be within"):
-            _encode_window_update_body(True)
-        with self.assertRaisesRegex(ValueError, "window_update_batch_bytes"):
-            TelescopingClient(window_update_batch_bytes=0)
-        with self.assertRaisesRegex(ValueError, "window_update_batch_bytes"):
-            TelescopingClient(window_update_batch_bytes=MAX_STREAM_WINDOW_BYTES + 1)
-        self.assertEqual(WINDOW_UPDATE_MAX_DELAY_SECONDS, 0.002)
-        self.assertEqual(TelescopingClient().window_update_max_delay_seconds, 0.002)
-        for invalid_delay in (0, -0.1, float("inf"), float("nan"), True, 1.01):
-            with self.subTest(invalid_delay=invalid_delay), self.assertRaisesRegex(
-                ValueError, "window_update_max_delay_seconds"
-            ):
-                TelescopingClient(window_update_max_delay_seconds=invalid_delay)
-        self.assertEqual(TelescopingClient(window_update_max_delay_seconds=0.0005).window_update_max_delay_seconds, 0.0005)
 
     async def test_sparse_stream_flushes_subthreshold_credit_and_continues(self) -> None:
         first = os.urandom(STREAM_CHUNK_BYTES)

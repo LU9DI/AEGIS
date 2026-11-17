@@ -16,19 +16,23 @@ import time
 from pathlib import Path
 from typing import Any
 
-from ._crypto import MissingCryptographyError, missing_symbol, requires_crypto
+from ._crypto import import_fallbacks, requires_crypto
 
 FEATURE = "signed PIR snapshot manifests"
 
 try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
     from cryptography.exceptions import InvalidSignature
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
-except ImportError:  # pragma: no cover - depends on the optional extra
+except ImportError as exc:  # pragma: no cover - depends on the optional extra
     # Manifest validation and checkpoint persistence stay usable; signing and
-    # verification raise MissingCryptoDependency.
-    InvalidSignature = MissingCryptographyError  # type: ignore[assignment,misc]
-    Ed25519PrivateKey = missing_symbol("Ed25519PrivateKey", FEATURE)  # type: ignore[assignment,misc]
-    Ed25519PublicKey = missing_symbol("Ed25519PublicKey", FEATURE)  # type: ignore[assignment,misc]
+    # verification raise MissingCryptoDependency (absent) or
+    # BrokenCryptoDependency (installed but broken).
+    InvalidSignature, Ed25519PrivateKey, Ed25519PublicKey = import_fallbacks(  # type: ignore[misc]
+        exc,
+        FEATURE,
+        ("InvalidSignature", "Ed25519PrivateKey", "Ed25519PublicKey"),
+        exception_names=("InvalidSignature",),
+    )
 
 _MANIFEST_DOMAIN = b"AEGIS-PIR-SNAPSHOT-MANIFEST-v1\x00"
 SCHEMA_VERSION = 1
