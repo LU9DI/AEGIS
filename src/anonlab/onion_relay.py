@@ -7,15 +7,23 @@ import contextlib
 import logging
 from pathlib import Path
 
-from ._crypto import import_fallback
+from ._crypto import import_fallbacks
 from .onion_protocol import CircuitReplayGuard, MAX_FRAME_BYTES, frame, parse_request_layer, wrap_response
 
 try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
     from cryptography.exceptions import InvalidTag
 except ImportError as exc:  # pragma: no cover - depends on the installed extras
     # Relay parsing stays importable; AEAD operations fail with
-    # Missing/BrokenCryptoDependency from onion_protocol.
-    InvalidTag = import_fallback(exc, "the authenticated onion relay", "InvalidTag")  # type: ignore[misc]
+    # Missing/BrokenCryptoDependency from onion_protocol. ``InvalidTag`` is used
+    # in the handler's ``except`` tuple, so it must stay an exception *class*:
+    # a placeholder object there raises TypeError while handling the real
+    # dependency error and hides it.
+    (InvalidTag,) = import_fallbacks(  # type: ignore[misc]
+        exc,
+        "the authenticated onion relay",
+        ("InvalidTag",),
+        exception_names=("InvalidTag",),
+    )
 
 LOG = logging.getLogger("anonlab.onion_relay")
 _REPLAY_GUARD = CircuitReplayGuard()

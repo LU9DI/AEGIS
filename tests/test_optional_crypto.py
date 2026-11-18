@@ -598,3 +598,83 @@ def test_missing_cryptography_error_is_a_runtime_error() -> None:
     assert issubclass(MissingCryptographyError, Exception)
     with pytest.raises(RuntimeError):
         raise MissingCryptoDependency("a guarded feature")
+
+
+def test_optional_exception_symbols_are_exception_classes_not_placeholders() -> None:
+    """A placeholder bound to an ``except`` target would mask the real error.
+
+    ``except <placeholder>`` raises ``TypeError: catching classes that do not
+    inherit from BaseException is not allowed`` while handling the dependency
+    error, replacing ``MissingCryptoDependency`` with an unrelated bug.
+    """
+    completed = _run_without_cryptography(
+        """
+        from anonlab import directory, onion_relay, pir_manifest, telescoping
+
+        for module, names in (
+            (directory, ("InvalidSignature",)),
+            (pir_manifest, ("InvalidSignature",)),
+            (telescoping, ("InvalidSignature", "InvalidTag")),
+            (onion_relay, ("InvalidTag",)),
+        ):
+            for name in names:
+                symbol = getattr(module, name)
+                assert isinstance(symbol, type), f"{module.__name__}.{name} is {symbol!r}"
+                assert issubclass(symbol, BaseException), f"{module.__name__}.{name} is not an exception"
+        print("ok")
+        """
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+def test_relay_reports_a_dependency_error_not_a_type_error() -> None:
+    """A client frame on a crypto-free relay must surface the dependency error."""
+    completed = _run_without_cryptography(
+        """
+        import asyncio
+
+        from anonlab.onion_relay import _handle
+
+        class Reader:
+            def __init__(self):
+                self.buffer = (64).to_bytes(4, "big") + bytes(64)
+
+            async def readexactly(self, n):
+                if len(self.buffer) < n:
+                    raise asyncio.IncompleteReadError(self.buffer, n)
+                chunk, self.buffer = self.buffer[:n], self.buffer[n:]
+                return chunk
+
+        class Writer:
+            def __init__(self):
+                self.written = b""
+                self.closed = False
+
+            def write(self, data):
+                self.written += data
+
+            async def drain(self):
+                return None
+
+            def close(self):
+                self.closed = True
+
+            async def wait_closed(self):
+                return None
+
+        writer = Writer()
+
+        async def drive():
+            await _handle(Reader(), writer, "relay-1", b"k" * 32, 2, True)
+
+        try:
+            asyncio.run(drive())
+        except BaseException as exc:
+            assert type(exc).__name__ == "MissingCryptoDependency", type(exc).__name__
+            assert writer.written == b"", "relay answered a request it could not authenticate"
+            print("ok")
+        else:
+            raise SystemExit("relay accepted a frame without cryptography")
+        """
+    )
+    assert completed.returncode == 0, completed.stderr
