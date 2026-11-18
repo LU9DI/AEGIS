@@ -13,7 +13,11 @@ Este arquivo registra o que foi executado para produzir a entrega, com código d
 | A | `13c45c3dbc204fa6f49ddff7569010febc570e57` | `research(thor): audit the transport data path and record the technology matrix` | documental: `01`, `02`, `04`, `05` (4 arquivos, 387 linhas) |
 | B | `1aa9130539a30c7ab7c62f116b4fa8771709c584` | `perf(thor): add a reproducible Surface/Tor/AEGIS benchmark harness` | código: `src/anonlab/thor_lab/` (16 módulos), 4 arquivos de teste, `pyproject.toml` (21 arquivos, 4 600 linhas) |
 | C | `316e1226d14ba0347aabc5757c498e49787c5576` | `docs(thor): record lab, emulated and public measurements with raw artifacts` | evidência: `docs/research/thor/03,06,07,08,README` + `experiments/thor-lab/` (37 arquivos, 9 657 linhas) |
-| D | este commit | `docs(thor): log the commands, exit codes and revision chain` | este arquivo |
+| D | `03d2bbc5978d9b9a412cf53d31c6465dd8b57af9` | `docs(thor): log the commands, exit codes and revision chain` | este arquivo + correção de três fatores de headroom em `06` |
+| E | `aa180ca27f03df3816271056096c4b950bb6e4f5` | `docs(thor): correct two cross-references in the research documents` | 2 linhas: faixa 14–34× em `08`, referência em `01` |
+| F | SHA em `git log -1 -- docs/research/thor/EVIDENCE.md` | `docs(thor): record the last two commit SHAs` | esta tabela |
+
+A cadeia é linear, sem merge e sem reescrita: `d8b84d5 → 13c45c3 → 1aa9130 → 316e122 → 03d2bbc → aa180ca →` (commit F). O diff total contra a base é de **63 arquivos e 14 721 inserções, sem nenhuma remoção** (`git diff --stat d8b84d5..HEAD`).
 
 Arquivos alterados por commit: `git show --stat <sha>` (saída reproduzível em qualquer clone). Nenhum artefato histórico foi apagado ou sobrescrito; os arquivos desta entrega são todos novos, exceto `pyproject.toml`, que apenas ganhou dois entry points.
 
