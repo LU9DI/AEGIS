@@ -43,6 +43,16 @@ class CircuitReplayGuardTests(unittest.TestCase):
         self.assertEqual(guard.count, 2)
 
 
+class OnionValidationTests(unittest.TestCase):
+    """Request-shape validation that runs before any AEAD primitive is touched."""
+
+    def test_build_request_requires_matching_route_keys(self) -> None:
+        with self.assertRaises(ValueError):
+            build_request(
+                b"x", [10001, 10002], [b"k" * 32], 10003, circuit_id=b"c" * 16
+            )
+
+
 @unittest.skipIf(InvalidTag is None, "install aegis-anon-lab[onion-lab] to run AEAD prototype tests")
 class OnionPrototypeTests(unittest.TestCase):
     def test_aead_detects_tampering(self) -> None:
@@ -89,24 +99,6 @@ class OnionPrototypeTests(unittest.TestCase):
         self.assertEqual(layer["circuit_id"], circuit_id)
         self.assertEqual(layer["sequence"], 41)
         self.assertTrue(layer["terminal"])
-
-    def test_build_request_requires_matching_route_keys(self) -> None:
-        with self.assertRaises(ValueError):
-            build_request(
-                b"x", [10001, 10002], [b"k" * 32], 10003, circuit_id=b"c" * 16
-            )
-
-    def test_replay_guard_rejects_duplicate_ids_and_fails_closed_when_full(self) -> None:
-        guard = CircuitReplayGuard(max_circuits=2)
-        first = b"a" * 16
-        second = b"b" * 16
-        guard.claim(first)
-        with self.assertRaisesRegex(ValueError, "replayed"):
-            guard.claim(first)
-        guard.claim(second)
-        with self.assertRaisesRegex(ValueError, "full"):
-            guard.claim(b"c" * 16)
-        self.assertEqual(guard.count, 2)
 
     def test_live_relay_rejects_replayed_first_frame_on_new_connection(self) -> None:
         from anonlab.onion_relay import _handle

@@ -42,6 +42,18 @@ class JainFairnessIndexTests(unittest.TestCase):
             _parse_stream_counts("33")
 
 
+class FairnessMatrixValidationTests(unittest.IsolatedAsyncioTestCase):
+    """Configuration validation; it runs before any cryptographic primitive."""
+
+    async def test_invalid_matrix_config_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "stream_counts"):
+            await run_fairness_matrix(stream_counts=[1, 1], trials=1, payload_bytes=1024)
+        with self.assertRaisesRegex(ValueError, "trials"):
+            await run_fairness_matrix(stream_counts=[1], trials=0, payload_bytes=1024)
+        with self.assertRaisesRegex(ValueError, "payload_bytes"):
+            await run_fairness_matrix(stream_counts=[1], trials=1, payload_bytes=1)
+
+
 @requires_crypto
 class FairnessMatrixTests(unittest.IsolatedAsyncioTestCase):
     async def test_small_matrix_reports_per_stream_and_cleanup_results(self) -> None:
@@ -64,11 +76,3 @@ class FairnessMatrixTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(run["active_proxy_connections_after_close"], [0, 0, 0, 0])
             self.assertGreaterEqual(run["circuit_completion_rate_jain_index"], 1 / run["stream_count"] - 1e-9)
             self.assertLessEqual(run["circuit_completion_rate_jain_index"], 1.0 + 1e-9)
-
-    async def test_invalid_matrix_config_is_rejected(self) -> None:
-        with self.assertRaisesRegex(ValueError, "stream_counts"):
-            await run_fairness_matrix(stream_counts=[1, 1], trials=1, payload_bytes=1024)
-        with self.assertRaisesRegex(ValueError, "trials"):
-            await run_fairness_matrix(stream_counts=[1], trials=0, payload_bytes=1024)
-        with self.assertRaisesRegex(ValueError, "payload_bytes"):
-            await run_fairness_matrix(stream_counts=[1], trials=1, payload_bytes=1)
