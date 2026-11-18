@@ -15,9 +15,9 @@
 | `bulk_echo:1048576x1@c16384i4` | `relay3_plain` | 7 | 0,465 [0,370; 0,485] | 1,94× | não atingido |
 | `bulk_echo:262144x1@c16384i4` | `aegis_telescope3` | 7 | 0,173 [0,144; 0,450] | 5,20× | não atingido |
 | `bulk_echo:262144x1@c16384i4` | `relay3_plain` | 7 | 0,832 [0,460; 1,174] | 1,08× | não atingido |
-| `bulk_echo:262144x1@c65536i4` | `aegis_telescope3` | 7 | 0,147 [0,124; 0,163] | 6,10× | não atingido |
-| `bulk_echo:262144x1@c262144i4` | `aegis_telescope3` | 7 | 0,160 [0,141; 0,176] | 5,64× | não atingido |
-| `parallel_bulk:8x65536@c16384i4` | `aegis_telescope3` | 7 | 0,107 [0,073; 0,125] | 8,58× | não atingido |
+| `bulk_echo:262144x1@c65536i4` | `aegis_telescope3` | 7 | 0,147 [0,124; 0,163] | 6,11× | não atingido |
+| `bulk_echo:262144x1@c262144i4` | `aegis_telescope3` | 7 | 0,160 [0,141; 0,176] | 5,63× | não atingido |
+| `parallel_bulk:8x65536@c16384i4` | `aegis_telescope3` | 7 | 0,107 [0,073; 0,125] | 8,39× | não atingido |
 | `small_rtt:1024x50@c16384i4` | `aegis_telescope3` | 7 | 0,215 [0,151; 0,262] | 4,20× | não atingido |
 
 Nenhum workload atinge 90%. O melhor caso é 21,5% (round-trip de 1 KiB) e o pior é 10,0% (1 MiB). **A meta de desempenho não está atingida no tier lab** — e o tier lab é o caso *mais favorável* possível (mesma máquina, sem rede).
