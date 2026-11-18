@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "created_unix": 1795042593.801728,
+  "created_local": "2026-11-18T19:56:33-0300",
+  "tier": "public",
+  "seed": 20261118,
+  "code": {
+    "revision": "1aa9130539a30c7ab7c62f116b4fa8771709c584",
+    "dirty": false,
+    "describe": "1aa9130",
+    "source": "git",
+    "checkout": "C:\\Users\\lucas\\AEGIS"
+  },
+  "environment": {
+    "python": "3.14.6",
+    "python_implementation": "CPython",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "system": "Windows",
+    "machine": "AMD64",
+    "processor": "Intel64 Family 6 Model 58 Stepping 9, GenuineIntel",
+    "cpu_count": 4,
+    "pid": 20520,
+    "aegis_version": "0.26.0",
+    "dependencies": {
+      "cryptography": "50.0.2",
+      "psutil": null
+    }
+  },
+  "configuration": {
+    "tier": "public",
+    "arms": [
+      {
+        "name": "surface",
+        "options": {}
+      },
+      {
+        "name": "tor_socks",
+        "options": {
+          "socks_host": "127.0.0.1",
+          "socks_port": 9050
+        }
+      }
+    ],
+    "workloads": [
+      {
+        "kind": "http_get",
+        "payload_bytes": 262144,
+        "chunk_bytes": 16384,
+        "operations": 1,
+        "streams": 1,
+        "max_in_flight": 4,
+        "timeout_s": 120.0,
+        "http_host": "cachefly.cachefly.net",
+        "http_path": "/1mb.test",
+        "http_headers": [
+          [
+            "Range",
+            "bytes=0-262143"
+          ]
+        ]
+      }
+    ],
+    "trials": 5,
+    "warmup_trials": 1,
+    "seed": 20261118,
+    "public_url": "http://cachefly.cachefly.net/1mb.test",
+    "link_profile": null,
+    "notes": "tier public, 256 KiB HTTP GET via Range, Tor local SocksPort, harness at commit 1aa9130"
+  },
+  "configuration_digest": "8a2b930e052d601fd9830d6c4c82039d70f47f657f3272eff333656d93c2f7a3",
+  "claim_scope": "Measurement artifact. It does not establish anonymity, security, Tor equivalence, or public-network performance.",
+  "extra": {
+    "run_id": "20261118T195633-public-20261118",
+    "runner": "anonlab.thor_lab.runner",
+    "configuration_digest_short": "8a2b930e052d601f",
+    "timer_resolution": {
+      "applied": true,
+      "period_ms": 1,
+      "reason": "ok"
+    }
+  }
+}

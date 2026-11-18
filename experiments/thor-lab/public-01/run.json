@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "run_id": "20261118T195633-public-20261118",
+  "result": {
+    "out_dir": "C:\\Users\\lucas\\AEGIS\\.github\\thor-lab-staging\\runs\\public-committed",
+    "run_id": "20261118T195633-public-20261118",
+    "trials_written": 12,
+    "arms_measured": [
+      "surface",
+      "tor_socks"
+    ],
+    "arms_unavailable": [],
+    "partial": false
+  },
+  "record_schema_version": 1,
+  "target": {
+    "host": "cachefly.cachefly.net",
+    "port": 80
+  },
+  "claims": "Raw measurement artifact; see docs/research/thor/04-THREAT-MODEL.md for scope."
+}

@@ -1,0 +1,41 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.6, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\lucas\AEGIS\.venv\Scripts\python.exe
+rootdir: C:\Users\lucas\AEGIS
+configfile: pyproject.toml
+collecting ... collected 33 items
+
+tests/test_thor_lab_stats.py::test_percentile_matches_linear_interpolation PASSED [  3%]
+tests/test_thor_lab_stats.py::test_percentile_single_sample_and_validation PASSED [  6%]
+tests/test_thor_lab_stats.py::test_summarize_reports_every_requested_percentile PASSED [  9%]
+tests/test_thor_lab_stats.py::test_bootstrap_ci_is_seeded_and_marks_small_samples_unreliable PASSED [ 12%]
+tests/test_thor_lab_stats.py::test_bootstrap_ci_rejects_bad_parameters PASSED [ 15%]
+tests/test_thor_lab_stats.py::test_paired_ratio_pairs_positionally_and_rejects_bad_denominators PASSED [ 18%]
+tests/test_thor_lab_stats.py::test_ratio_ci_reports_paired_trials PASSED [ 21%]
+tests/test_thor_lab_provenance.py::test_canonical_digest_is_key_order_independent PASSED [ 24%]
+tests/test_thor_lab_provenance.py::test_repository_root_and_code_revision_shape PASSED [ 27%]
+tests/test_thor_lab_provenance.py::test_environment_reports_interpreter_facts PASSED [ 30%]
+tests/test_thor_lab_provenance.py::test_manifest_records_revision_digest_and_claim_scope PASSED [ 33%]
+tests/test_thor_lab_provenance.py::test_resource_delta_is_non_negative_and_time_ordered PASSED [ 36%]
+tests/test_thor_lab_provenance.py::test_available_detail_states_what_is_measured PASSED [ 39%]
+tests/test_thor_lab_provenance.py::test_timer_resolution_control_is_recorded_and_released PASSED [ 42%]
+tests/test_thor_lab_backends.py::test_counting_proxy_counts_both_directions PASSED [ 45%]
+tests/test_thor_lab_backends.py::test_counting_proxy_max_connections_is_bounded PASSED [ 48%]
+tests/test_thor_lab_backends.py::test_surface_arm_round_trips_payload_and_reports_setup PASSED [ 51%]
+tests/test_thor_lab_backends.py::test_plain_chain_arm_round_trips_through_three_hops PASSED [ 54%]
+tests/test_thor_lab_backends.py::test_aegis_arm_round_trips_through_three_aead_hops PASSED [ 57%]
+tests/test_thor_lab_backends.py::test_tor_arm_reports_unavailable_without_a_socks_endpoint PASSED [ 60%]
+tests/test_thor_lab_backends.py::test_socks5_client_success_against_a_fake_proxy PASSED [ 63%]
+tests/test_thor_lab_backends.py::test_socks5_client_surfaces_reply_codes PASSED [ 66%]
+tests/test_thor_lab_backends.py::test_http_get_parses_content_length_and_chunked_bodies PASSED [ 69%]
+tests/test_thor_lab_backends.py::test_http_get_rejects_a_truncated_body PASSED [ 72%]
+tests/test_thor_lab_backends.py::test_echo_exchange_through_surface_reports_wire_bytes PASSED [ 75%]
+tests/test_thor_lab_runner.py::test_runner_writes_immutable_artifact_set PASSED [ 78%]
+tests/test_thor_lab_runner.py::test_runner_refuses_to_reuse_a_non_empty_directory PASSED [ 81%]
+tests/test_thor_lab_runner.py::test_summary_records_digest_and_gate_requires_enough_trials PASSED [ 84%]
+tests/test_thor_lab_runner.py::test_gate_met_matches_the_reported_ratio PASSED [ 87%]
+tests/test_thor_lab_runner.py::test_verify_detects_a_tampered_raw_file PASSED [ 90%]
+tests/test_thor_lab_runner.py::test_runner_records_unavailable_arm_instead_of_dropping_it PASSED [ 93%]
+tests/test_thor_lab_runner.py::test_rejects_workload_and_tier_mismatches PASSED [ 96%]
+tests/test_thor_lab_runner.py::test_workload_spec_parsing_matches_grammar PASSED [100%]
+
+============================= 33 passed in 27.56s =============================

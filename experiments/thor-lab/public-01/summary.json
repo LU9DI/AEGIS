@@ -1,0 +1,660 @@
+{
+  "schema_version": 1,
+  "run_id": "20261118T195633-public-20261118",
+  "tier": "public",
+  "seed": 20261118,
+  "code": {
+    "revision": "1aa9130539a30c7ab7c62f116b4fa8771709c584",
+    "dirty": false,
+    "describe": "1aa9130",
+    "source": "git",
+    "checkout": "C:\\Users\\lucas\\AEGIS"
+  },
+  "environment": {
+    "python": "3.14.6",
+    "python_implementation": "CPython",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "system": "Windows",
+    "machine": "AMD64",
+    "processor": "Intel64 Family 6 Model 58 Stepping 9, GenuineIntel",
+    "cpu_count": 4,
+    "pid": 20520,
+    "aegis_version": "0.26.0",
+    "dependencies": {
+      "cryptography": "50.0.2",
+      "psutil": null
+    }
+  },
+  "configuration": {
+    "tier": "public",
+    "arms": [
+      {
+        "name": "surface",
+        "options": {}
+      },
+      {
+        "name": "tor_socks",
+        "options": {
+          "socks_host": "127.0.0.1",
+          "socks_port": 9050
+        }
+      }
+    ],
+    "workloads": [
+      {
+        "kind": "http_get",
+        "payload_bytes": 262144,
+        "chunk_bytes": 16384,
+        "operations": 1,
+        "streams": 1,
+        "max_in_flight": 4,
+        "timeout_s": 120.0,
+        "http_host": "cachefly.cachefly.net",
+        "http_path": "/1mb.test",
+        "http_headers": [
+          [
+            "Range",
+            "bytes=0-262143"
+          ]
+        ]
+      }
+    ],
+    "trials": 5,
+    "warmup_trials": 1,
+    "seed": 20261118,
+    "public_url": "http://cachefly.cachefly.net/1mb.test",
+    "link_profile": null,
+    "notes": "tier public, 256 KiB HTTP GET via Range, Tor local SocksPort, harness at commit 1aa9130"
+  },
+  "configuration_digest": "8a2b930e052d601fd9830d6c4c82039d70f47f657f3272eff333656d93c2f7a3",
+  "configuration_digest_recomputed": "8a2b930e052d601fd9830d6c4c82039d70f47f657f3272eff333656d93c2f7a3",
+  "raw": {
+    "trials_sha256": "ced15accc8fa926ededcdae7d765e11b9cbf5a24238c0d3b0c2a0d2d7c838b11",
+    "records": 12,
+    "warmup_records": 2,
+    "error_records": 0,
+    "qualifying_records": 10
+  },
+  "availability": [],
+  "arms": {
+    "surface": {
+      "family": "surface",
+      "records": 6,
+      "warmup_records": 1,
+      "ok_records": 6,
+      "error_records": 0,
+      "integrity_failures": 0
+    },
+    "tor_socks": {
+      "family": "tor",
+      "records": 6,
+      "warmup_records": 1,
+      "ok_records": 6,
+      "error_records": 0,
+      "integrity_failures": 0
+    }
+  },
+  "workloads": {
+    "http_get:1xcachefly.cachefly.net/1mb.test": {
+      "surface": {
+        "trials": 5,
+        "payload_bytes": [
+          262144
+        ],
+        "goodput_mbps": {
+          "n": 5,
+          "mean": 6.91004,
+          "stdev": 7.0180641421263745,
+          "min": 0.8339,
+          "max": 17.742,
+          "p50": 5.9488,
+          "p95": 16.02848,
+          "p99": 17.399296,
+          "ci": {
+            "point": 5.9488,
+            "low": 0.8339,
+            "high": 17.742,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 5,
+          "mean": 174.9317,
+          "stdev": 128.86578309898636,
+          "min": 70.7844,
+          "max": 399.8913,
+          "p50": 136.3231,
+          "p95": 348.1123999999999,
+          "p99": 389.53552,
+          "ci": {
+            "point": 136.3231,
+            "low": 70.7844,
+            "high": 399.8913,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 5,
+          "mean": 1135.6026200000001,
+          "stdev": 1238.6980561941768,
+          "min": 118.2029,
+          "max": 2514.7515,
+          "p50": 352.5361,
+          "p95": 2504.58826,
+          "p99": 2512.718852,
+          "ci": {
+            "point": 352.5361,
+            "low": 118.2029,
+            "high": 2514.7515,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 5,
+          "mean": 1.3725200000000002,
+          "stdev": 0.16962456190068695,
+          "min": 1.1386,
+          "max": 1.6154,
+          "p50": 1.3724,
+          "p95": 1.5711199999999999,
+          "p99": 1.606544,
+          "ci": {
+            "point": 1.3724,
+            "low": 1.1386,
+            "high": 1.6154,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 5,
+          "mean": 1139.10824,
+          "stdev": 1238.848968292648,
+          "min": 120.9637,
+          "max": 2518.4223,
+          "p50": 356.436,
+          "p95": 2508.2473800000002,
+          "p99": 2516.3873160000003,
+          "ci": {
+            "point": 356.436,
+            "low": 120.9637,
+            "high": 2518.4223,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 5,
+          "mean": 0.0007900000000000001,
+          "stdev": 1.21217487951527e-19,
+          "min": 0.00079,
+          "max": 0.00079,
+          "p50": 0.00079,
+          "p95": 0.00079,
+          "p99": 0.00079,
+          "ci": {
+            "point": 0.00079,
+            "low": 0.00079,
+            "high": 0.00079,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 5,
+          "mean": 1.0022168,
+          "stdev": 8.497058314495285e-06,
+          "min": 1.002213,
+          "max": 1.002232,
+          "p50": 1.002213,
+          "p95": 1.0022282,
+          "p99": 1.00223124,
+          "ci": {
+            "point": 1.002213,
+            "low": 1.002213,
+            "high": 1.002232,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 5,
+          "mean": 0.056579000000000004,
+          "stdev": 0.11289177207839374,
+          "min": 0.0,
+          "max": 0.257571,
+          "p50": 0.0,
+          "p95": 0.21112159999999996,
+          "p99": 0.24828112,
+          "ci": {
+            "point": 0.0,
+            "low": 0.0,
+            "high": 0.257571,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 5,
+          "mean": 33159.2,
+          "stdev": 101.83908876261609,
+          "min": 33012.0,
+          "max": 33256.0,
+          "p50": 33136.0,
+          "p95": 33256.0,
+          "p99": 33256.0,
+          "ci": {
+            "point": 33136.0,
+            "low": 33012.0,
+            "high": 33256.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 5,
+          "mean": 1135.6026200000001,
+          "stdev": 1238.6980561941768,
+          "min": 118.2029,
+          "max": 2514.7515,
+          "p50": 352.5361,
+          "p95": 2504.58826,
+          "p99": 2512.718852,
+          "ci": {
+            "point": 352.5361,
+            "low": 118.2029,
+            "high": 2514.7515,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p95_ms": {
+          "n": 5,
+          "mean": 1135.6026200000001,
+          "stdev": 1238.6980561941768,
+          "min": 118.2029,
+          "max": 2514.7515,
+          "p50": 352.5361,
+          "p95": 2504.58826,
+          "p99": 2512.718852,
+          "ci": {
+            "point": 352.5361,
+            "low": 118.2029,
+            "high": 2514.7515,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p99_ms": {
+          "n": 5,
+          "mean": 1135.6026200000001,
+          "stdev": 1238.6980561941768,
+          "min": 118.2029,
+          "max": 2514.7515,
+          "p50": 352.5361,
+          "p95": 2504.58826,
+          "p99": 2512.718852,
+          "ci": {
+            "point": 352.5361,
+            "low": 118.2029,
+            "high": 2514.7515,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_first_body_ms": {
+          "n": 5,
+          "mean": 174.9317,
+          "stdev": 128.86578309898636,
+          "min": 70.7844,
+          "max": 399.8913,
+          "p50": 136.3231,
+          "p95": 348.1123999999999,
+          "p99": 389.53552,
+          "ci": {
+            "point": 136.3231,
+            "low": 70.7844,
+            "high": 399.8913,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "connections_per_trial": [
+          1
+        ]
+      },
+      "tor_socks": {
+        "trials": 5,
+        "payload_bytes": [
+          262144
+        ],
+        "goodput_mbps": {
+          "n": 5,
+          "mean": 1.71664,
+          "stdev": 0.43718698859870014,
+          "min": 1.1948,
+          "max": 2.3116,
+          "p50": 1.5815,
+          "p95": 2.2474,
+          "p99": 2.2987599999999997,
+          "ci": {
+            "point": 1.5815,
+            "low": 1.1948,
+            "high": 2.3116,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 5,
+          "mean": 390.71086,
+          "stdev": 105.69622177496699,
+          "min": 309.1087,
+          "max": 540.2276,
+          "p50": 324.5661,
+          "p95": 525.1778400000001,
+          "p99": 537.217648,
+          "ci": {
+            "point": 324.5661,
+            "low": 309.1087,
+            "high": 540.2276,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 5,
+          "mean": 1287.17334,
+          "stdev": 328.23895093628516,
+          "min": 907.2373,
+          "max": 1755.3016,
+          "p50": 1326.0902,
+          "p95": 1682.98706,
+          "p99": 1740.838692,
+          "ci": {
+            "point": 1326.0902,
+            "low": 907.2373,
+            "high": 1755.3016,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 5,
+          "mean": 388.22826,
+          "stdev": 93.43452408273936,
+          "min": 308.7374,
+          "max": 520.2808,
+          "p50": 330.4199,
+          "p95": 506.8912,
+          "p99": 517.60288,
+          "ci": {
+            "point": 330.4199,
+            "low": 308.7374,
+            "high": 520.2808,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 5,
+          "mean": 1677.8470399999999,
+          "stdev": 399.7284959840028,
+          "min": 1218.1158,
+          "max": 2210.8749,
+          "p50": 1659.3003,
+          "p95": 2152.0516799999996,
+          "p99": 2199.110256,
+          "ci": {
+            "point": 1659.3003,
+            "low": 1218.1158,
+            "high": 2210.8749,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 5,
+          "mean": 0.000908,
+          "stdev": 0.0,
+          "min": 0.000908,
+          "max": 0.000908,
+          "p50": 0.000908,
+          "p95": 0.000908,
+          "p99": 0.000908,
+          "ci": {
+            "point": 0.000908,
+            "low": 0.000908,
+            "high": 0.000908,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 5,
+          "mean": 1.002265,
+          "stdev": 6.7082039325433164e-06,
+          "min": 1.002262,
+          "max": 1.002277,
+          "p50": 1.002262,
+          "p95": 1.002274,
+          "p99": 1.0022764,
+          "ci": {
+            "point": 1.002262,
+            "low": 1.002262,
+            "high": 1.002277,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 5,
+          "mean": 0.015390999999999998,
+          "stdev": 0.01005556796009057,
+          "min": 0.0,
+          "max": 0.025646,
+          "p50": 0.018828,
+          "p95": 0.024756399999999998,
+          "p99": 0.02546808,
+          "ci": {
+            "point": 0.018828,
+            "low": 0.0,
+            "high": 0.025646,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 5,
+          "mean": 33218.4,
+          "stdev": 78.15881268289584,
+          "min": 33136.0,
+          "max": 33308.0,
+          "p50": 33256.0,
+          "p95": 33297.6,
+          "p99": 33305.92,
+          "ci": {
+            "point": 33256.0,
+            "low": 33136.0,
+            "high": 33308.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 5,
+          "mean": 1287.17334,
+          "stdev": 328.23895093628516,
+          "min": 907.2373,
+          "max": 1755.3016,
+          "p50": 1326.0902,
+          "p95": 1682.98706,
+          "p99": 1740.838692,
+          "ci": {
+            "point": 1326.0902,
+            "low": 907.2373,
+            "high": 1755.3016,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p95_ms": {
+          "n": 5,
+          "mean": 1287.17334,
+          "stdev": 328.23895093628516,
+          "min": 907.2373,
+          "max": 1755.3016,
+          "p50": 1326.0902,
+          "p95": 1682.98706,
+          "p99": 1740.838692,
+          "ci": {
+            "point": 1326.0902,
+            "low": 907.2373,
+            "high": 1755.3016,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p99_ms": {
+          "n": 5,
+          "mean": 1287.17334,
+          "stdev": 328.23895093628516,
+          "min": 907.2373,
+          "max": 1755.3016,
+          "p50": 1326.0902,
+          "p95": 1682.98706,
+          "p99": 1740.838692,
+          "ci": {
+            "point": 1326.0902,
+            "low": 907.2373,
+            "high": 1755.3016,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_first_body_ms": {
+          "n": 5,
+          "mean": 390.71086,
+          "stdev": 105.69622177496699,
+          "min": 309.1087,
+          "max": 540.2276,
+          "p50": 324.5661,
+          "p95": 525.1778400000001,
+          "p99": 537.217648,
+          "ci": {
+            "point": 324.5661,
+            "low": 309.1087,
+            "high": 540.2276,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "connections_per_trial": [
+          1
+        ]
+      }
+    }
+  },
+  "claim_scope": "Derived from one THOR run. Loopback/lab ratios are not public-network performance and do not establish anonymity or Tor equivalence.",
+  "gates": [
+    {
+      "workload": "http_get:1xcachefly.cachefly.net/1mb.test",
+      "candidate": "tor_socks",
+      "reference": "surface",
+      "tier": "public",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 5,
+      "goodput_ratio": {
+        "paired_trials": 5,
+        "ratios": [
+          0.20084722969338353,
+          1.8044129991605709,
+          1.858183527200094,
+          0.21697331705615625,
+          0.13028970803742532
+        ],
+        "point": 0.21697331705615625,
+        "low": 0.13028970803742532,
+        "high": 1.858183527200094,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 4.148,
+      "latency_ratio": {
+        "paired_trials": 5,
+        "ratios": [
+          6.202726155607177,
+          0.7610950713071434,
+          0.6724491283390388,
+          5.961909192127371,
+          10.070093755399347
+        ],
+        "point": 5.961909192127371,
+        "low": 0.6724491283390388,
+        "high": 10.070093755399347,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    }
+  ]
+}

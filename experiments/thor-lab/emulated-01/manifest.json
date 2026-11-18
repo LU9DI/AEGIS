@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "created_unix": 1795042573.2007117,
+  "created_local": "2026-11-18T19:56:13-0300",
+  "tier": "emulated",
+  "seed": 20261118,
+  "code": {
+    "revision": "1aa9130539a30c7ab7c62f116b4fa8771709c584",
+    "dirty": false,
+    "describe": "1aa9130",
+    "source": "git",
+    "checkout": "C:\\Users\\lucas\\AEGIS"
+  },
+  "environment": {
+    "python": "3.14.6",
+    "python_implementation": "CPython",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "system": "Windows",
+    "machine": "AMD64",
+    "processor": "Intel64 Family 6 Model 58 Stepping 9, GenuineIntel",
+    "cpu_count": 4,
+    "pid": 9144,
+    "aegis_version": "0.26.0",
+    "dependencies": {
+      "cryptography": "50.0.2",
+      "psutil": null
+    }
+  },
+  "configuration": {
+    "tier": "emulated",
+    "arms": [
+      {
+        "name": "surface",
+        "options": {}
+      },
+      {
+        "name": "relay3_plain",
+        "options": {}
+      },
+      {
+        "name": "aegis_telescope3",
+        "options": {
+          "hop_count": 3,
+          "window_update_batch_bytes": 65536
+        }
+      }
+    ],
+    "workloads": [
+      {
+        "kind": "bulk_echo",
+        "payload_bytes": 262144,
+        "chunk_bytes": 16384,
+        "operations": 1,
+        "streams": 1,
+        "max_in_flight": 4,
+        "timeout_s": 120.0,
+        "http_host": null,
+        "http_path": "/",
+        "http_headers": []
+      },
+      {
+        "kind": "bulk_echo",
+        "payload_bytes": 262144,
+        "chunk_bytes": 65536,
+        "operations": 1,
+        "streams": 1,
+        "max_in_flight": 4,
+        "timeout_s": 120.0,
+        "http_host": null,
+        "http_path": "/",
+        "http_headers": []
+      },
+      {
+        "kind": "small_rtt",
+        "payload_bytes": 1024,
+        "chunk_bytes": 16384,
+        "operations": 20,
+        "streams": 1,
+        "max_in_flight": 4,
+        "timeout_s": 120.0,
+        "http_host": null,
+        "http_path": "/",
+        "http_headers": []
+      }
+    ],
+    "trials": 5,
+    "warmup_trials": 1,
+    "seed": 20261118,
+    "public_url": null,
+    "link_profile": "metro",
+    "notes": "tier emulated, metro shaper, harness at commit 1aa9130"
+  },
+  "configuration_digest": "4c108effcfd297b1c26fa2da0f7df8356808624719063e1a7e852411960d46f6",
+  "claim_scope": "Measurement artifact. It does not establish anonymity, security, Tor equivalence, or public-network performance.",
+  "extra": {
+    "run_id": "20261118T195613-emulated-20261118",
+    "runner": "anonlab.thor_lab.runner",
+    "configuration_digest_short": "4c108effcfd297b1",
+    "timer_resolution": {
+      "applied": true,
+      "period_ms": 1,
+      "reason": "ok"
+    }
+  }
+}

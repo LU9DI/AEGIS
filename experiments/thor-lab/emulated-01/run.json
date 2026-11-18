@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "run_id": "20261118T195613-emulated-20261118",
+  "result": {
+    "out_dir": "C:\\Users\\lucas\\AEGIS\\.github\\thor-lab-staging\\runs\\emulated-committed",
+    "run_id": "20261118T195613-emulated-20261118",
+    "trials_written": 54,
+    "arms_measured": [
+      "surface",
+      "relay3_plain",
+      "aegis_telescope3"
+    ],
+    "arms_unavailable": [],
+    "partial": false
+  },
+  "record_schema_version": 1,
+  "target": {
+    "host": "127.0.0.1",
+    "port": 62785
+  },
+  "claims": "Raw measurement artifact; see docs/research/thor/04-THREAT-MODEL.md for scope."
+}

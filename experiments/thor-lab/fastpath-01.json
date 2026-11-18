@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "kind": "thor_lab_fastpath_microbenchmark",
+  "generated_ns": 38705495671600,
+  "repeats": 3000,
+  "note": "Microbenchmark only. It measures the cost of individual operations in CPython on this host; it is not a protocol result and does not include event-loop, socket, or scheduling cost.",
+  "cryptography_version": "50.0.2",
+  "measurements": [
+    {
+      "payload_bytes": 1024,
+      "operations": {
+        "aead_object_construct": {
+          "median_ns": 3700.0,
+          "p95_ns": 6100.0,
+          "min_ns": 3500.0
+        },
+        "seal_uncached": {
+          "median_ns": 10200.0,
+          "p95_ns": 15000.0,
+          "min_ns": 9200.0
+        },
+        "seal_shared_object": {
+          "median_ns": 5000.0,
+          "p95_ns": 8400.0,
+          "min_ns": 4800.0
+        },
+        "open_uncached": {
+          "median_ns": 15400.0,
+          "p95_ns": 21800.0,
+          "min_ns": 9700.0
+        },
+        "open_shared_object": {
+          "median_ns": 5200.0,
+          "p95_ns": 11800.0,
+          "min_ns": 4800.0
+        },
+        "aad_encode_fresh": {
+          "median_ns": 900.0,
+          "p95_ns": 1000.0,
+          "min_ns": 800.0
+        },
+        "aad_encode_cached": {
+          "median_ns": 700.0,
+          "p95_ns": 1100.0,
+          "min_ns": 400.0
+        },
+        "body_copy_slice": {
+          "median_ns": 1100.0,
+          "p95_ns": 1200.0,
+          "min_ns": 400.0
+        },
+        "body_memoryview": {
+          "median_ns": 1400.0,
+          "p95_ns": 1500.0,
+          "min_ns": 800.0
+        },
+        "frame_concat": {
+          "median_ns": 1700.0,
+          "p95_ns": 1900.0,
+          "min_ns": 1600.0
+        },
+        "frame_pack_only": {
+          "median_ns": 1100.0,
+          "p95_ns": 1100.0,
+          "min_ns": 1000.0
+        },
+        "command_header_unpack": {
+          "median_ns": 1100.0,
+          "p95_ns": 1200.0,
+          "min_ns": 700.0
+        },
+        "dispatch_dict_built": {
+          "median_ns": 1000.0,
+          "p95_ns": 2200.0,
+          "min_ns": 900.0
+        },
+        "dispatch_dict_cached": {
+          "median_ns": 400.0,
+          "p95_ns": 600.0,
+          "min_ns": 300.0
+        },
+        "one_hop_command": {
+          "median_ns": 13100.0,
+          "p95_ns": 21500.0,
+          "min_ns": 12600.0
+        }
+      },
+      "derived": {
+        "one_hop_command_ns": 13100.0,
+        "three_hop_chain_command_ns": 39300.0,
+        "commands_per_second_single_core_3hop": 25445.3,
+        "predicted_goodput_mbps_3hop_serial": 208.448
+      }
+    },
+    {
+      "payload_bytes": 16384,
+      "operations": {
+        "aead_object_construct": {
+          "median_ns": 3700.0,
+          "p95_ns": 6400.0,
+          "min_ns": 3400.0
+        },
+        "seal_uncached": {
+          "median_ns": 31800.0,
+          "p95_ns": 50500.0,
+          "min_ns": 31300.0
+        },
+        "seal_shared_object": {
+          "median_ns": 26900.0,
+          "p95_ns": 45600.0,
+          "min_ns": 26200.0
+        },
+        "open_uncached": {
+          "median_ns": 34000.0,
+          "p95_ns": 59700.0,
+          "min_ns": 32100.0
+        },
+        "open_shared_object": {
+          "median_ns": 28400.0,
+          "p95_ns": 49000.0,
+          "min_ns": 26500.0
+        },
+        "aad_encode_fresh": {
+          "median_ns": 400.0,
+          "p95_ns": 600.0,
+          "min_ns": 400.0
+        },
+        "aad_encode_cached": {
+          "median_ns": 400.0,
+          "p95_ns": 1000.0,
+          "min_ns": 300.0
+        },
+        "body_copy_slice": {
+          "median_ns": 2900.0,
+          "p95_ns": 3300.0,
+          "min_ns": 2200.0
+        },
+        "body_memoryview": {
+          "median_ns": 1400.0,
+          "p95_ns": 1800.0,
+          "min_ns": 1200.0
+        },
+        "frame_concat": {
+          "median_ns": 3200.0,
+          "p95_ns": 4300.0,
+          "min_ns": 1700.0
+        },
+        "frame_pack_only": {
+          "median_ns": 1100.0,
+          "p95_ns": 1200.0,
+          "min_ns": 900.0
+        },
+        "command_header_unpack": {
+          "median_ns": 1300.0,
+          "p95_ns": 1500.0,
+          "min_ns": 700.0
+        },
+        "dispatch_dict_built": {
+          "median_ns": 2100.0,
+          "p95_ns": 2300.0,
+          "min_ns": 900.0
+        },
+        "dispatch_dict_cached": {
+          "median_ns": 700.0,
+          "p95_ns": 900.0,
+          "min_ns": 300.0
+        },
+        "one_hop_command": {
+          "median_ns": 83400.0,
+          "p95_ns": 121600.0,
+          "min_ns": 60100.0
+        }
+      },
+      "derived": {
+        "one_hop_command_ns": 83400.0,
+        "three_hop_chain_command_ns": 250200.0,
+        "commands_per_second_single_core_3hop": 3996.8,
+        "predicted_goodput_mbps_3hop_serial": 523.869
+      }
+    },
+    {
+      "payload_bytes": 262144,
+      "operations": {
+        "aead_object_construct": {
+          "median_ns": 3700.0,
+          "p95_ns": 8000.0,
+          "min_ns": 3500.0
+        },
+        "seal_uncached": {
+          "median_ns": 480900.0,
+          "p95_ns": 1055200.0,
+          "min_ns": 355800.0
+        },
+        "seal_shared_object": {
+          "median_ns": 466600.0,
+          "p95_ns": 826300.0,
+          "min_ns": 348600.0
+        },
+        "open_uncached": {
+          "median_ns": 425700.0,
+          "p95_ns": 752100.0,
+          "min_ns": 359400.0
+        },
+        "open_shared_object": {
+          "median_ns": 461100.0,
+          "p95_ns": 755900.0,
+          "min_ns": 352600.0
+        },
+        "aad_encode_fresh": {
+          "median_ns": 600.0,
+          "p95_ns": 1000.0,
+          "min_ns": 400.0
+        },
+        "aad_encode_cached": {
+          "median_ns": 600.0,
+          "p95_ns": 700.0,
+          "min_ns": 300.0
+        },
+        "body_copy_slice": {
+          "median_ns": 15200.0,
+          "p95_ns": 24900.0,
+          "min_ns": 14700.0
+        },
+        "body_memoryview": {
+          "median_ns": 1300.0,
+          "p95_ns": 1500.0,
+          "min_ns": 600.0
+        },
+        "frame_concat": {
+          "median_ns": 16300.0,
+          "p95_ns": 27000.0,
+          "min_ns": 15900.0
+        },
+        "frame_pack_only": {
+          "median_ns": 700.0,
+          "p95_ns": 1300.0,
+          "min_ns": 400.0
+        },
+        "command_header_unpack": {
+          "median_ns": 500.0,
+          "p95_ns": 1200.0,
+          "min_ns": 400.0
+        },
+        "dispatch_dict_built": {
+          "median_ns": 1000.0,
+          "p95_ns": 2200.0,
+          "min_ns": 900.0
+        },
+        "dispatch_dict_cached": {
+          "median_ns": 800.0,
+          "p95_ns": 900.0,
+          "min_ns": 600.0
+        },
+        "one_hop_command": {
+          "median_ns": 1092850.0,
+          "p95_ns": 2180000.0,
+          "min_ns": 760000.0
+        }
+      },
+      "derived": {
+        "one_hop_command_ns": 1092850.0,
+        "three_hop_chain_command_ns": 3278550.0,
+        "commands_per_second_single_core_3hop": 305.0,
+        "predicted_goodput_mbps_3hop_serial": 639.658
+      }
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "raw_digest_sha256": {
+    "matches": true,
+    "actual": "d8d567c30265c10bd47cbc7399116cd6627880ad74556bdbe69197a3c19677d9"
+  },
+  "configuration_digest_sha256": {
+    "matches": true,
+    "recorded": "4c108effcfd297b1c26fa2da0f7df8356808624719063e1a7e852411960d46f6",
+    "recomputed": "4c108effcfd297b1c26fa2da0f7df8356808624719063e1a7e852411960d46f6"
+  },
+  "revision_recorded": {
+    "value": "1aa9130539a30c7ab7c62f116b4fa8771709c584"
+  },
+  "dirty_tree": {
+    "value": false
+  },
+  "record_schema": {
+    "matches": true,
+    "records": 54
+  },
+  "ok": true
+}

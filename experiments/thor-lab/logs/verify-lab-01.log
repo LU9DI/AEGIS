@@ -1,0 +1,22 @@
+{
+  "raw_digest_sha256": {
+    "matches": true,
+    "actual": "88220ea1f296d89e276b5e110e5d4cbe4a58adeac3212c1af30910b9d11246b6"
+  },
+  "configuration_digest_sha256": {
+    "matches": true,
+    "recorded": "b2e001db92303bb5d76c368985a252c36104708e4af0f0faed1254a6a2f942bf",
+    "recomputed": "b2e001db92303bb5d76c368985a252c36104708e4af0f0faed1254a6a2f942bf"
+  },
+  "revision_recorded": {
+    "value": "1aa9130539a30c7ab7c62f116b4fa8771709c584"
+  },
+  "dirty_tree": {
+    "value": false
+  },
+  "record_schema": {
+    "matches": true,
+    "records": 144
+  },
+  "ok": true
+}
