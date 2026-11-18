@@ -25,7 +25,7 @@
 
 ## 2. O que isso diz sobre o gargalo
 
-- **AEAD é o custo dominante por hop em volume** (seal+open = 66% do comando de 16 KiB e 85% do de 256 KiB), mas o teto de goodput que ele impõe (524–640 Mb/s) está **10–25× acima do goodput medido** (18,8–37,8 Mb/s no tier lab).
+- **AEAD é o custo dominante por hop em volume** (seal+open = 66% do comando de 16 KiB e 85% do de 256 KiB), mas o teto de goodput que ele impõe (524–640 Mb/s) está **14–34× acima do goodput medido** (18,8–37,8 Mb/s no tier lab).
 - **Cópias e framing são pequenos**: ~7% do comando de 16 KiB e ~3% do de 256 KiB.
 - **A construção de objeto AEAD só importa em mensagens minúsculas** (28% do comando de 1 KiB, 4,4% em 16 KiB, 0,34% em 256 KiB).
 - Portanto, a conclusão da Fase 4 é a mesma que a decomposição end-to-end já indicava (`03`): **o custo está no escalonamento e no despacho por comando (tasks, futures, locks, timers, round-trips), não nas operações criptográficas nem nas cópias.**

@@ -49,7 +49,7 @@ Para cada comando enviado pelo cliente, por hop:
 | Resposta | `telescoping.py:989-1011`, `_seal_reply` | novo `seal` + `frame` (header + payload concatenados) por hop |
 | Encaminhamento | `telescoping.py:923-943` | `Future` + lock + task por escrita encaminhada |
 
-Consequência estrutural: nesses pontos o custo por byte cai e o custo por **comando** domina. Isso é exatamente o que os artefatos do repositório já mostram — `handle` do relay com 26,1% do tempo acumulado e `seal` com 7,1% (`experiments/cprofile-after-cache-v0.18.0.txt:14,27`) — e é reproduzido nas medições desta entrega (§5 de `06-LAB-RESULTS.md`).
+Consequência estrutural: nesses pontos o custo por byte cai e o custo por **comando** domina. Isso é exatamente o que os artefatos do repositório já mostram — `handle` do relay com 26,1% do tempo acumulado e `seal` com 7,1% (`experiments/cprofile-after-cache-v0.18.0.txt:14,27`) — e é confirmado nas medições desta entrega (decomposição em `03-BOTTLENECKS.md` §1–§2 e microbenchmark em `08-PROTOTYPE-RESULTS.md` §2).
 
 ## 4. Achados (F1–F12)
 
