@@ -21,6 +21,12 @@ from anonlab.pir_rpc import (
 )
 
 
+# Loopback RPC budget for these tests. They used 2s, which is below the
+# library default (5s) and loses to scheduling stalls on loaded CI hosts:
+# a cancelled `asyncio.open_connection`/TLS handshake then looks like an RPC
+# failure. 10s keeps the test a bounded hang detector without masking errors.
+RPC_TIMEOUT_SECONDS = 10.0
+
 @unittest.skipUnless(shutil.which("openssl"), "OpenSSL CLI is required for local TLS integration certificate")
 class PirRpcTlsTransportTests(unittest.IsolatedAsyncioTestCase):
     @classmethod
@@ -152,7 +158,7 @@ class PirRpcTlsTransportTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_tls_transport_retrieves_record_without_client_shared_hmac_keys(self):
         endpoints = await self._start_servers()
-        result = await retrieve_two_server_pir_rpc(endpoints, len(self.records), 11, record_bytes=3, timeout_seconds=2)
+        result = await retrieve_two_server_pir_rpc(endpoints, len(self.records), 11, record_bytes=3, timeout_seconds=RPC_TIMEOUT_SECONDS)
         self.assertEqual(result.record, self.records[11])
         self.assertIn("TLS 1.2+ encrypted", result.transport)
         self.assertIsNone(endpoints[0].shared_key)
@@ -169,7 +175,7 @@ class PirRpcTlsTransportTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotEqual(old_fingerprint, new_fingerprint)
         self.assertEqual(reported_fingerprint, new_fingerprint)
         result = await retrieve_two_server_pir_rpc(
-            endpoints, len(self.records), 7, record_bytes=3, timeout_seconds=2
+            endpoints, len(self.records), 7, record_bytes=3, timeout_seconds=RPC_TIMEOUT_SECONDS
         )
         self.assertEqual(result.record, self.records[7])
 
@@ -183,7 +189,7 @@ class PirRpcTlsTransportTests(unittest.IsolatedAsyncioTestCase):
         current_fingerprint = await self._peer_certificate_fingerprint(endpoints[0])
         self.assertEqual(current_fingerprint, old_fingerprint)
         result = await retrieve_two_server_pir_rpc(
-            endpoints, len(self.records), 8, record_bytes=3, timeout_seconds=2
+            endpoints, len(self.records), 8, record_bytes=3, timeout_seconds=RPC_TIMEOUT_SECONDS
         )
         self.assertEqual(result.record, self.records[8])
 
@@ -202,10 +208,10 @@ class PirRpcTlsTransportTests(unittest.IsolatedAsyncioTestCase):
             PirRpcEndpoint("replica-b", "127.0.0.1", self.server_b.port,
                            ssl_context=self.client_context, server_hostname="replica-b.test"),
         )
-        first = await retrieve_two_server_pir_rpc(endpoints, len(self.records), 4, record_bytes=3, timeout_seconds=2)
+        first = await retrieve_two_server_pir_rpc(endpoints, len(self.records), 4, record_bytes=3, timeout_seconds=RPC_TIMEOUT_SECONDS)
         self.assertEqual(first.record, self.records[4])
         with self.assertRaises(PirRpcError):
-            await retrieve_two_server_pir_rpc(endpoints, len(self.records), 5, record_bytes=3, timeout_seconds=2)
+            await retrieve_two_server_pir_rpc(endpoints, len(self.records), 5, record_bytes=3, timeout_seconds=RPC_TIMEOUT_SECONDS)
         await asyncio.sleep(0.01)
         stats = self.server_a.aggregate_stats
         self.assertEqual(stats["requests_accepted"], 1)
@@ -235,7 +241,7 @@ class PirRpcTlsTransportTests(unittest.IsolatedAsyncioTestCase):
             byte ^ 0x01 for byte in original_answer(query)
         )
         transfer = await retrieve_two_server_pir_rpc(
-            endpoints, len(self.records), 9, record_bytes=3, timeout_seconds=2
+            endpoints, len(self.records), 9, record_bytes=3, timeout_seconds=RPC_TIMEOUT_SECONDS
         )
         self.assertNotEqual(transfer.record, self.records[9])
         self.assertEqual(transfer.snapshot_sha256, self.server_a.snapshot_sha256)
@@ -260,7 +266,7 @@ class PirRpcTlsTransportTests(unittest.IsolatedAsyncioTestCase):
         loop.set_exception_handler(lambda _loop, context: handshake_errors.append(context))
         try:
             with self.assertRaises(PirRpcError):
-                await retrieve_two_server_pir_rpc(wrong_name, len(self.records), 11, record_bytes=3, timeout_seconds=2)
+                await retrieve_two_server_pir_rpc(wrong_name, len(self.records), 11, record_bytes=3, timeout_seconds=RPC_TIMEOUT_SECONDS)
             await asyncio.sleep(0)
         finally:
             loop.set_exception_handler(previous_handler)
@@ -280,7 +286,7 @@ class PirRpcTlsTransportTests(unittest.IsolatedAsyncioTestCase):
         loop.set_exception_handler(lambda _loop, context: handshake_errors.append(context))
         try:
             with self.assertRaises(PirRpcError):
-                await retrieve_two_server_pir_rpc(bad, len(self.records), 11, record_bytes=3, timeout_seconds=2)
+                await retrieve_two_server_pir_rpc(bad, len(self.records), 11, record_bytes=3, timeout_seconds=RPC_TIMEOUT_SECONDS)
             await asyncio.sleep(0)
         finally:
             loop.set_exception_handler(previous_handler)

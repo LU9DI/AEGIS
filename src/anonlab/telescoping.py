@@ -22,11 +22,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
 
-from cryptography.exceptions import InvalidSignature, InvalidTag
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-
+from ._crypto import import_fallbacks, requires_crypto
 from .ntor_experiment import (
     CLIENT_HANDSHAKE_BYTES,
     NtorClientState,
@@ -38,6 +34,37 @@ from .ntor_experiment import (
     relay_respond,
 )
 from .onion_protocol import MAX_FRAME_BYTES, frame, open_sealed, seal
+
+FEATURE = "the telescoping circuit prototype"
+
+try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
+    from cryptography.exceptions import InvalidSignature, InvalidTag
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+except ImportError as exc:  # pragma: no cover - depends on the installed extras
+    # Framing, descriptors and validation stay importable without the extra;
+    # key generation, link authentication and sealing raise instead.
+    (
+        InvalidSignature,  # type: ignore[misc]
+        InvalidTag,  # type: ignore[misc]
+        serialization,
+        Ed25519PrivateKey,  # type: ignore[misc]
+        Ed25519PublicKey,  # type: ignore[misc]
+        X25519PrivateKey,  # type: ignore[misc]
+    ) = import_fallbacks(
+        exc,
+        FEATURE,
+        (
+            "InvalidSignature",
+            "InvalidTag",
+            "serialization",
+            "Ed25519PrivateKey",
+            "Ed25519PublicKey",
+            "X25519PrivateKey",
+        ),
+        exception_names=("InvalidSignature", "InvalidTag"),
+    )
 
 BOOTSTRAP_CREATE = b"C"
 BOOTSTRAP_CREATED = b"c"
@@ -260,10 +287,12 @@ class LinkReplayGuard:
         self._seen.add(token)
 
 
+@requires_crypto(FEATURE)
 def _ed25519_raw_public(key: Ed25519PublicKey) -> bytes:
     return key.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
 
 
+@requires_crypto(FEATURE)
 def _link_hello(
     target: RelayDescriptor,
     *,
@@ -313,6 +342,7 @@ def _link_hello(
     return unsigned + signature
 
 
+@requires_crypto(FEATURE)
 async def _authenticate_relay_endpoint(
     reader: asyncio.StreamReader,
     writer: asyncio.StreamWriter,
@@ -518,6 +548,7 @@ class RelayNode:
         self._descriptor_cache = descriptor
         return descriptor
 
+    @requires_crypto(FEATURE)
     def configure_directory_authorization(
         self, verifier: Any, signed_descriptor: Any, *, authorized_peer_ids: set[bytes] | frozenset[bytes] | None = None
     ) -> None:
@@ -555,6 +586,7 @@ class RelayNode:
                 raise ValueError("authorized peer IDs must be 20-byte relay identity digests")
             self.authorized_peer_ids = peers
 
+    @requires_crypto(FEATURE)
     async def _answer_link_hello(self, hello: bytes, writer: asyncio.StreamWriter) -> None:
         """Authenticate the target-bound hello and authorize certified relay peers."""
         if self.identity_private_key is None:
@@ -2072,6 +2104,7 @@ class TelescopingClient:
                 await self._close_unlocked()
                 raise
 
+    @requires_crypto(FEATURE)
     async def _connect_guard_unlocked(self, guard: RelayDescriptor) -> None:
         if self._writer is not None or self.hops:
             raise ValueError("client already has a circuit")

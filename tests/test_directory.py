@@ -20,8 +20,25 @@ try:
         descriptor_to_json,
         relay_identity_digest,
     )
-except (ImportError, RuntimeError):  # optional research dependency
+except ImportError:  # optional research dependency
     Ed25519PrivateKey = None  # type: ignore[assignment,misc]
+
+# descriptor_from_json is pure, so the parser tests below run without the extra.
+from anonlab.directory import descriptor_from_json
+
+
+class DescriptorParsingTests(unittest.TestCase):
+    """Strict JSON parsing of relay descriptors; no key material required."""
+
+    def test_json_parser_rejects_malformed_non_object_and_oversized(self) -> None:
+        for value in ("{", "[]", " " * 16385):
+            with self.subTest(value=value[:10]):
+                with self.assertRaises(ValueError):
+                    descriptor_from_json(value)
+
+    def test_json_parser_rejects_duplicate_fields(self) -> None:
+        with self.assertRaisesRegex(ValueError, "duplicate field"):
+            descriptor_from_json('{"relay_id":"a","relay_id":"b"}')
 
 
 def raw_x25519_public(key: X25519PrivateKey) -> bytes:
@@ -171,16 +188,6 @@ class SignedDirectoryTests(unittest.TestCase):
         altered["extra"] = "untrusted"
         with self.assertRaisesRegex(ValueError, "exactly"):
             self.verifier.verify_descriptor(altered, now=self.now + 1)
-
-    def test_json_parser_rejects_malformed_non_object_and_oversized(self) -> None:
-        for value in ("{", "[]", " " * 16385):
-            with self.subTest(value=value[:10]):
-                with self.assertRaises(ValueError):
-                    descriptor_from_json(value)
-
-    def test_json_parser_rejects_duplicate_fields(self) -> None:
-        with self.assertRaisesRegex(ValueError, "duplicate field"):
-            descriptor_from_json('{"relay_id":"a","relay_id":"b"}')
 
     def test_schema_version_requires_integer_not_boolean_or_float(self) -> None:
         altered = copy.deepcopy(self.descriptor)

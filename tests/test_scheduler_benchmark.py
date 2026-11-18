@@ -4,8 +4,19 @@ import unittest
 
 from anonlab.scheduler_benchmark import _parse_stream_counts, run_scheduler_comparison
 
+try:
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+except ImportError:  # optional research dependency
+    X25519PrivateKey = None  # type: ignore[assignment,misc]
+
+requires_crypto = unittest.skipIf(
+    X25519PrivateKey is None,
+    "install aegis-anon-lab[onion-lab] for scheduler benchmarks",
+)
+
 
 class SchedulerBenchmarkTests(unittest.IsolatedAsyncioTestCase):
+    @requires_crypto
     async def test_ab_benchmark_reports_both_modes_and_cleanup(self) -> None:
         result = await run_scheduler_comparison(
             profile_name="loopback",

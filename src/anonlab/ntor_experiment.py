@@ -12,18 +12,26 @@ from dataclasses import dataclass, field
 import hashlib
 import hmac
 
-try:
+from ._crypto import import_fallbacks, requires_crypto
+
+FEATURE = "the ntor key-agreement experiment"
+
+try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric.x25519 import (
         X25519PrivateKey,
         X25519PublicKey,
     )
     from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-except ImportError as exc:  # pragma: no cover - exercised without optional extra
-    raise RuntimeError(
-        "The ntor experiment requires the optional dependency: "
-        "python -m pip install 'rea-anon-lab[onion-lab]'"
-    ) from exc
+except ImportError as exc:  # pragma: no cover - depends on the installed extras
+    # Placeholders keep annotations, module import and pure helpers working; the
+    # guarded public entry points fail with MissingCryptoDependency (absent) or
+    # BrokenCryptoDependency (installed but broken).
+    hashes, serialization, X25519PrivateKey, X25519PublicKey, HKDF = import_fallbacks(  # type: ignore[misc]
+        exc,
+        FEATURE,
+        ("hashes", "serialization", "X25519PrivateKey", "X25519PublicKey", "HKDF"),
+    )
 
 PROTOID = b"ntor-curve25519-sha256-1"
 _T_MAC = PROTOID + b":mac"
@@ -143,6 +151,7 @@ class NtorReplayGuard:
         return len(self._seen)
 
 
+@requires_crypto(FEATURE)
 def client_start(identity_digest: bytes, onion_public_key: bytes) -> tuple[NtorClientState, bytes]:
     """Begin a one-hop ntor handshake using a pinned relay descriptor.
 
@@ -169,6 +178,7 @@ def client_start(identity_digest: bytes, onion_public_key: bytes) -> tuple[NtorC
     )
 
 
+@requires_crypto(FEATURE)
 def relay_respond(
     client_handshake: bytes,
     expected_identity_digest: bytes,
@@ -231,6 +241,7 @@ def relay_respond(
     return relay_ephemeral_public + auth, _derive_session_keys(secret)
 
 
+@requires_crypto(FEATURE)
 def client_finish(state: NtorClientState, relay_handshake: bytes) -> NtorSessionKeys:
     """Authenticate the relay response and derive matching directional keys."""
     if state._finished:

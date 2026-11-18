@@ -1,0 +1,107 @@
+name: Transport baseline regression
+
+on:
+  pull_request:
+    paths:
+      - "scripts/run_transport_baseline.py"
+      - "src/anonlab/local_benchmark.py"
+      - "src/anonlab/trace_dataset.py"
+      - "src/anonlab/privacy_eval.py"
+      - "tests/test_privacy_eval.py"
+      - "tests/test_transport_baseline_runner.py"
+      - "tests/test_trace_dataset.py"
+      - "docs/experiments/NORMALIZED-TRACE-DATASET.md"
+      - ".github/workflows/transport-baseline.yml"
+      - "pyproject.toml"
+  push:
+    branches:
+      - main
+      - "perf/reproducible-baseline-plan"
+    paths:
+      - "scripts/run_transport_baseline.py"
+      - "src/anonlab/local_benchmark.py"
+      - "src/anonlab/trace_dataset.py"
+      - "src/anonlab/privacy_eval.py"
+      - "tests/test_privacy_eval.py"
+      - "tests/test_transport_baseline_runner.py"
+      - "tests/test_trace_dataset.py"
+      - "docs/experiments/NORMALIZED-TRACE-DATASET.md"
+      - ".github/workflows/transport-baseline.yml"
+      - "pyproject.toml"
+  workflow_dispatch:
+    inputs:
+      full_baseline:
+        description: "Run a larger multi-hop loopback measurement instead of the smoke test"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: transport-baseline-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  loopback-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AEGIS_GITHUB_EVENT_NAME: ${{ github.event_name }}
+      AEGIS_GITHUB_REF: ${{ github.ref }}
+      AEGIS_GITHUB_SHA: ${{ github.sha }}
+      AEGIS_GITHUB_HEAD_REF: ${{ github.head_ref }}
+      AEGIS_GITHUB_BASE_REF: ${{ github.base_ref }}
+      AEGIS_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
+      AEGIS_PR_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+      AEGIS_GITHUB_RUN_ID: ${{ github.run_id }}
+      AEGIS_GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
+      AEGIS_GITHUB_WORKFLOW: ${{ github.workflow }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test runner
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Run baseline and normalized trace dataset regression tests
+        env:
+          PYTHONPATH: src
+        run: python -m pytest -q tests/test_transport_baseline_runner.py tests/test_trace_dataset.py tests/test_privacy_eval.py
+
+      - name: Capture a smoke-sized loopback artifact
+        if: github.event_name != 'workflow_dispatch' || inputs.full_baseline != true
+        run: |
+          python scripts/run_transport_baseline.py \
+            --hops 1 \
+            --bytes 65536 \
+            --trials 2 \
+            --latency-samples 10 \
+            --timeout 60 \
+            --output "$RUNNER_TEMP/aegis-transport-smoke.json"
+
+      - name: Capture a larger multi-hop loopback artifact
+        if: github.event_name == 'workflow_dispatch' && inputs.full_baseline == true
+        run: |
+          python scripts/run_transport_baseline.py \
+            --hops 3 \
+            --bytes 4000000 \
+            --trials 5 \
+            --latency-samples 100 \
+            --timeout 300 \
+            --output "$RUNNER_TEMP/aegis-transport-full.json"
+
+      - name: Upload raw benchmark artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aegis-transport-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/aegis-transport-*.json
+          if-no-files-found: ignore
+          retention-days: 30

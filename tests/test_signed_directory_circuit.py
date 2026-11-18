@@ -38,6 +38,12 @@ def raw_ed_public(key: Ed25519PrivateKey) -> bytes:
     )
 
 
+# The relay closes the link after rejecting an unauthorized hello. These tests
+# assert *that* it closes without replying, not how fast: a 1s bound raced
+# with Windows event-loop stalls (observed 1.5-7s in loaded runs) and turned a
+# correct rejection into a TimeoutError. 5s remains a bounded regression guard.
+LINK_CLOSE_WAIT_SECONDS = 5.0
+
 @unittest.skipIf(X25519PrivateKey is None, "install aegis-anon-lab[onion-lab] for signed-directory integration tests")
 class SignedDirectoryCircuitTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
@@ -186,7 +192,7 @@ class SignedDirectoryCircuitTests(unittest.IsolatedAsyncioTestCase):
             writer.write(frame(hello))
             await writer.drain()
             with self.assertRaises(asyncio.IncompleteReadError):
-                await asyncio.wait_for(read_frame(reader), timeout=1)
+                await asyncio.wait_for(read_frame(reader), timeout=LINK_CLOSE_WAIT_SECONDS)
             self.assertEqual(len(target.link_replay_guard._seen), 0)
         finally:
             writer.close()
@@ -205,7 +211,7 @@ class SignedDirectoryCircuitTests(unittest.IsolatedAsyncioTestCase):
             writer.write(frame(hello))
             await writer.drain()
             with self.assertRaises(asyncio.IncompleteReadError):
-                await asyncio.wait_for(read_frame(reader), timeout=1)
+                await asyncio.wait_for(read_frame(reader), timeout=LINK_CLOSE_WAIT_SECONDS)
             self.assertEqual(len(target.link_replay_guard._seen), 0)
         finally:
             writer.close()
@@ -225,7 +231,7 @@ class SignedDirectoryCircuitTests(unittest.IsolatedAsyncioTestCase):
             writer.write(frame(hello))
             await writer.drain()
             with self.assertRaises(asyncio.IncompleteReadError):
-                await asyncio.wait_for(read_frame(reader), timeout=1)
+                await asyncio.wait_for(read_frame(reader), timeout=LINK_CLOSE_WAIT_SECONDS)
             self.assertEqual(len(target.link_replay_guard._seen), 0)
         finally:
             writer.close()
@@ -251,7 +257,7 @@ class SignedDirectoryCircuitTests(unittest.IsolatedAsyncioTestCase):
             writer.write(frame(hello))
             await writer.drain()
             with self.assertRaises(asyncio.IncompleteReadError):
-                await asyncio.wait_for(read_frame(reader), timeout=1)
+                await asyncio.wait_for(read_frame(reader), timeout=LINK_CLOSE_WAIT_SECONDS)
             self.assertEqual(len(target.link_replay_guard._seen), 0)
         finally:
             writer.close()
@@ -278,7 +284,7 @@ class SignedDirectoryCircuitTests(unittest.IsolatedAsyncioTestCase):
             writer.write(frame(hello))
             await writer.drain()
             with self.assertRaises(asyncio.IncompleteReadError):
-                await asyncio.wait_for(read_frame(reader), timeout=1)
+                await asyncio.wait_for(read_frame(reader), timeout=LINK_CLOSE_WAIT_SECONDS)
             self.assertEqual(len(target.link_replay_guard._seen), 0)
         finally:
             writer.close()

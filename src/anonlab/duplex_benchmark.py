@@ -12,9 +12,8 @@ import time
 from pathlib import Path
 from typing import Any
 
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-
 from . import __version__
+from ._crypto import import_fallback, requires_crypto
 from .telescoping import (
     MAX_PIPELINE_DEPTH,
     MAX_PIPELINED_WRITE_PAYLOAD_BYTES,
@@ -27,6 +26,13 @@ from .telescoping import (
     serve_node,
 )
 
+FEATURE = "the duplex stream benchmark"
+
+try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+except ImportError as exc:  # pragma: no cover - depends on the installed extras
+    X25519PrivateKey = import_fallback(exc, FEATURE, "X25519PrivateKey")  # type: ignore[misc]
+
 
 def _percentile(values: list[float], p: float) -> float:
     if not values:
@@ -35,6 +41,7 @@ def _percentile(values: list[float], p: float) -> float:
     return ordered[min(len(ordered) - 1, max(0, int((len(ordered) - 1) * p + 0.999999)))]
 
 
+@requires_crypto(FEATURE)
 async def run_duplex_benchmark(
     *, stream_count: int = 8, payload_bytes: int = 64 * 1024, seed: int = 20261009,
     write_chunk_bytes: int = STREAM_WRITE_MAX_BYTES, pipeline_depth: int = 1,

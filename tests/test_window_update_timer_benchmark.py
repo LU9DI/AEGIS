@@ -11,6 +11,16 @@ from anonlab.window_update_timer_benchmark import (
     summarize_timer_sensitivity,
 )
 
+try:
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+except ImportError:  # optional research dependency
+    X25519PrivateKey = None  # type: ignore[assignment,misc]
+
+requires_crypto = unittest.skipIf(
+    X25519PrivateKey is None,
+    "install aegis-anon-lab[onion-lab] for window-update timer benchmarks",
+)
+
 
 class WindowUpdateTimerBenchmarkTests(unittest.IsolatedAsyncioTestCase):
     def test_timer_validation_is_bounded_unique_and_requires_control(self) -> None:
@@ -45,6 +55,7 @@ class WindowUpdateTimerBenchmarkTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(metric["losses_vs_control"], 1)
         self.assertAlmostEqual(metric["median_paired_trial_delta_percent"], 0.0, places=6)
 
+    @requires_crypto
     async def test_timer_sensitivity_smoke_checks_integrity_configuration_and_cleanup(self) -> None:
         result = await run_window_update_timer_sensitivity(
             profile_name="loopback",

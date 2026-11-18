@@ -6,6 +6,16 @@ import unittest
 from anonlab.fairness_benchmark import _parse_stream_counts, run_fairness_matrix
 from anonlab.network_impairment_benchmark import _jain_index
 
+try:
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+except ImportError:  # optional research dependency
+    X25519PrivateKey = None  # type: ignore[assignment,misc]
+
+requires_crypto = unittest.skipIf(
+    X25519PrivateKey is None,
+    "install aegis-anon-lab[onion-lab] for fairness matrix benchmarks",
+)
+
 
 class JainFairnessIndexTests(unittest.TestCase):
     def test_equal_rates_have_perfect_index(self) -> None:
@@ -32,6 +42,19 @@ class JainFairnessIndexTests(unittest.TestCase):
             _parse_stream_counts("33")
 
 
+class FairnessMatrixValidationTests(unittest.IsolatedAsyncioTestCase):
+    """Configuration validation; it runs before any cryptographic primitive."""
+
+    async def test_invalid_matrix_config_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "stream_counts"):
+            await run_fairness_matrix(stream_counts=[1, 1], trials=1, payload_bytes=1024)
+        with self.assertRaisesRegex(ValueError, "trials"):
+            await run_fairness_matrix(stream_counts=[1], trials=0, payload_bytes=1024)
+        with self.assertRaisesRegex(ValueError, "payload_bytes"):
+            await run_fairness_matrix(stream_counts=[1], trials=1, payload_bytes=1)
+
+
+@requires_crypto
 class FairnessMatrixTests(unittest.IsolatedAsyncioTestCase):
     async def test_small_matrix_reports_per_stream_and_cleanup_results(self) -> None:
         result = await run_fairness_matrix(
@@ -53,11 +76,3 @@ class FairnessMatrixTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(run["active_proxy_connections_after_close"], [0, 0, 0, 0])
             self.assertGreaterEqual(run["circuit_completion_rate_jain_index"], 1 / run["stream_count"] - 1e-9)
             self.assertLessEqual(run["circuit_completion_rate_jain_index"], 1.0 + 1e-9)
-
-    async def test_invalid_matrix_config_is_rejected(self) -> None:
-        with self.assertRaisesRegex(ValueError, "stream_counts"):
-            await run_fairness_matrix(stream_counts=[1, 1], trials=1, payload_bytes=1024)
-        with self.assertRaisesRegex(ValueError, "trials"):
-            await run_fairness_matrix(stream_counts=[1], trials=0, payload_bytes=1024)
-        with self.assertRaisesRegex(ValueError, "payload_bytes"):
-            await run_fairness_matrix(stream_counts=[1], trials=1, payload_bytes=1)

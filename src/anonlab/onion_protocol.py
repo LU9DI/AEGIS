@@ -9,13 +9,19 @@ from __future__ import annotations
 import os
 import struct
 
-try:
+from ._crypto import import_fallback
+
+try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
     from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
-except ImportError as exc:  # pragma: no cover - exercised without optional extra
-    raise RuntimeError(
-        "The encrypted onion prototype requires the optional dependency: "
-        "python -m pip install 'rea-anon-lab[onion-lab]'"
-    ) from exc
+except ImportError as exc:  # pragma: no cover - depends on the installed extras
+    # Framing and parsing below stay importable; sealing raises
+    # MissingCryptoDependency (absent) or BrokenCryptoDependency (broken install)
+    # instead of pretending to encrypt.
+    ChaCha20Poly1305 = import_fallback(  # type: ignore[misc]
+        exc,
+        "the encrypted onion prototype (AEAD envelope sealing)",
+        "ChaCha20Poly1305",
+    )
 
 VERSION = 2
 NONCE_BYTES = 12

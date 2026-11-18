@@ -13,9 +13,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-
+from ._crypto import import_fallback, requires_crypto
 from .ntor_experiment import (
     CLIENT_HANDSHAKE_BYTES,
     SERVER_HANDSHAKE_BYTES,
@@ -26,6 +24,14 @@ from .ntor_experiment import (
 )
 
 HOST = "127.0.0.1"
+FEATURE = "the ntor handshake benchmark"
+
+try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+except ImportError as exc:  # pragma: no cover - depends on the installed extras
+    serialization = import_fallback(exc, FEATURE, "serialization")  # type: ignore[misc]
+    X25519PrivateKey = import_fallback(exc, FEATURE, "X25519PrivateKey")  # type: ignore[misc]
 
 
 def _raw_public(key: X25519PrivateKey) -> bytes:
@@ -50,6 +56,7 @@ def _percentile(values: list[float], quantile: float) -> float:
     return ordered[low] * (1.0 - (pos - low)) + ordered[high] * (pos - low)
 
 
+@requires_crypto(FEATURE)
 async def run_ntor_benchmark(rounds: int = 100) -> dict[str, Any]:
     """Measure crypto-only handshake time and one-request loopback handshake RTT.
 

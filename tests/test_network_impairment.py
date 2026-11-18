@@ -11,6 +11,16 @@ from anonlab.network_impairment import (
 )
 from anonlab.network_impairment_benchmark import run_network_impairment_benchmark
 
+try:
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+except ImportError:  # optional research dependency
+    X25519PrivateKey = None  # type: ignore[assignment,misc]
+
+requires_crypto = unittest.skipIf(
+    X25519PrivateKey is None,
+    "install aegis-anon-lab[onion-lab] for network-impairment benchmarks",
+)
+
 
 class LinkImpairmentProfileTests(unittest.TestCase):
     def test_named_profiles_are_bounded_and_have_explicit_limitations(self) -> None:
@@ -249,6 +259,7 @@ class TcpImpairmentProxyTests(unittest.IsolatedAsyncioTestCase):
             await server.wait_closed()
 
 
+@requires_crypto
 class NetworkImpairmentBenchmarkTests(unittest.IsolatedAsyncioTestCase):
     async def test_benchmark_reports_shaping_metadata_and_cleans_up(self) -> None:
         result = await run_network_impairment_benchmark(

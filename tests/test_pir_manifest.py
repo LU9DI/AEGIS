@@ -2,12 +2,23 @@ import time
 from dataclasses import replace
 
 import pytest
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+try:
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+except ImportError:  # optional research dependency
+    Ed25519PrivateKey = None  # type: ignore[assignment,misc]
 
 from anonlab.pir_commitment import AuthenticatedSnapshot
 from anonlab.pir_manifest import (
-    ManifestError, SnapshotCheckpoint, sign_snapshot_manifest,
+    ManifestError,
+    SnapshotCheckpoint,
+    sign_snapshot_manifest,
     verify_snapshot_manifest,
+)
+
+requires_crypto = pytest.mark.skipif(
+    Ed25519PrivateKey is None,
+    reason="install aegis-anon-lab[onion-lab] for Ed25519 snapshot manifests",
 )
 
 
@@ -20,6 +31,7 @@ def _manifest(key, sequence=1, created_at=None, rows=(b"a", b"b")):
     )
 
 
+@requires_crypto
 def test_signed_manifest_round_trip_and_wrong_key_rejection():
     key = Ed25519PrivateKey.generate()
     manifest = _manifest(key)
@@ -28,6 +40,7 @@ def test_signed_manifest_round_trip_and_wrong_key_rejection():
         verify_snapshot_manifest(manifest, Ed25519PrivateKey.generate().public_key())
 
 
+@requires_crypto
 def test_manifest_tampering_and_invalid_fields_are_rejected():
     key = Ed25519PrivateKey.generate()
     manifest = _manifest(key)
@@ -37,6 +50,7 @@ def test_manifest_tampering_and_invalid_fields_are_rejected():
         _manifest(key, sequence=-1)
 
 
+@requires_crypto
 def test_freshness_and_future_timestamp_policy():
     key = Ed25519PrivateKey.generate()
     now = 2_000_000_000
@@ -49,6 +63,7 @@ def test_freshness_and_future_timestamp_policy():
         verify_snapshot_manifest(future, key.public_key(), now=now)
 
 
+@requires_crypto
 def test_checkpoint_rejects_rollback_and_same_sequence_equivocation():
     key = Ed25519PrivateKey.generate()
     checkpoint = SnapshotCheckpoint()
@@ -63,6 +78,7 @@ def test_checkpoint_rejects_rollback_and_same_sequence_equivocation():
         checkpoint.verify_and_advance(conflicting, key.public_key())
 
 
+@requires_crypto
 def test_checkpoint_advances_only_after_verification():
     key = Ed25519PrivateKey.generate()
     checkpoint = SnapshotCheckpoint()
@@ -72,6 +88,7 @@ def test_checkpoint_advances_only_after_verification():
     assert checkpoint.sequence == -1
 
 
+@requires_crypto
 def test_checkpoint_atomic_persistence_round_trip(tmp_path):
     from anonlab.pir_manifest import load_checkpoint, save_checkpoint
     key = Ed25519PrivateKey.generate()

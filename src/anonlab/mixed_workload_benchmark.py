@@ -17,9 +17,8 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-
 from . import __version__
+from ._crypto import import_fallback, requires_crypto
 from .network_impairment import DEFAULT_PROFILES, LinkImpairmentProfile, TcpImpairmentProxy
 from .telescoping import (
     STREAM_CHUNK_BYTES,
@@ -34,6 +33,13 @@ from .telescoping import (
     serve_node,
 )
 
+FEATURE = "the mixed-workload benchmark"
+
+try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+except ImportError as exc:  # pragma: no cover - depends on the installed extras
+    X25519PrivateKey = import_fallback(exc, FEATURE, "X25519PrivateKey")  # type: ignore[misc]
+
 
 def _percentile(values: list[float], percentile: float) -> float:
     if not values:
@@ -43,6 +49,7 @@ def _percentile(values: list[float], percentile: float) -> float:
     return float(ordered[index])
 
 
+@requires_crypto(FEATURE)
 async def run_mixed_workload_benchmark(
     *,
     profile: LinkImpairmentProfile,
@@ -403,6 +410,7 @@ async def run_mixed_workload_benchmark(
             await server.wait_closed()
 
 
+@requires_crypto(FEATURE)
 async def run_mixed_scheduler_comparison(
     *,
     profile_name: str = "metro",

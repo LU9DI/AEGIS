@@ -145,8 +145,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(find src/anonlab -maxdepth 1 -name '*.py' -type f | wc -l)" -eq 42
-          test "$(find tests -maxdepth 1 -name 'test_*.py' -type f | wc -l)" -eq 26
+          test "$(find src/anonlab -maxdepth 1 -name '*.py' -type f | wc -l)" -ge 42
+          test "$(find tests -maxdepth 1 -name 'test_*.py' -type f | wc -l)" -ge 26
           python -m pip install -e ".[onion-lab]" pytest
           python -m pip check
           python -m compileall -q src tests
@@ -195,8 +195,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(find src/anonlab -maxdepth 1 -name '*.py' -type f | wc -l)" -eq 42
-          test "$(find tests -maxdepth 1 -name 'test_*.py' -type f | wc -l)" -eq 26
+          # Lower bound, not equality: the recovered snapshot contributes 42
+          # modules and 26 test files, and later work (for example the optional
+          # cryptography module) legitimately adds more. The PR job above uses
+          # the same bounds, so this keeps both paths consistent while still
+          # failing if recovered files go missing.
+          test "$(find src/anonlab -maxdepth 1 -name '*.py' -type f | wc -l)" -ge 42
+          test "$(find tests -maxdepth 1 -name 'test_*.py' -type f | wc -l)" -ge 26
           python -m pip install -e ".[onion-lab]" pytest
           python -m pip check
           python -m compileall -q src tests

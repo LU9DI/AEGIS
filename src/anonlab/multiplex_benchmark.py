@@ -12,17 +12,18 @@ import time
 from pathlib import Path
 from typing import Any
 
-try:
-    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-except ImportError as exc:  # pragma: no cover - optional research dependency
-    raise RuntimeError(
-        "The stream benchmark requires: python -m pip install 'rea-anon-lab[onion-lab]'"
-    ) from exc
-
 from . import __version__
+from ._crypto import import_fallback, requires_crypto
 from .onion_protocol import frame
 from .telescoping import RelayNode, TelescopingClient, read_frame, serve_node
 from .telescoping_benchmark import _percentile
+
+FEATURE = "the stream multiplexing benchmark"
+
+try:  # pragma: no cover - the fallback is exercised in the crypto-free environment
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+except ImportError as exc:  # pragma: no cover - depends on the installed extras
+    X25519PrivateKey = import_fallback(exc, FEATURE, "X25519PrivateKey")  # type: ignore[misc]
 
 
 async def _echo_handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
@@ -41,6 +42,7 @@ async def _echo_handler(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
             pass
 
 
+@requires_crypto(FEATURE)
 async def run_stream_multiplex_benchmark(
     *, streams_count: int = 32, payload_bytes: int = 16_384, seed: int = 20261009
 ) -> dict[str, Any]:
