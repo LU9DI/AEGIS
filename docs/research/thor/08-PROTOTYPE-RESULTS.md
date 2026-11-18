@@ -47,7 +47,7 @@ Nenhum arquivo de protocolo foi modificado nesta fase: `onion_protocol.py` e `te
 
 | Verificação | Comando | Resultado |
 |---|---|---|
-| Testes do harness THOR | `python -m pytest tests/test_thor_lab_*.py` | **33 passed** |
+| Testes do harness THOR | `python -m pytest tests/test_thor_lab_*.py` | **33 passed, exit 0** em três re-execuções após o endurecimento do timeout do teste AEGIS (ver `EVIDENCE.md` §7.3–7.4; uma execução anterior, sob carga do host, teve um `TimeoutError` transitório, investigado e corrigido sem alterar nenhuma asserção) |
 | Suíte completa do repositório | `python -m pytest tests/` | **321 passed, 11 skipped, 1 failed** (falha pré-existente em `test_onion_protocol.py::test_three_hop_persistent_circuit_checks_monotonic_sequence`, teardown do Windows: `relay-3.log` ainda aberto por subprocesso; não toca no código desta entrega) |
 | Integridade dos trials | `summary.json` de cada run | `integrity_failures: 0` e `error_records: 0` nos 144 + 54 + 12 + 12 registros |
 | Digest do bruto | `python -m anonlab.thor_lab verify <run>` | `ok: true` nos quatro runs |

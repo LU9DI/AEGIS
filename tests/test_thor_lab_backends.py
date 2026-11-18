@@ -20,6 +20,13 @@ from anonlab.thor_lab.socks5 import Socks5Error, open_socks5
 
 HAS_CRYPTO = importlib.util.find_spec("cryptography") is not None
 
+# The AEGIS arm runs three relay hops, a counting proxy and an echo destination
+# inside one process on a shared host. A transient OS-level stall (antivirus,
+# scheduler starvation) must not be reported as a protocol failure, while a real
+# hang must still fail: the ceiling is explicit and generous, and it matches the
+# 120 s per-trial ceiling the measurement runner uses.
+_AEGIS_TEST_TIMEOUT_S = 120.0
+
 
 def test_counting_proxy_counts_both_directions() -> None:
     async def scenario() -> dict[str, int]:
@@ -139,14 +146,16 @@ def test_aegis_arm_round_trips_through_three_aead_hops() -> None:
             backend = AegisTelescopeBackend(echo.host, echo.port, hop_count=3)
             await backend.start()
             try:
-                connection = await backend.connect(timeout=30)
+                connection = await backend.connect(timeout=_AEGIS_TEST_TIMEOUT_S)
                 steps = [step.step for step in connection.setup_steps]
                 assert steps == ["guard_connect", "extend_1", "extend_2", "stream_open"]
                 payload = b"aead-hop" * 1024
                 await connection.stream.write_bulk(payload, chunk_bytes=8192, max_in_flight=4)
                 received = bytearray()
                 while len(received) < len(payload):
-                    chunk = await asyncio.wait_for(connection.stream.read(65536), timeout=30)
+                    chunk = await asyncio.wait_for(
+                        connection.stream.read(65536), timeout=_AEGIS_TEST_TIMEOUT_S
+                    )
                     if not chunk:
                         break
                     received.extend(chunk)

@@ -15,7 +15,8 @@ Este arquivo registra o que foi executado para produzir a entrega, com código d
 | C | `316e1226d14ba0347aabc5757c498e49787c5576` | `docs(thor): record lab, emulated and public measurements with raw artifacts` | evidência: `docs/research/thor/03,06,07,08,README` + `experiments/thor-lab/` (37 arquivos, 9 657 linhas) |
 | D | `03d2bbc5978d9b9a412cf53d31c6465dd8b57af9` | `docs(thor): log the commands, exit codes and revision chain` | este arquivo + correção de três fatores de headroom em `06` |
 | E | `aa180ca27f03df3816271056096c4b950bb6e4f5` | `docs(thor): correct two cross-references in the research documents` | 2 linhas: faixa 14–34× em `08`, referência em `01` |
-| F | SHA em `git log -1 -- docs/research/thor/EVIDENCE.md` | `docs(thor): record the last two commit SHAs` | esta tabela |
+| F | `ace1e2764f5b69a94724c2adf89aacd51a147d41` | `docs(thor): record the last two commit SHAs` | esta tabela |
+| G | SHA em `git log -1 -- tests/test_thor_lab_backends.py` | `test(thor): make the three-hop AEGIS arm test tolerant of host stalls` | timeout explícito + §7 deste arquivo (ver §7) |
 
 A cadeia é linear, sem merge e sem reescrita: `d8b84d5 → 13c45c3 → 1aa9130 → 316e122 → 03d2bbc → aa180ca →` (commit F). O diff total contra a base é de **63 arquivos e 14 721 inserções, sem nenhuma remoção** (`git diff --stat d8b84d5..HEAD`).
 
@@ -29,7 +30,7 @@ Todos os comandos de medição foram executados a partir de `C:\Users\lucas\AEGI
 |---|---|---|---|---|
 | 1 | `git checkout -b research/thor-performance-privacy-lab` | branch criada a partir de `d8b84d5` | 0 | base correta |
 | 2 | `python -m anonlab.thor_lab probe --socks 127.0.0.1:9050` | JSON com revision `1aa9130…`, `crypto_extra.available=true`, `tor_socks.available=true` | 0 | ambiente e Tor OK |
-| 3 | `python -m pytest tests/test_thor_lab_*.py` | `33 passed in 27.56s` | 0 | testes do harness |
+| 3 | `python -m pytest tests/test_thor_lab_stats.py tests/test_thor_lab_provenance.py tests/test_thor_lab_backends.py tests/test_thor_lab_runner.py` | `33 passed` (ver §7: houve uma falha transitória sob carga antes do endurecimento do timeout) | 0 | testes do harness |
 | 4 | `python -m pytest tests/` (suíte completa) | `321 passed, 11 skipped, 1 failed in 637.77s` | 1 | falha pré-existente: `test_onion_protocol.py::test_three_hop_persistent_circuit_checks_monotonic_sequence`, teardown do Windows (`relay-3.log` aberto por subprocesso); não envolve o código desta entrega |
 | 5 | `python -m anonlab.thor_lab run --tier lab … --out experiments/thor-lab/lab-01` | 144 registros, 3 braços, `partial: false` | 0 | ver `lab-01/` |
 | 6 | `python -m anonlab.thor_lab run --tier emulated --profile metro …` | 54 registros, `partial: false` | 0 | ver `emulated-01/` |
@@ -79,3 +80,52 @@ python -m anonlab.thor_lab report experiments/thor-lab/lab-01
 ```
 
 Em ambientes onde o diretório temporário do sistema não permite subdiretórios (sandbox), defina `THOR_LAB_TEST_TMP` para um diretório gravável antes de rodar o pytest — foi o único ajuste de ambiente necessário, e ele não altera nenhum teste.
+
+## 7. Validação pós-publicação (divergência de publicação resolvida)
+
+A primeira validação independente encontrou a divergência abaixo. Ela era real e a causa era simples: **os commits existiam apenas no clone local; nunca houve push.**
+
+### 7.1 Diagnóstico
+
+| Verificação | Resultado |
+|---|---|
+| `git remote -v` | `origin https://github.com/LU9DI/AEGIS.git` (fetch e push) |
+| `git branch --show-current` | `research/thor-performance-privacy-lab` |
+| `git rev-parse HEAD` | `ace1e2764f5b69a94724c2adf89aacd51a147d41` |
+| `git cat-file -t` nos seis SHAs | `commit` em todos (13c45c3, 1aa9130, 316e122, 03d2bbc, aa180ca, ace1e27) |
+| `git ls-remote --heads origin refs/heads/research/thor-performance-privacy-lab` (antes) | `d8b84d531a77318d578224c9ece9fd3bab184037` — isto é, a branch remota existia apontando para a **base**, sem os seis commits |
+| `git rev-list --left-right --count origin/<branch>...HEAD` (antes) | `0 6` — zero atrás, seis à frente |
+| `git merge-base --is-ancestor origin/<branch> HEAD` | exit `0` → fast-forward, sem force |
+
+### 7.2 Publicação
+
+```
+git push origin research/thor-performance-privacy-lab
+push_exit=0
+To https://github.com/LU9DI/AEGIS.git
+   d8b84d5..ace1e27  research/thor-performance-privacy-lab -> research/thor-performance-privacy-lab
+```
+
+Depois do push, `git ls-remote --heads origin` retornou `ace1e2764f5b69a94724c2adf89aacd51a147d41`, e `git merge-base --is-ancestor <sha> origin/research/thor-performance-privacy-lab` retornou `0` para **cada um dos seis commits**. Nenhum force push, nenhum merge, nenhuma reescrita, e `refs/pull/34/head` permaneceu em `d8b84d531a77318d578224c9ece9fd3bab184037` — o PR #34 não foi tocado.
+
+### 7.3 Falha transitória encontrada na validação pós-push
+
+A primeira execução dos testes após o push terminou com **`1 failed, 32 passed` (exit 1)**: `tests/test_thor_lab_backends.py::test_aegis_arm_round_trips_through_three_aead_hops` estourou `TimeoutError` com um teto de 30 s. A investigação mostrou que não era defeito de protocolo:
+
+- o teste isolado passou em **3,91 s** (exit 0);
+- o arquivo inteiro passou **11/11 em 4,37 s**, com o caso AEGIS em **0,39 s**;
+- a execução combinada que falhou levou **72 s** contra **27 s** de uma execução anterior — máquina compartilhada com o daemon Tor, antivírus e outros processos.
+
+Conclusão: o teto de 30 s era apertado demais para um host compartilhado, e a falha era um stall de SO, não um deadlock. Correção (commit G): constante explícita `_AEGIS_TEST_TIMEOUT_S = 120.0` usada no `connect` e na leitura, com comentário que explica a razão e mantém o teste capaz de falhar em caso de hang real. O teto coincide com o teto por trial do runner de medição.
+
+### 7.4 Re-execuções registradas
+
+| Execução | Comando | Resultado | Código |
+|---|---|---|---|
+| 1 | os quatro arquivos `tests/test_thor_lab_*.py` | `33 passed in 20.72s` | 0 |
+| 2 | idem | `33 passed in 15.15s` | 0 |
+| 3 (log publicado) | idem, `-v`, saída gravada em `experiments/thor-lab/logs/pytest-thor-lab.log` | `33 passed in 24.85s` | 0 |
+| — | `python -m anonlab.thor_lab verify experiments/thor-lab/lab-01` | `"ok": true`, `records: 144` | 0 |
+
+Nenhum artefato de medição foi alterado por esta correção: os quatro runs, o `fastpath-01.json` e seus digests permanecem exatamente como no commit C.
+

@@ -38,4 +38,4 @@ tests/test_thor_lab_runner.py::test_runner_records_unavailable_arm_instead_of_dr
 tests/test_thor_lab_runner.py::test_rejects_workload_and_tier_mismatches PASSED [ 96%]
 tests/test_thor_lab_runner.py::test_workload_spec_parsing_matches_grammar PASSED [100%]
 
-============================= 33 passed in 27.56s =============================
+============================= 33 passed in 24.85s =============================
