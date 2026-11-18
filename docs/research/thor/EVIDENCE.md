@@ -18,7 +18,7 @@ Este arquivo registra o que foi executado para produzir a entrega, com código d
 | F | `ace1e2764f5b69a94724c2adf89aacd51a147d41` | `docs(thor): record the last two commit SHAs` | esta tabela |
 | G | SHA em `git log -1 -- tests/test_thor_lab_backends.py` | `test(thor): make the three-hop AEGIS arm test tolerant of host stalls` | timeout explícito + §7 deste arquivo (ver §7) |
 
-A cadeia é linear, sem merge e sem reescrita: `d8b84d5 → 13c45c3 → 1aa9130 → 316e122 → 03d2bbc → aa180ca →` (commit F). O diff total contra a base é de **63 arquivos e 14 721 inserções, sem nenhuma remoção** (`git diff --stat d8b84d5..HEAD`).
+A cadeia é linear, sem merge e sem reescrita: `d8b84d5 → 13c45c3 → 1aa9130 → 316e122 → 03d2bbc → aa180ca → ace1e27 → c692f23` (commits F e G). O diff total contra a base é de **63 arquivos, sem nenhuma remoção**; o número exato de inserções muda a cada commit que só toca este arquivo, então a fonte autoritativa é sempre `git diff --shortstat d8b84d531a77318d578224c9ece9fd3bab184037..HEAD` (14 784 inserções no commit G, HEAD `c692f23ad9938edf54ddb3788be7ad5e48e31c21`).
 
 Arquivos alterados por commit: `git show --stat <sha>` (saída reproduzível em qualquer clone). Nenhum artefato histórico foi apagado ou sobrescrito; os arquivos desta entrega são todos novos, exceto `pyproject.toml`, que apenas ganhou dois entry points.
 
