@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "created_unix": 1795052795.3411536,
+  "created_local": "2026-11-18T22:46:35-0300",
+  "tier": "lab",
+  "seed": 20261118,
+  "code": {
+    "revision": "bbb0e3f4affbe305cd10053e3b980021f5233c1d",
+    "dirty": false,
+    "describe": "bbb0e3f",
+    "source": "git",
+    "checkout": "C:\\Users\\lucas\\AEGIS"
+  },
+  "environment": {
+    "python": "3.14.6",
+    "python_implementation": "CPython",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "system": "Windows",
+    "machine": "AMD64",
+    "processor": "Intel64 Family 6 Model 58 Stepping 9, GenuineIntel",
+    "cpu_count": 4,
+    "pid": 8456,
+    "aegis_version": "0.26.0",
+    "dependencies": {
+      "cryptography": "50.0.2",
+      "psutil": null
+    }
+  },
+  "configuration": {
+    "tier": "lab",
+    "arms": [
+      {
+        "name": "surface",
+        "options": {}
+      },
+      {
+        "name": "relay3_plain",
+        "options": {}
+      },
+      {
+        "name": "aegis_telescope3",
+        "options": {
+          "hop_count": 3,
+          "window_update_batch_bytes": 65536
+        }
+      },
+      {
+        "name": "aegis_io_batch",
+        "options": {}
+      },
+      {
+        "name": "aegis_lean_dispatch",
+        "options": {}
+      },
+      {
+        "name": "aegis_combined",
+        "options": {}
+      }
+    ],
+    "workloads": [
+      {
+        "kind": "bulk_echo",
+        "payload_bytes": 1048576,
+        "chunk_bytes": 16384,
+        "operations": 1,
+        "streams": 1,
+        "max_in_flight": 4,
+        "timeout_s": 120.0,
+        "http_host": null,
+        "http_path": "/",
+        "http_headers": []
+      },
+      {
+        "kind": "bulk_echo",
+        "payload_bytes": 262144,
+        "chunk_bytes": 16384,
+        "operations": 1,
+        "streams": 1,
+        "max_in_flight": 4,
+        "timeout_s": 120.0,
+        "http_host": null,
+        "http_path": "/",
+        "http_headers": []
+      },
+      {
+        "kind": "bulk_echo",
+        "payload_bytes": 262144,
+        "chunk_bytes": 262144,
+        "operations": 1,
+        "streams": 1,
+        "max_in_flight": 4,
+        "timeout_s": 120.0,
+        "http_host": null,
+        "http_path": "/",
+        "http_headers": []
+      },
+      {
+        "kind": "parallel_bulk",
+        "payload_bytes": 65536,
+        "chunk_bytes": 16384,
+        "operations": 1,
+        "streams": 8,
+        "max_in_flight": 4,
+        "timeout_s": 120.0,
+        "http_host": null,
+        "http_path": "/",
+        "http_headers": []
+      }
+    ],
+    "trials": 7,
+    "warmup_trials": 1,
+    "seed": 20261118,
+    "public_url": null,
+    "link_profile": null,
+    "notes": "P1 dispatch batching; control vs io_batch vs lean_dispatch vs combined; interleaved"
+  },
+  "configuration_digest": "271cac6e78d414f7244c3249a0c00f70eaabdcb3fb0d61ec28f79a96d8e94d4f",
+  "claim_scope": "Measurement artifact. It does not establish anonymity, security, Tor equivalence, or public-network performance.",
+  "extra": {
+    "run_id": "20261118T224635-lab-20261118",
+    "runner": "anonlab.thor_lab.runner",
+    "configuration_digest_short": "271cac6e78d414f7",
+    "timer_resolution": {
+      "applied": true,
+      "period_ms": 1,
+      "reason": "ok"
+    }
+  }
+}

@@ -1,0 +1,5661 @@
+{
+  "schema_version": 1,
+  "run_id": "20261118T224635-lab-20261118",
+  "tier": "lab",
+  "seed": 20261118,
+  "code": {
+    "revision": "bbb0e3f4affbe305cd10053e3b980021f5233c1d",
+    "dirty": false,
+    "describe": "bbb0e3f",
+    "source": "git",
+    "checkout": "C:\\Users\\lucas\\AEGIS"
+  },
+  "environment": {
+    "python": "3.14.6",
+    "python_implementation": "CPython",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "system": "Windows",
+    "machine": "AMD64",
+    "processor": "Intel64 Family 6 Model 58 Stepping 9, GenuineIntel",
+    "cpu_count": 4,
+    "pid": 8456,
+    "aegis_version": "0.26.0",
+    "dependencies": {
+      "cryptography": "50.0.2",
+      "psutil": null
+    }
+  },
+  "configuration": {
+    "tier": "lab",
+    "arms": [
+      {
+        "name": "surface",
+        "options": {}
+      },
+      {
+        "name": "relay3_plain",
+        "options": {}
+      },
+      {
+        "name": "aegis_telescope3",
+        "options": {
+          "hop_count": 3,
+          "window_update_batch_bytes": 65536
+        }
+      },
+      {
+        "name": "aegis_io_batch",
+        "options": {}
+      },
+      {
+        "name": "aegis_lean_dispatch",
+        "options": {}
+      },
+      {
+        "name": "aegis_combined",
+        "options": {}
+      }
+    ],
+    "workloads": [
+      {
+        "kind": "bulk_echo",
+        "payload_bytes": 1048576,
+        "chunk_bytes": 16384,
+        "operations": 1,
+        "streams": 1,
+        "max_in_flight": 4,
+        "timeout_s": 120.0,
+        "http_host": null,
+        "http_path": "/",
+        "http_headers": []
+      },
+      {
+        "kind": "bulk_echo",
+        "payload_bytes": 262144,
+        "chunk_bytes": 16384,
+        "operations": 1,
+        "streams": 1,
+        "max_in_flight": 4,
+        "timeout_s": 120.0,
+        "http_host": null,
+        "http_path": "/",
+        "http_headers": []
+      },
+      {
+        "kind": "bulk_echo",
+        "payload_bytes": 262144,
+        "chunk_bytes": 262144,
+        "operations": 1,
+        "streams": 1,
+        "max_in_flight": 4,
+        "timeout_s": 120.0,
+        "http_host": null,
+        "http_path": "/",
+        "http_headers": []
+      },
+      {
+        "kind": "parallel_bulk",
+        "payload_bytes": 65536,
+        "chunk_bytes": 16384,
+        "operations": 1,
+        "streams": 8,
+        "max_in_flight": 4,
+        "timeout_s": 120.0,
+        "http_host": null,
+        "http_path": "/",
+        "http_headers": []
+      }
+    ],
+    "trials": 7,
+    "warmup_trials": 1,
+    "seed": 20261118,
+    "public_url": null,
+    "link_profile": null,
+    "notes": "P1 dispatch batching; control vs io_batch vs lean_dispatch vs combined; interleaved"
+  },
+  "configuration_digest": "271cac6e78d414f7244c3249a0c00f70eaabdcb3fb0d61ec28f79a96d8e94d4f",
+  "configuration_digest_recomputed": "271cac6e78d414f7244c3249a0c00f70eaabdcb3fb0d61ec28f79a96d8e94d4f",
+  "raw": {
+    "trials_sha256": "c9f3c3e1177b397eea0d89c6b347116ab462d32512094900cacda99a8037deb8",
+    "records": 192,
+    "warmup_records": 24,
+    "error_records": 0,
+    "qualifying_records": 168
+  },
+  "availability": [],
+  "arms": {
+    "aegis_combined": {
+      "family": "aegis",
+      "records": 32,
+      "warmup_records": 4,
+      "ok_records": 32,
+      "error_records": 0,
+      "integrity_failures": 0
+    },
+    "aegis_io_batch": {
+      "family": "aegis",
+      "records": 32,
+      "warmup_records": 4,
+      "ok_records": 32,
+      "error_records": 0,
+      "integrity_failures": 0
+    },
+    "aegis_lean_dispatch": {
+      "family": "aegis",
+      "records": 32,
+      "warmup_records": 4,
+      "ok_records": 32,
+      "error_records": 0,
+      "integrity_failures": 0
+    },
+    "aegis_telescope3": {
+      "family": "aegis",
+      "records": 32,
+      "warmup_records": 4,
+      "ok_records": 32,
+      "error_records": 0,
+      "integrity_failures": 0
+    },
+    "relay3_plain": {
+      "family": "relay_chain",
+      "records": 32,
+      "warmup_records": 4,
+      "ok_records": 32,
+      "error_records": 0,
+      "integrity_failures": 0
+    },
+    "surface": {
+      "family": "surface",
+      "records": 32,
+      "warmup_records": 4,
+      "ok_records": 32,
+      "error_records": 0,
+      "integrity_failures": 0
+    }
+  },
+  "workloads": {
+    "bulk_echo:1048576x1@c16384i4": {
+      "aegis_combined": {
+        "trials": 7,
+        "payload_bytes": [
+          1048576
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 32.107285714285716,
+          "stdev": 4.9875840158098494,
+          "min": 21.6374,
+          "max": 36.3561,
+          "p50": 33.1366,
+          "p95": 36.33594,
+          "p99": 36.352067999999996,
+          "ci": {
+            "point": 33.1366,
+            "low": 31.155,
+            "high": 36.2889,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 156.08290000000002,
+          "stdev": 28.833332435626186,
+          "min": 119.2466,
+          "max": 213.8501,
+          "p50": 152.1629,
+          "p95": 197.91403999999994,
+          "p99": 210.66288799999995,
+          "ci": {
+            "point": 152.1629,
+            "low": 141.0805,
+            "high": 160.7299,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 268.44018571428575,
+          "stdev": 54.348319799524894,
+          "min": 230.7347,
+          "max": 387.6908,
+          "p50": 253.1523,
+          "p95": 352.15963999999997,
+          "p99": 380.58456799999993,
+          "ci": {
+            "point": 253.1523,
+            "low": 231.1616,
+            "high": 269.2536,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 25.707600000000003,
+          "stdev": 7.728695243269289,
+          "min": 20.268,
+          "max": 40.8639,
+          "p50": 21.9718,
+          "p95": 38.13144,
+          "p99": 40.317408,
+          "ci": {
+            "point": 21.9718,
+            "low": 21.3464,
+            "high": 31.7557,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 307.0358142857143,
+          "stdev": 62.194240495012316,
+          "min": 263.0112,
+          "max": 443.692,
+          "p50": 287.0165,
+          "p95": 402.7703499999999,
+          "p99": 435.50766999999996,
+          "ci": {
+            "point": 287.0165,
+            "low": 266.6774,
+            "high": 307.2865,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.013578,
+          "stdev": 0.0,
+          "min": 1.013578,
+          "max": 1.013578,
+          "p50": 1.013578,
+          "p95": 1.013578,
+          "p99": 1.013578,
+          "ci": {
+            "point": 1.013578,
+            "low": 1.013578,
+            "high": 1.013578,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.024111,
+          "stdev": 0.0,
+          "min": 1.024111,
+          "max": 1.024111,
+          "p50": 1.024111,
+          "p95": 1.024111,
+          "p99": 1.024111,
+          "ci": {
+            "point": 1.024111,
+            "low": 1.024111,
+            "high": 1.024111,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.9034008571428572,
+          "stdev": 0.12661138101217254,
+          "min": 0.667501,
+          "max": 1.031348,
+          "p50": 0.947766,
+          "p95": 1.0196554999999998,
+          "p99": 1.0290095,
+          "ci": {
+            "point": 0.947766,
+            "low": 0.810611,
+            "high": 0.992373,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      },
+      "aegis_io_batch": {
+        "trials": 7,
+        "payload_bytes": [
+          1048576
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 33.78951428571428,
+          "stdev": 8.70408354632632,
+          "min": 18.3623,
+          "max": 42.0704,
+          "p50": 35.0038,
+          "p95": 41.81144,
+          "p99": 42.018608,
+          "ci": {
+            "point": 35.0038,
+            "low": 29.2572,
+            "high": 41.2072,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 157.50911428571428,
+          "stdev": 78.96570417635806,
+          "min": 103.9985,
+          "max": 330.4088,
+          "p50": 137.5001,
+          "p95": 280.3054099999999,
+          "p99": 320.3881219999999,
+          "ci": {
+            "point": 137.5001,
+            "low": 109.7871,
+            "high": 163.3975,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 267.7502,
+          "stdev": 91.2746923747943,
+          "min": 199.3947,
+          "max": 456.8375,
+          "p50": 239.6487,
+          "p95": 405.80194999999986,
+          "p99": 446.63038999999986,
+          "ci": {
+            "point": 239.6487,
+            "low": 203.5712,
+            "high": 286.719,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 25.834100000000003,
+          "stdev": 8.867624574070932,
+          "min": 18.5074,
+          "max": 44.5979,
+          "p50": 23.738,
+          "p95": 39.45199999999999,
+          "p99": 43.56871999999999,
+          "ci": {
+            "point": 23.738,
+            "low": 19.0932,
+            "high": 27.4449,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 305.7227,
+          "stdev": 94.78042487226287,
+          "min": 227.9255,
+          "max": 499.9801,
+          "p50": 295.8805,
+          "p95": 447.03150999999986,
+          "p99": 489.39038199999993,
+          "ci": {
+            "point": 295.8805,
+            "low": 234.1338,
+            "high": 323.4848,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.013578,
+          "stdev": 0.0,
+          "min": 1.013578,
+          "max": 1.013578,
+          "p50": 1.013578,
+          "p95": 1.013578,
+          "p99": 1.013578,
+          "ci": {
+            "point": 1.013578,
+            "low": 1.013578,
+            "high": 1.013578,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.024111,
+          "stdev": 0.0,
+          "min": 1.024111,
+          "max": 1.024111,
+          "p50": 1.024111,
+          "p95": 1.024111,
+          "p99": 1.024111,
+          "ci": {
+            "point": 1.024111,
+            "low": 1.024111,
+            "high": 1.024111,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.8698092857142857,
+          "stdev": 0.17453966477347804,
+          "min": 0.530208,
+          "max": 1.001278,
+          "p50": 0.956377,
+          "p95": 0.9936079,
+          "p99": 0.99974398,
+          "ci": {
+            "point": 0.956377,
+            "low": 0.731439,
+            "high": 0.975711,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      },
+      "aegis_lean_dispatch": {
+        "trials": 7,
+        "payload_bytes": [
+          1048576
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 34.1882,
+          "stdev": 4.821018167012718,
+          "min": 28.4093,
+          "max": 40.3701,
+          "p50": 33.6535,
+          "p95": 40.15497,
+          "p99": 40.327074,
+          "ci": {
+            "point": 33.6535,
+            "low": 28.6863,
+            "high": 39.653,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 136.15664285714286,
+          "stdev": 19.267440533955824,
+          "min": 114.3246,
+          "max": 159.1177,
+          "p50": 137.8064,
+          "p95": 158.97244,
+          "p99": 159.08864800000003,
+          "ci": {
+            "point": 137.8064,
+            "low": 117.3994,
+            "high": 158.6335,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 249.62565714285714,
+          "stdev": 35.42456696892978,
+          "min": 207.7924,
+          "max": 295.2773,
+          "p50": 249.2637,
+          "p95": 294.42176,
+          "p99": 295.106192,
+          "ci": {
+            "point": 249.2637,
+            "low": 211.5503,
+            "high": 292.4255,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 22.512957142857143,
+          "stdev": 6.4925250228903355,
+          "min": 16.1661,
+          "max": 35.7111,
+          "p50": 22.1637,
+          "p95": 31.78727999999999,
+          "p99": 34.92633599999999,
+          "ci": {
+            "point": 22.1637,
+            "low": 16.336,
+            "high": 22.6317,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 283.27675714285715,
+          "stdev": 39.83620457493648,
+          "min": 234.5028,
+          "max": 330.8592,
+          "p50": 282.6253,
+          "p95": 329.74233000000004,
+          "p99": 330.635826,
+          "ci": {
+            "point": 282.6253,
+            "low": 237.8822,
+            "high": 327.1363,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.013578,
+          "stdev": 0.0,
+          "min": 1.013578,
+          "max": 1.013578,
+          "p50": 1.013578,
+          "p95": 1.013578,
+          "p99": 1.013578,
+          "ci": {
+            "point": 1.013578,
+            "low": 1.013578,
+            "high": 1.013578,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.024111,
+          "stdev": 0.0,
+          "min": 1.024111,
+          "max": 1.024111,
+          "p50": 1.024111,
+          "p95": 1.024111,
+          "p99": 1.024111,
+          "ci": {
+            "point": 1.024111,
+            "low": 1.024111,
+            "high": 1.024111,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.9007322857142857,
+          "stdev": 0.07164315721387095,
+          "min": 0.809074,
+          "max": 0.982726,
+          "p50": 0.929705,
+          "p95": 0.9779454999999999,
+          "p99": 0.9817699,
+          "ci": {
+            "point": 0.929705,
+            "low": 0.826894,
+            "high": 0.966791,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      },
+      "aegis_telescope3": {
+        "trials": 7,
+        "payload_bytes": [
+          1048576
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 34.75774285714286,
+          "stdev": 7.360484736043124,
+          "min": 21.4853,
+          "max": 41.2014,
+          "p50": 37.3587,
+          "p95": 41.0418,
+          "p99": 41.16947999999999,
+          "ci": {
+            "point": 37.3587,
+            "low": 27.8695,
+            "high": 40.6694,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 148.7116,
+          "stdev": 39.75049475943664,
+          "min": 119.1796,
+          "max": 223.1882,
+          "p50": 126.191,
+          "p95": 210.05968999999996,
+          "p99": 220.56249799999998,
+          "ci": {
+            "point": 126.191,
+            "low": 120.1307,
+            "high": 179.4265,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 253.66571428571427,
+          "stdev": 68.76391196200296,
+          "min": 203.6002,
+          "max": 390.4351,
+          "p50": 224.5422,
+          "p95": 363.60330999999996,
+          "p99": 385.06874199999993,
+          "ci": {
+            "point": 224.5422,
+            "low": 206.2635,
+            "high": 300.9958,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 24.34035714285714,
+          "stdev": 5.138067592281863,
+          "min": 17.8093,
+          "max": 32.1344,
+          "p50": 23.0238,
+          "p95": 31.327609999999996,
+          "p99": 31.973041999999996,
+          "ci": {
+            "point": 23.0238,
+            "low": 20.0772,
+            "high": 29.4451,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 291.0846142857143,
+          "stdev": 72.59086686148216,
+          "min": 235.1525,
+          "max": 429.7838,
+          "p50": 258.9212,
+          "p95": 405.93476,
+          "p99": 425.013992,
+          "ci": {
+            "point": 258.9212,
+            "low": 241.6792,
+            "high": 350.287,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.013578,
+          "stdev": 0.0,
+          "min": 1.013578,
+          "max": 1.013578,
+          "p50": 1.013578,
+          "p95": 1.013578,
+          "p99": 1.013578,
+          "ci": {
+            "point": 1.013578,
+            "low": 1.013578,
+            "high": 1.013578,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.024111,
+          "stdev": 0.0,
+          "min": 1.024111,
+          "max": 1.024111,
+          "p50": 1.024111,
+          "p95": 1.024111,
+          "p99": 1.024111,
+          "ci": {
+            "point": 1.024111,
+            "low": 1.024111,
+            "high": 1.024111,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.9191167142857143,
+          "stdev": 0.09923326269572162,
+          "min": 0.725573,
+          "max": 1.017417,
+          "p50": 0.926916,
+          "p95": 1.0160145,
+          "p99": 1.0171364999999999,
+          "ci": {
+            "point": 0.926916,
+            "low": 0.889228,
+            "high": 1.012742,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      },
+      "relay3_plain": {
+        "trials": 7,
+        "payload_bytes": [
+          1048576
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 134.26704285714285,
+          "stdev": 30.424370685951587,
+          "min": 94.6543,
+          "max": 167.4446,
+          "p50": 147.8323,
+          "p95": 164.84696,
+          "p99": 166.925072,
+          "ci": {
+            "point": 147.8323,
+            "low": 95.7592,
+            "high": 158.7858,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 42.29947142857143,
+          "stdev": 7.740838283139254,
+          "min": 33.8785,
+          "max": 54.0011,
+          "p50": 38.922,
+          "p95": 52.53035,
+          "p99": 53.70695,
+          "ci": {
+            "point": 38.922,
+            "low": 35.4876,
+            "high": 49.0986,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 65.6674,
+          "stdev": 16.548676118852125,
+          "min": 50.0978,
+          "max": 88.6236,
+          "p50": 56.7441,
+          "p95": 88.31684999999999,
+          "p99": 88.56225,
+          "ci": {
+            "point": 56.7441,
+            "low": 52.8297,
+            "high": 87.6011,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 1.5156142857142856,
+          "stdev": 0.6925121260757134,
+          "min": 0.9771,
+          "max": 2.9796,
+          "p50": 1.2808,
+          "p95": 2.6023799999999992,
+          "p99": 2.9041559999999995,
+          "ci": {
+            "point": 1.2808,
+            "low": 1.0134,
+            "high": 1.7222,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 77.0981,
+          "stdev": 19.000444132352975,
+          "min": 58.7301,
+          "max": 103.8947,
+          "p50": 68.4424,
+          "p95": 103.55188999999999,
+          "p99": 103.82613799999999,
+          "ci": {
+            "point": 68.4424,
+            "low": 63.369,
+            "high": 102.752,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "ci": {
+            "point": 1.0,
+            "low": 1.0,
+            "high": 1.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "ci": {
+            "point": 1.0,
+            "low": 1.0,
+            "high": 1.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.9566907142857143,
+          "stdev": 0.17859420518194716,
+          "min": 0.589375,
+          "max": 1.133952,
+          "p50": 0.979444,
+          "p95": 1.1114475,
+          "p99": 1.1294511,
+          "ci": {
+            "point": 0.979444,
+            "low": 0.898446,
+            "high": 1.058937,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      },
+      "surface": {
+        "trials": 7,
+        "payload_bytes": [
+          1048576
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 293.9608857142857,
+          "stdev": 61.23375272871514,
+          "min": 208.3293,
+          "max": 364.995,
+          "p50": 312.4214,
+          "p95": 360.762,
+          "p99": 364.14840000000004,
+          "ci": {
+            "point": 312.4214,
+            "low": 227.3083,
+            "high": 350.885,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 22.743042857142857,
+          "stdev": 6.18237054261474,
+          "min": 14.9009,
+          "max": 32.5454,
+          "p50": 20.1725,
+          "p95": 31.176289999999995,
+          "p99": 32.271578,
+          "ci": {
+            "point": 20.1725,
+            "low": 18.1449,
+            "high": 27.9817,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 29.727642857142857,
+          "stdev": 6.733802378017228,
+          "min": 22.9828,
+          "max": 40.2661,
+          "p50": 26.8503,
+          "p95": 39.2575,
+          "p99": 40.06438,
+          "ci": {
+            "point": 26.8503,
+            "low": 23.907,
+            "high": 36.9041,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 2.2706285714285714,
+          "stdev": 1.6049781355876118,
+          "min": 1.1622,
+          "max": 5.5091,
+          "p50": 1.3356,
+          "p95": 4.775929999999998,
+          "p99": 5.362465999999999,
+          "ci": {
+            "point": 1.3356,
+            "low": 1.1996,
+            "high": 3.0652,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 41.766000000000005,
+          "stdev": 9.196170715393809,
+          "min": 31.5421,
+          "max": 53.3954,
+          "p50": 37.9593,
+          "p95": 52.820389999999996,
+          "p99": 53.280398,
+          "ci": {
+            "point": 37.9593,
+            "low": 33.0772,
+            "high": 51.4787,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "ci": {
+            "point": 1.0,
+            "low": 1.0,
+            "high": 1.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "ci": {
+            "point": 1.0,
+            "low": 1.0,
+            "high": 1.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.9435405714285715,
+          "stdev": 0.1277565171447327,
+          "min": 0.812811,
+          "max": 1.201006,
+          "p50": 0.934339,
+          "p95": 1.1346990999999997,
+          "p99": 1.18774462,
+          "ci": {
+            "point": 0.934339,
+            "low": 0.85616,
+            "high": 0.979983,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      }
+    },
+    "bulk_echo:262144x1@c16384i4": {
+      "aegis_combined": {
+        "trials": 7,
+        "payload_bytes": [
+          262144
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 35.05575714285714,
+          "stdev": 6.421144418211119,
+          "min": 25.1782,
+          "max": 42.8205,
+          "p50": 36.974,
+          "p95": 41.98428,
+          "p99": 42.653256000000006,
+          "ci": {
+            "point": 36.974,
+            "low": 30.2805,
+            "high": 40.0331,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 38.412728571428566,
+          "stdev": 6.0842505974344085,
+          "min": 30.9708,
+          "max": 46.254,
+          "p50": 37.6199,
+          "p95": 46.136759999999995,
+          "p99": 46.230551999999996,
+          "ci": {
+            "point": 37.6199,
+            "low": 33.2756,
+            "high": 45.8632,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 61.740457142857146,
+          "stdev": 12.339571866540743,
+          "min": 48.9754,
+          "max": 83.2925,
+          "p50": 56.7197,
+          "p95": 79.082,
+          "p99": 82.45039999999999,
+          "ci": {
+            "point": 56.7197,
+            "low": 52.3854,
+            "high": 69.2575,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 21.004557142857145,
+          "stdev": 2.325697823490936,
+          "min": 18.7805,
+          "max": 25.2744,
+          "p50": 21.0521,
+          "p95": 24.37776,
+          "p99": 25.095072,
+          "ci": {
+            "point": 21.0521,
+            "low": 18.7835,
+            "high": 22.2856,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 89.53602857142857,
+          "stdev": 15.853443543986934,
+          "min": 72.6495,
+          "max": 114.5066,
+          "p50": 83.4791,
+          "p95": 110.55400999999999,
+          "p99": 113.716082,
+          "ci": {
+            "point": 83.4791,
+            "low": 75.6081,
+            "high": 101.3313,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.016548,
+          "stdev": 0.0,
+          "min": 1.016548,
+          "max": 1.016548,
+          "p50": 1.016548,
+          "p95": 1.016548,
+          "p99": 1.016548,
+          "ci": {
+            "point": 1.016548,
+            "low": 1.016548,
+            "high": 1.016548,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.026543,
+          "stdev": 0.0,
+          "min": 1.026543,
+          "max": 1.026543,
+          "p50": 1.026543,
+          "p95": 1.026543,
+          "p99": 1.026543,
+          "ci": {
+            "point": 1.026543,
+            "low": 1.026543,
+            "high": 1.026543,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.923125,
+          "stdev": 0.17190474953686802,
+          "min": 0.617711,
+          "max": 1.081726,
+          "p50": 0.983381,
+          "p95": 1.0758888999999998,
+          "p99": 1.08055858,
+          "ci": {
+            "point": 0.983381,
+            "low": 0.763068,
+            "high": 1.062269,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      },
+      "aegis_io_batch": {
+        "trials": 7,
+        "payload_bytes": [
+          262144
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 34.76144285714286,
+          "stdev": 8.262480729146896,
+          "min": 23.9602,
+          "max": 46.418,
+          "p50": 34.8519,
+          "p95": 44.944669999999995,
+          "p99": 46.123334,
+          "ci": {
+            "point": 34.8519,
+            "low": 26.8015,
+            "high": 41.5069,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 39.61448571428571,
+          "stdev": 9.334661128366072,
+          "min": 28.2994,
+          "max": 56.3818,
+          "p50": 39.4104,
+          "p95": 53.24991999999999,
+          "p99": 55.75542399999999,
+          "ci": {
+            "point": 39.4104,
+            "low": 33.0578,
+            "high": 45.9422,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 63.46747142857142,
+          "stdev": 15.642152525757048,
+          "min": 45.1797,
+          "max": 87.5264,
+          "p50": 60.1732,
+          "p95": 84.74278999999999,
+          "p99": 86.969678,
+          "ci": {
+            "point": 60.1732,
+            "low": 50.5254,
+            "high": 78.2477,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 25.264100000000003,
+          "stdev": 8.831462292282065,
+          "min": 15.7329,
+          "max": 39.4756,
+          "p50": 23.1671,
+          "p95": 38.23042,
+          "p99": 39.226563999999996,
+          "ci": {
+            "point": 23.1671,
+            "low": 18.0415,
+            "high": 35.325,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 96.07328571428572,
+          "stdev": 27.560633944778836,
+          "min": 65.5321,
+          "max": 139.5867,
+          "p50": 89.6207,
+          "p95": 135.86493,
+          "p99": 138.84234600000002,
+          "ci": {
+            "point": 89.6207,
+            "low": 75.5552,
+            "high": 127.1808,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.016548,
+          "stdev": 0.0,
+          "min": 1.016548,
+          "max": 1.016548,
+          "p50": 1.016548,
+          "p95": 1.016548,
+          "p99": 1.016548,
+          "ci": {
+            "point": 1.016548,
+            "low": 1.016548,
+            "high": 1.016548,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.026543,
+          "stdev": 0.0,
+          "min": 1.026543,
+          "max": 1.026543,
+          "p50": 1.026543,
+          "p95": 1.026543,
+          "p99": 1.026543,
+          "ci": {
+            "point": 1.026543,
+            "low": 1.026543,
+            "high": 1.026543,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.8393518571428571,
+          "stdev": 0.17324430301016014,
+          "min": 0.555883,
+          "max": 1.038935,
+          "p50": 0.805999,
+          "p95": 1.0336751,
+          "p99": 1.03788302,
+          "ci": {
+            "point": 0.805999,
+            "low": 0.7310650000000001,
+            "high": 1.021402,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      },
+      "aegis_lean_dispatch": {
+        "trials": 7,
+        "payload_bytes": [
+          262144
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 35.6721,
+          "stdev": 4.747650797324224,
+          "min": 29.4068,
+          "max": 41.7707,
+          "p50": 36.5552,
+          "p95": 41.02652,
+          "p99": 41.621863999999995,
+          "ci": {
+            "point": 36.5552,
+            "low": 30.6501,
+            "high": 39.2901,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 38.328857142857146,
+          "stdev": 6.255431097016721,
+          "min": 30.7722,
+          "max": 46.0574,
+          "p50": 36.4091,
+          "p95": 45.65909,
+          "p99": 45.977738,
+          "ci": {
+            "point": 36.4091,
+            "low": 32.4505,
+            "high": 44.7297,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 59.71812857142857,
+          "stdev": 8.168305349074206,
+          "min": 50.2063,
+          "max": 71.3151,
+          "p50": 57.3695,
+          "p95": 70.44729,
+          "p99": 71.141538,
+          "ci": {
+            "point": 57.3695,
+            "low": 53.3761,
+            "high": 68.4224,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 22.712157142857144,
+          "stdev": 3.8583514160226273,
+          "min": 15.7034,
+          "max": 26.7483,
+          "p50": 24.0605,
+          "p95": 26.4084,
+          "p99": 26.680320000000002,
+          "ci": {
+            "point": 24.0605,
+            "low": 20.2048,
+            "high": 25.6153,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 88.74247142857143,
+          "stdev": 11.089980578238823,
+          "min": 74.9199,
+          "max": 103.8768,
+          "p50": 87.1394,
+          "p95": 102.39048,
+          "p99": 103.57953599999999,
+          "ci": {
+            "point": 87.1394,
+            "low": 77.3455,
+            "high": 98.9224,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.016548,
+          "stdev": 0.0,
+          "min": 1.016548,
+          "max": 1.016548,
+          "p50": 1.016548,
+          "p95": 1.016548,
+          "p99": 1.016548,
+          "ci": {
+            "point": 1.016548,
+            "low": 1.016548,
+            "high": 1.016548,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.026543,
+          "stdev": 0.0,
+          "min": 1.026543,
+          "max": 1.026543,
+          "p50": 1.026543,
+          "p95": 1.026543,
+          "p99": 1.026543,
+          "ci": {
+            "point": 1.026543,
+            "low": 1.026543,
+            "high": 1.026543,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.9718718571428572,
+          "stdev": 0.10085019467412802,
+          "min": 0.807235,
+          "max": 1.096382,
+          "p50": 1.000156,
+          "p95": 1.0807007,
+          "p99": 1.09324574,
+          "ci": {
+            "point": 1.000156,
+            "low": 0.889494,
+            "high": 1.044111,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      },
+      "aegis_telescope3": {
+        "trials": 7,
+        "payload_bytes": [
+          262144
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 32.38977142857143,
+          "stdev": 6.2831097795901165,
+          "min": 22.7733,
+          "max": 41.319,
+          "p50": 33.6212,
+          "p95": 40.29042,
+          "p99": 41.113284,
+          "ci": {
+            "point": 33.6212,
+            "low": 27.8068,
+            "high": 37.8904,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 44.59935714285714,
+          "stdev": 11.869711652613573,
+          "min": 32.7167,
+          "max": 67.9421,
+          "p50": 42.9654,
+          "p95": 62.47744999999998,
+          "p99": 66.84916999999999,
+          "ci": {
+            "point": 42.9654,
+            "low": 33.6736,
+            "high": 49.7266,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 67.02694285714286,
+          "stdev": 13.96124937769505,
+          "min": 50.7552,
+          "max": 92.0881,
+          "p50": 62.3759,
+          "p95": 87.08730999999997,
+          "p99": 91.08794199999998,
+          "ci": {
+            "point": 62.3759,
+            "low": 55.3478,
+            "high": 75.4188,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 25.369814285714284,
+          "stdev": 8.87713184281736,
+          "min": 15.9043,
+          "max": 44.0142,
+          "p50": 23.4605,
+          "p95": 38.52596999999999,
+          "p99": 42.91655399999999,
+          "ci": {
+            "point": 23.4605,
+            "low": 20.969499999999996,
+            "high": 25.7201,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 98.97777142857142,
+          "stdev": 24.017531934104184,
+          "min": 70.8373,
+          "max": 145.9485,
+          "p50": 93.5943,
+          "p95": 134.53479,
+          "p99": 143.66575799999998,
+          "ci": {
+            "point": 93.5943,
+            "low": 82.5938,
+            "high": 107.9028,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.016548,
+          "stdev": 0.0,
+          "min": 1.016548,
+          "max": 1.016548,
+          "p50": 1.016548,
+          "p95": 1.016548,
+          "p99": 1.016548,
+          "ci": {
+            "point": 1.016548,
+            "low": 1.016548,
+            "high": 1.016548,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.026543,
+          "stdev": 0.0,
+          "min": 1.026543,
+          "max": 1.026543,
+          "p50": 1.026543,
+          "p95": 1.026543,
+          "p99": 1.026543,
+          "ci": {
+            "point": 1.026543,
+            "low": 1.026543,
+            "high": 1.026543,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.9255708571428573,
+          "stdev": 0.18411838938613073,
+          "min": 0.531252,
+          "max": 1.092285,
+          "p50": 0.988816,
+          "p95": 1.0727799,
+          "p99": 1.08838398,
+          "ci": {
+            "point": 0.988816,
+            "low": 0.910425,
+            "high": 1.027268,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      },
+      "relay3_plain": {
+        "trials": 7,
+        "payload_bytes": [
+          262144
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 108.72745714285715,
+          "stdev": 22.35348781315473,
+          "min": 83.9516,
+          "max": 141.801,
+          "p50": 111.4949,
+          "p95": 137.84177999999997,
+          "p99": 141.009156,
+          "ci": {
+            "point": 111.4949,
+            "low": 85.492,
+            "high": 128.6036,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 18.864642857142858,
+          "stdev": 3.9799894722880627,
+          "min": 14.1479,
+          "max": 24.1095,
+          "p50": 17.4166,
+          "p95": 23.87844,
+          "p99": 24.063288,
+          "ci": {
+            "point": 17.4166,
+            "low": 15.1704,
+            "high": 23.3393,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 19.99958571428571,
+          "stdev": 4.074502105136516,
+          "min": 14.7894,
+          "max": 24.9805,
+          "p50": 18.8094,
+          "p95": 24.84547,
+          "p99": 24.953494,
+          "ci": {
+            "point": 18.8094,
+            "low": 16.3071,
+            "high": 24.5304,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 2.014885714285714,
+          "stdev": 0.7282117009692795,
+          "min": 1.2938,
+          "max": 3.401,
+          "p50": 1.7968,
+          "p95": 3.1473199999999992,
+          "p99": 3.3502639999999997,
+          "ci": {
+            "point": 1.7968,
+            "low": 1.4675,
+            "high": 2.5554,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 25.050414285714286,
+          "stdev": 4.4456166281812814,
+          "min": 18.5575,
+          "max": 29.5865,
+          "p50": 24.175,
+          "p95": 29.571830000000002,
+          "p99": 29.583565999999998,
+          "ci": {
+            "point": 24.175,
+            "low": 20.971,
+            "high": 29.5376,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "ci": {
+            "point": 1.0,
+            "low": 1.0,
+            "high": 1.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "ci": {
+            "point": 1.0,
+            "low": 1.0,
+            "high": 1.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.7775017142857142,
+          "stdev": 0.20506005531283944,
+          "min": 0.520748,
+          "max": 1.056343,
+          "p50": 0.731792,
+          "p95": 1.0511245,
+          "p99": 1.0552993,
+          "ci": {
+            "point": 0.731792,
+            "low": 0.632496,
+            "high": 1.038948,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      },
+      "surface": {
+        "trials": 7,
+        "payload_bytes": [
+          262144
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 251.21434285714284,
+          "stdev": 77.1995291498132,
+          "min": 144.4459,
+          "max": 383.5108,
+          "p50": 247.0376,
+          "p95": 360.1831299999999,
+          "p99": 378.845266,
+          "ci": {
+            "point": 247.0376,
+            "low": 191.7466,
+            "high": 305.7519,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 7.785614285714286,
+          "stdev": 3.0014819381035602,
+          "min": 4.5774,
+          "max": 13.2088,
+          "p50": 6.9836,
+          "p95": 12.276369999999998,
+          "p99": 13.022314,
+          "ci": {
+            "point": 6.9836,
+            "low": 5.0488,
+            "high": 10.1007,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 9.080114285714286,
+          "stdev": 2.9433048830798865,
+          "min": 5.4683,
+          "max": 14.5186,
+          "p50": 8.4892,
+          "p95": 13.444149999999997,
+          "p99": 14.303709999999997,
+          "ci": {
+            "point": 8.4892,
+            "low": 6.859,
+            "high": 10.9371,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 1.5915714285714286,
+          "stdev": 0.4010333972554976,
+          "min": 0.892,
+          "max": 2.0743,
+          "p50": 1.5789,
+          "p95": 2.04232,
+          "p99": 2.067904,
+          "ci": {
+            "point": 1.5789,
+            "low": 1.412,
+            "high": 1.9677,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 13.490128571428572,
+          "stdev": 3.4104605797039036,
+          "min": 8.593,
+          "max": 19.0606,
+          "p50": 13.2775,
+          "p95": 18.02809,
+          "p99": 18.854098,
+          "ci": {
+            "point": 13.2775,
+            "low": 11.2722,
+            "high": 15.6189,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "ci": {
+            "point": 1.0,
+            "low": 1.0,
+            "high": 1.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "ci": {
+            "point": 1.0,
+            "low": 1.0,
+            "high": 1.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.8775772857142857,
+          "stdev": 0.6525893119501509,
+          "min": 0.0,
+          "max": 1.749172,
+          "p50": 1.003881,
+          "p95": 1.6090041999999998,
+          "p99": 1.7211384399999998,
+          "ci": {
+            "point": 1.003881,
+            "low": 0.0,
+            "high": 1.281946,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      }
+    },
+    "bulk_echo:262144x1@c262144i4": {
+      "aegis_combined": {
+        "trials": 7,
+        "payload_bytes": [
+          262144
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 49.187871428571434,
+          "stdev": 11.576444850026897,
+          "min": 34.1417,
+          "max": 65.1773,
+          "p50": 50.0542,
+          "p95": 63.24704,
+          "p99": 64.791248,
+          "ci": {
+            "point": 50.0542,
+            "low": 35.1936,
+            "high": 58.7431,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 19.066300000000002,
+          "stdev": 3.9852292686034176,
+          "min": 13.9098,
+          "max": 26.3528,
+          "p50": 17.9212,
+          "p95": 25.006309999999996,
+          "p99": 26.083501999999996,
+          "ci": {
+            "point": 17.9212,
+            "low": 17.0126,
+            "high": 21.8645,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 44.906,
+          "stdev": 11.437453780307338,
+          "min": 32.1761,
+          "max": 61.425,
+          "p50": 41.8976,
+          "p95": 60.874199999999995,
+          "p99": 61.31484,
+          "ci": {
+            "point": 41.8976,
+            "low": 35.7004,
+            "high": 59.589,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 20.615142857142853,
+          "stdev": 4.816387553916712,
+          "min": 14.1579,
+          "max": 28.2613,
+          "p50": 19.2873,
+          "p95": 27.044439999999998,
+          "p99": 28.017927999999994,
+          "ci": {
+            "point": 19.2873,
+            "low": 16.5142,
+            "high": 24.2051,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 71.4653,
+          "stdev": 16.024717744368125,
+          "min": 52.9292,
+          "max": 96.1719,
+          "p50": 69.359,
+          "p95": 94.00280999999998,
+          "p99": 95.73808199999999,
+          "ci": {
+            "point": 69.359,
+            "low": 55.7647,
+            "high": 88.9416,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.007107,
+          "stdev": 0.0,
+          "min": 1.007107,
+          "max": 1.007107,
+          "p50": 1.007107,
+          "p95": 1.007107,
+          "p99": 1.007107,
+          "ci": {
+            "point": 1.007107,
+            "low": 1.007107,
+            "high": 1.007107,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.017502,
+          "stdev": 0.0,
+          "min": 1.017502,
+          "max": 1.017502,
+          "p50": 1.017502,
+          "p95": 1.017502,
+          "p99": 1.017502,
+          "ci": {
+            "point": 1.017502,
+            "low": 1.017502,
+            "high": 1.017502,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.83692,
+          "stdev": 0.14271610694428757,
+          "min": 0.642936,
+          "max": 1.046131,
+          "p50": 0.870322,
+          "p95": 1.0128177999999999,
+          "p99": 1.0394683599999999,
+          "ci": {
+            "point": 0.870322,
+            "low": 0.667189,
+            "high": 0.935087,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      },
+      "aegis_io_batch": {
+        "trials": 7,
+        "payload_bytes": [
+          262144
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 51.52482857142858,
+          "stdev": 8.663214758528207,
+          "min": 40.6655,
+          "max": 64.2667,
+          "p50": 49.4328,
+          "p95": 63.25891,
+          "p99": 64.065142,
+          "ci": {
+            "point": 49.4328,
+            "low": 44.107,
+            "high": 60.9074,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 17.4666,
+          "stdev": 2.432862189548215,
+          "min": 13.4416,
+          "max": 20.7461,
+          "p50": 17.5969,
+          "p95": 20.2733,
+          "p99": 20.651539999999997,
+          "ci": {
+            "point": 17.5969,
+            "low": 15.4902,
+            "high": 19.1701,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 41.680171428571434,
+          "stdev": 6.848534208795895,
+          "min": 32.632,
+          "max": 51.5708,
+          "p50": 42.4243,
+          "p95": 50.36362999999999,
+          "p99": 51.32936599999999,
+          "ci": {
+            "point": 42.4243,
+            "low": 34.4318,
+            "high": 47.5469,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 18.503828571428574,
+          "stdev": 2.675906950122572,
+          "min": 15.6321,
+          "max": 23.6148,
+          "p50": 17.7656,
+          "p95": 22.65735,
+          "p99": 23.423309999999997,
+          "ci": {
+            "point": 17.7656,
+            "low": 16.8759,
+            "high": 20.4233,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 66.58634285714285,
+          "stdev": 9.582887695584796,
+          "min": 56.0216,
+          "max": 81.652,
+          "p50": 69.5805,
+          "p95": 78.66753999999999,
+          "p99": 81.055108,
+          "ci": {
+            "point": 69.5805,
+            "low": 56.8679,
+            "high": 71.7038,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.007107,
+          "stdev": 0.0,
+          "min": 1.007107,
+          "max": 1.007107,
+          "p50": 1.007107,
+          "p95": 1.007107,
+          "p99": 1.007107,
+          "ci": {
+            "point": 1.007107,
+            "low": 1.007107,
+            "high": 1.007107,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.017502,
+          "stdev": 0.0,
+          "min": 1.017502,
+          "max": 1.017502,
+          "p50": 1.017502,
+          "p95": 1.017502,
+          "p99": 1.017502,
+          "ci": {
+            "point": 1.017502,
+            "low": 1.017502,
+            "high": 1.017502,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.9244942857142858,
+          "stdev": 0.1233483120742697,
+          "min": 0.787765,
+          "max": 1.097514,
+          "p50": 0.890075,
+          "p95": 1.0922109,
+          "p99": 1.09645338,
+          "ci": {
+            "point": 0.890075,
+            "low": 0.811545,
+            "high": 1.079837,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      },
+      "aegis_lean_dispatch": {
+        "trials": 7,
+        "payload_bytes": [
+          262144
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 54.59442857142857,
+          "stdev": 8.24580597793292,
+          "min": 38.7958,
+          "max": 63.5243,
+          "p50": 56.8627,
+          "p95": 62.67335,
+          "p99": 63.35411,
+          "ci": {
+            "point": 56.8627,
+            "low": 49.5689,
+            "high": 60.6878,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 16.514285714285712,
+          "stdev": 3.430746654120923,
+          "min": 11.8849,
+          "max": 21.8217,
+          "p50": 16.96,
+          "p95": 21.06384,
+          "p99": 21.670128,
+          "ci": {
+            "point": 16.96,
+            "low": 13.9486,
+            "high": 19.2955,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 39.3272,
+          "stdev": 7.133035961169224,
+          "min": 33.0134,
+          "max": 54.0561,
+          "p50": 36.881,
+          "p95": 50.53160999999999,
+          "p99": 53.351201999999994,
+          "ci": {
+            "point": 36.881,
+            "low": 34.5564,
+            "high": 42.3078,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 19.898314285714285,
+          "stdev": 3.917343784346978,
+          "min": 14.9127,
+          "max": 25.9594,
+          "p50": 20.5603,
+          "p95": 24.944169999999996,
+          "p99": 25.756353999999995,
+          "ci": {
+            "point": 20.5603,
+            "low": 15.898600000000002,
+            "high": 22.5753,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 64.741,
+          "stdev": 11.983552982317056,
+          "min": 52.6027,
+          "max": 88.2167,
+          "p50": 63.5993,
+          "p95": 82.62700999999998,
+          "p99": 87.098762,
+          "ci": {
+            "point": 63.5993,
+            "low": 54.258,
+            "high": 69.5844,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.007107,
+          "stdev": 0.0,
+          "min": 1.007107,
+          "max": 1.007107,
+          "p50": 1.007107,
+          "p95": 1.007107,
+          "p99": 1.007107,
+          "ci": {
+            "point": 1.007107,
+            "low": 1.007107,
+            "high": 1.007107,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.017502,
+          "stdev": 0.0,
+          "min": 1.017502,
+          "max": 1.017502,
+          "p50": 1.017502,
+          "p95": 1.017502,
+          "p99": 1.017502,
+          "ci": {
+            "point": 1.017502,
+            "low": 1.017502,
+            "high": 1.017502,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.9599655714285714,
+          "stdev": 0.19966630195308135,
+          "min": 0.664102,
+          "max": 1.172901,
+          "p50": 1.035039,
+          "p95": 1.1614761,
+          "p99": 1.1706160199999998,
+          "ci": {
+            "point": 1.035039,
+            "low": 0.706761,
+            "high": 1.134818,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      },
+      "aegis_telescope3": {
+        "trials": 7,
+        "payload_bytes": [
+          262144
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 52.49635714285715,
+          "stdev": 9.145820921028566,
+          "min": 35.7203,
+          "max": 61.6374,
+          "p50": 56.6409,
+          "p95": 60.44655,
+          "p99": 61.399229999999996,
+          "ci": {
+            "point": 56.6409,
+            "low": 44.3033,
+            "high": 57.6679,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 17.7094,
+          "stdev": 4.560275671126326,
+          "min": 13.5208,
+          "max": 26.4548,
+          "p50": 17.7853,
+          "p95": 24.531319999999994,
+          "p99": 26.070103999999997,
+          "ci": {
+            "point": 17.7853,
+            "low": 13.7838,
+            "high": 20.0432,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 41.24987142857143,
+          "stdev": 8.793413823939346,
+          "min": 34.024,
+          "max": 58.7103,
+          "p50": 37.0254,
+          "p95": 55.29809999999999,
+          "p99": 58.02785999999999,
+          "ci": {
+            "point": 37.0254,
+            "low": 36.366,
+            "high": 47.3363,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 23.802242857142858,
+          "stdev": 4.421590003553452,
+          "min": 17.0995,
+          "max": 29.8868,
+          "p50": 25.1107,
+          "p95": 29.03615,
+          "p99": 29.71667,
+          "ci": {
+            "point": 25.1107,
+            "low": 19.563000000000002,
+            "high": 27.0513,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 70.21507142857142,
+          "stdev": 13.322332791934286,
+          "min": 58.3245,
+          "max": 94.8158,
+          "p50": 66.335,
+          "p95": 90.75151999999999,
+          "p99": 94.00294399999999,
+          "ci": {
+            "point": 66.335,
+            "low": 60.0955,
+            "high": 81.2682,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.007107,
+          "stdev": 0.0,
+          "min": 1.007107,
+          "max": 1.007107,
+          "p50": 1.007107,
+          "p95": 1.007107,
+          "p99": 1.007107,
+          "ci": {
+            "point": 1.007107,
+            "low": 1.007107,
+            "high": 1.007107,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.017502,
+          "stdev": 0.0,
+          "min": 1.017502,
+          "max": 1.017502,
+          "p50": 1.017502,
+          "p95": 1.017502,
+          "p99": 1.017502,
+          "ci": {
+            "point": 1.017502,
+            "low": 1.017502,
+            "high": 1.017502,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.9789015714285715,
+          "stdev": 0.15232821249947665,
+          "min": 0.760204,
+          "max": 1.166668,
+          "p50": 1.004206,
+          "p95": 1.1519368,
+          "p99": 1.1637217599999998,
+          "ci": {
+            "point": 1.004206,
+            "low": 0.795253,
+            "high": 1.117564,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      },
+      "relay3_plain": {
+        "trials": 7,
+        "payload_bytes": [
+          262144
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 128.23982857142857,
+          "stdev": 45.901385116599485,
+          "min": 42.9117,
+          "max": 175.1875,
+          "p50": 132.3233,
+          "p95": 172.08694,
+          "p99": 174.567388,
+          "ci": {
+            "point": 132.3233,
+            "low": 96.257,
+            "high": 164.8523,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 15.201828571428573,
+          "stdev": 3.5946183467855977,
+          "min": 11.2999,
+          "max": 21.0409,
+          "p50": 15.0546,
+          "p95": 20.35222,
+          "p99": 20.903164,
+          "ci": {
+            "point": 15.0546,
+            "low": 12.2042,
+            "high": 18.7453,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 20.10828571428571,
+          "stdev": 13.098615152173984,
+          "min": 11.9709,
+          "max": 48.8713,
+          "p50": 15.8487,
+          "p95": 40.746009999999984,
+          "p99": 47.24624199999998,
+          "ci": {
+            "point": 15.8487,
+            "low": 12.7214,
+            "high": 21.787,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 1.7632857142857143,
+          "stdev": 0.5512633745273109,
+          "min": 1.2332,
+          "max": 2.8267,
+          "p50": 1.536,
+          "p95": 2.5809099999999994,
+          "p99": 2.7775419999999995,
+          "ci": {
+            "point": 1.536,
+            "low": 1.3374,
+            "high": 2.0074,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 24.23307142857143,
+          "stdev": 13.60294615291289,
+          "min": 16.0578,
+          "max": 53.7331,
+          "p50": 19.1192,
+          "p95": 45.92355999999998,
+          "p99": 52.17119199999999,
+          "ci": {
+            "point": 19.1192,
+            "low": 16.4246,
+            "high": 27.7013,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "ci": {
+            "point": 1.0,
+            "low": 1.0,
+            "high": 1.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "ci": {
+            "point": 1.0,
+            "low": 1.0,
+            "high": 1.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.9708654285714287,
+          "stdev": 0.30393699223954135,
+          "min": 0.575573,
+          "max": 1.552587,
+          "p50": 0.931851,
+          "p95": 1.4194700999999996,
+          "p99": 1.5259636199999997,
+          "ci": {
+            "point": 0.931851,
+            "low": 0.791684,
+            "high": 1.108864,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      },
+      "surface": {
+        "trials": 7,
+        "payload_bytes": [
+          262144
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 398.3455285714286,
+          "stdev": 54.79172371747746,
+          "min": 305.685,
+          "max": 455.2,
+          "p50": 406.0235,
+          "p95": 452.46376,
+          "p99": 454.65275199999996,
+          "ci": {
+            "point": 406.0235,
+            "low": 353.8959,
+            "high": 446.0792,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 7,
+          "mean": 4.6137999999999995,
+          "stdev": 0.6229891759359333,
+          "min": 3.9515,
+          "max": 5.6948,
+          "p50": 4.3346,
+          "p95": 5.5226299999999995,
+          "p99": 5.660365999999999,
+          "ci": {
+            "point": 4.3346,
+            "low": 4.1035,
+            "high": 5.1209,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 5.3598,
+          "stdev": 0.8126173535762902,
+          "min": 4.6071,
+          "max": 6.8605,
+          "p50": 5.1651,
+          "p95": 6.580119999999999,
+          "p99": 6.804424,
+          "ci": {
+            "point": 5.1651,
+            "low": 4.7013,
+            "high": 5.9259,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 1.6719428571428572,
+          "stdev": 1.0571784678365062,
+          "min": 0.8907,
+          "max": 3.6271,
+          "p50": 1.1216,
+          "p95": 3.333519999999999,
+          "p99": 3.5683839999999996,
+          "ci": {
+            "point": 1.1216,
+            "low": 0.9283,
+            "high": 2.6485,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 9.8726,
+          "stdev": 3.153651982490565,
+          "min": 7.3002,
+          "max": 16.565,
+          "p50": 9.0239,
+          "p95": 14.826379999999997,
+          "p99": 16.217276,
+          "ci": {
+            "point": 9.0239,
+            "low": 7.7391,
+            "high": 10.7696,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "ci": {
+            "point": 1.0,
+            "low": 1.0,
+            "high": 1.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "ci": {
+            "point": 1.0,
+            "low": 1.0,
+            "high": 1.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.9082837142857143,
+          "stdev": 0.914323552110104,
+          "min": 0.0,
+          "max": 2.041203,
+          "p50": 0.917025,
+          "p95": 1.9524857999999998,
+          "p99": 2.0234595599999996,
+          "ci": {
+            "point": 0.917025,
+            "low": 0.0,
+            "high": 1.745479,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50589.142857142855,
+          "stdev": 355.65312153437213,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50228.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          1
+        ]
+      }
+    },
+    "parallel_bulk:8x65536@c16384i4": {
+      "aegis_combined": {
+        "trials": 7,
+        "payload_bytes": [
+          524288
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 13.944742857142858,
+          "stdev": 2.636328133254751,
+          "min": 8.6474,
+          "max": 16.4414,
+          "p50": 14.7004,
+          "p95": 16.33625,
+          "p99": 16.420370000000002,
+          "ci": {
+            "point": 14.7004,
+            "low": 12.7575,
+            "high": 16.0909,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 0
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 313.46097142857144,
+          "stdev": 79.45925958786917,
+          "min": 255.1057,
+          "max": 485.0386,
+          "p50": 285.3191,
+          "p95": 438.1584999999999,
+          "p99": 475.6625799999999,
+          "ci": {
+            "point": 285.3191,
+            "low": 260.663,
+            "high": 328.7716,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 163.01749999999998,
+          "stdev": 55.27282968171009,
+          "min": 119.3249,
+          "max": 282.5456,
+          "p50": 148.2981,
+          "p95": 246.8850499999999,
+          "p99": 275.4134899999999,
+          "ci": {
+            "point": 148.2981,
+            "low": 130.2292,
+            "high": 163.6771,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 317.2984428571429,
+          "stdev": 79.83941175398812,
+          "min": 259.4904,
+          "max": 489.8764,
+          "p50": 289.3913,
+          "p95": 442.3209999999999,
+          "p99": 480.36531999999994,
+          "ci": {
+            "point": 289.3913,
+            "low": 263.3706,
+            "high": 331.3584,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.028427,
+          "stdev": 0.0,
+          "min": 1.028427,
+          "max": 1.028427,
+          "p50": 1.028427,
+          "p95": 1.028427,
+          "p99": 1.028427,
+          "ci": {
+            "point": 1.028427,
+            "low": 1.028427,
+            "high": 1.028427,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.03627,
+          "stdev": 0.0,
+          "min": 1.03627,
+          "max": 1.03627,
+          "p50": 1.03627,
+          "p95": 1.03627,
+          "p99": 1.03627,
+          "ci": {
+            "point": 1.03627,
+            "low": 1.03627,
+            "high": 1.03627,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.9206365714285714,
+          "stdev": 0.12466905900403828,
+          "min": 0.652694,
+          "max": 1.024095,
+          "p50": 0.952664,
+          "p95": 1.0143705,
+          "p99": 1.0221501,
+          "ci": {
+            "point": 0.952664,
+            "low": 0.895561,
+            "high": 0.99168,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50682.857142857145,
+          "stdev": 298.8396607834088,
+          "min": 50228.0,
+          "max": 51032.0,
+          "p50": 50864.0,
+          "p95": 50981.6,
+          "p99": 51021.92,
+          "ci": {
+            "point": 50864.0,
+            "low": 50384.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          8
+        ]
+      },
+      "aegis_io_batch": {
+        "trials": 7,
+        "payload_bytes": [
+          524288
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 13.927928571428572,
+          "stdev": 2.615994652590283,
+          "min": 9.2776,
+          "max": 16.82,
+          "p50": 14.0283,
+          "p95": 16.77188,
+          "p99": 16.810376,
+          "ci": {
+            "point": 14.0283,
+            "low": 12.6144,
+            "high": 16.6596,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 0
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 312.0943857142857,
+          "stdev": 69.39821757757731,
+          "min": 249.3634,
+          "max": 452.0901,
+          "p50": 298.9892,
+          "p95": 416.2133399999999,
+          "p99": 444.9147479999999,
+          "ci": {
+            "point": 298.9892,
+            "low": 251.7656,
+            "high": 332.5009,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 156.8550142857143,
+          "stdev": 39.55526231423696,
+          "min": 118.0951,
+          "max": 232.1891,
+          "p50": 145.9744,
+          "p95": 215.93998999999997,
+          "p99": 228.93927799999997,
+          "ci": {
+            "point": 145.9744,
+            "low": 122.6699,
+            "high": 178.0254,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 315.46799999999996,
+          "stdev": 70.12864305769317,
+          "min": 252.0228,
+          "max": 456.5821,
+          "p50": 301.6185,
+          "p95": 420.6440799999999,
+          "p99": 449.39449599999995,
+          "ci": {
+            "point": 301.6185,
+            "low": 254.4824,
+            "high": 336.7887,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.028427,
+          "stdev": 0.0,
+          "min": 1.028427,
+          "max": 1.028427,
+          "p50": 1.028427,
+          "p95": 1.028427,
+          "p99": 1.028427,
+          "ci": {
+            "point": 1.028427,
+            "low": 1.028427,
+            "high": 1.028427,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.03627,
+          "stdev": 0.0,
+          "min": 1.03627,
+          "max": 1.03627,
+          "p50": 1.03627,
+          "p95": 1.03627,
+          "p99": 1.03627,
+          "ci": {
+            "point": 1.03627,
+            "low": 1.03627,
+            "high": 1.03627,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.8973784285714286,
+          "stdev": 0.09242184287071455,
+          "min": 0.753754,
+          "max": 1.013559,
+          "p50": 0.93872,
+          "p95": 0.9944025000000001,
+          "p99": 1.0097277,
+          "ci": {
+            "point": 0.93872,
+            "low": 0.79732,
+            "high": 0.949704,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50660.0,
+          "stdev": 316.80909077865806,
+          "min": 50228.0,
+          "max": 51032.0,
+          "p50": 50864.0,
+          "p95": 50981.6,
+          "p99": 51021.92,
+          "ci": {
+            "point": 50864.0,
+            "low": 50384.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          8
+        ]
+      },
+      "aegis_lean_dispatch": {
+        "trials": 7,
+        "payload_bytes": [
+          524288
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 14.160142857142857,
+          "stdev": 1.7637557964536388,
+          "min": 11.0428,
+          "max": 15.8464,
+          "p50": 14.4557,
+          "p95": 15.788469999999998,
+          "p99": 15.834814,
+          "ci": {
+            "point": 14.4557,
+            "low": 12.6594,
+            "high": 15.6533,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 0
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 300.6444714285714,
+          "stdev": 41.80169480171485,
+          "min": 264.6858,
+          "max": 379.8241,
+          "p50": 290.1478,
+          "p95": 365.27241999999995,
+          "p99": 376.91376399999996,
+          "ci": {
+            "point": 290.1478,
+            "low": 267.9507,
+            "high": 331.3185,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 141.83395714285714,
+          "stdev": 19.733042485541617,
+          "min": 123.8555,
+          "max": 170.0343,
+          "p50": 132.6308,
+          "p95": 169.82289,
+          "p99": 169.992018,
+          "ci": {
+            "point": 132.6308,
+            "low": 124.9988,
+            "high": 169.3296,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 304.7656571428571,
+          "stdev": 42.169934707793,
+          "min": 268.9552,
+          "max": 384.2001,
+          "p50": 292.7584,
+          "p95": 370.10295,
+          "p99": 381.38067,
+          "ci": {
+            "point": 292.7584,
+            "low": 272.4434,
+            "high": 337.2096,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.028427,
+          "stdev": 0.0,
+          "min": 1.028427,
+          "max": 1.028427,
+          "p50": 1.028427,
+          "p95": 1.028427,
+          "p99": 1.028427,
+          "ci": {
+            "point": 1.028427,
+            "low": 1.028427,
+            "high": 1.028427,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.03627,
+          "stdev": 0.0,
+          "min": 1.03627,
+          "max": 1.03627,
+          "p50": 1.03627,
+          "p95": 1.03627,
+          "p99": 1.03627,
+          "ci": {
+            "point": 1.03627,
+            "low": 1.03627,
+            "high": 1.03627,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.9043122857142857,
+          "stdev": 0.08842754917956712,
+          "min": 0.779053,
+          "max": 0.999844,
+          "p50": 0.926009,
+          "p95": 0.9975993999999999,
+          "p99": 0.9993950799999999,
+          "ci": {
+            "point": 0.926009,
+            "low": 0.792561,
+            "high": 0.992362,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50682.857142857145,
+          "stdev": 298.8396607834088,
+          "min": 50228.0,
+          "max": 51032.0,
+          "p50": 50864.0,
+          "p95": 50981.6,
+          "p99": 51021.92,
+          "ci": {
+            "point": 50864.0,
+            "low": 50384.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          8
+        ]
+      },
+      "aegis_telescope3": {
+        "trials": 7,
+        "payload_bytes": [
+          524288
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 13.870585714285713,
+          "stdev": 2.3611318997665576,
+          "min": 10.3847,
+          "max": 17.2003,
+          "p50": 13.6437,
+          "p95": 16.89247,
+          "p99": 17.138734,
+          "ci": {
+            "point": 13.6437,
+            "low": 12.2079,
+            "high": 16.1742,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 0
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 310.26359999999994,
+          "stdev": 54.67698614188606,
+          "min": 243.8512,
+          "max": 403.8911,
+          "p50": 307.4176,
+          "p95": 385.79587999999995,
+          "p99": 400.27205599999996,
+          "ci": {
+            "point": 307.4176,
+            "low": 259.3203,
+            "high": 343.5737,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 157.58705714285716,
+          "stdev": 27.293757219912465,
+          "min": 124.4746,
+          "max": 197.3329,
+          "p50": 168.3856,
+          "p95": 190.13574999999997,
+          "p99": 195.89346999999998,
+          "ci": {
+            "point": 168.3856,
+            "low": 127.7876,
+            "high": 173.3424,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 313.5169714285715,
+          "stdev": 55.15879150639283,
+          "min": 246.2775,
+          "max": 407.9357,
+          "p50": 309.9632,
+          "p95": 389.58052999999995,
+          "p99": 404.264666,
+          "ci": {
+            "point": 309.9632,
+            "low": 262.2319,
+            "high": 346.7518,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.028427,
+          "stdev": 0.0,
+          "min": 1.028427,
+          "max": 1.028427,
+          "p50": 1.028427,
+          "p95": 1.028427,
+          "p99": 1.028427,
+          "ci": {
+            "point": 1.028427,
+            "low": 1.028427,
+            "high": 1.028427,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.03627,
+          "stdev": 0.0,
+          "min": 1.03627,
+          "max": 1.03627,
+          "p50": 1.03627,
+          "p95": 1.03627,
+          "p99": 1.03627,
+          "ci": {
+            "point": 1.03627,
+            "low": 1.03627,
+            "high": 1.03627,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.9511592857142858,
+          "stdev": 0.0575923107648764,
+          "min": 0.866381,
+          "max": 1.043736,
+          "p50": 0.9376,
+          "p95": 1.0300818,
+          "p99": 1.04100516,
+          "ci": {
+            "point": 0.9376,
+            "low": 0.922991,
+            "high": 0.998222,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50660.0,
+          "stdev": 316.80909077865806,
+          "min": 50228.0,
+          "max": 51032.0,
+          "p50": 50864.0,
+          "p95": 50981.6,
+          "p99": 51021.92,
+          "ci": {
+            "point": 50864.0,
+            "low": 50384.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          8
+        ]
+      },
+      "relay3_plain": {
+        "trials": 7,
+        "payload_bytes": [
+          524288
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 60.50464285714286,
+          "stdev": 10.192481498120259,
+          "min": 44.9919,
+          "max": 78.8938,
+          "p50": 59.5021,
+          "p95": 74.40238,
+          "p99": 77.995516,
+          "ci": {
+            "point": 59.5021,
+            "low": 56.3756,
+            "high": 63.9224,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 0
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 71.02239999999999,
+          "stdev": 12.066741139457111,
+          "min": 53.1639,
+          "max": 93.2235,
+          "p50": 70.49,
+          "p95": 87.57623999999998,
+          "p99": 92.09404799999999,
+          "ci": {
+            "point": 70.49,
+            "low": 65.6156,
+            "high": 74.3993,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 6.787157142857143,
+          "stdev": 1.8359707794126634,
+          "min": 4.6866,
+          "max": 9.8536,
+          "p50": 7.0438,
+          "p95": 9.340089999999998,
+          "p99": 9.750898,
+          "ci": {
+            "point": 7.0438,
+            "low": 4.9601,
+            "high": 8.1419,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 75.35427142857144,
+          "stdev": 12.411596926760911,
+          "min": 55.8071,
+          "max": 97.6813,
+          "p50": 73.9056,
+          "p95": 91.99104999999999,
+          "p99": 96.54324999999999,
+          "ci": {
+            "point": 73.9056,
+            "low": 70.382,
+            "high": 78.7138,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "ci": {
+            "point": 1.0,
+            "low": 1.0,
+            "high": 1.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "ci": {
+            "point": 1.0,
+            "low": 1.0,
+            "high": 1.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.9091547142857143,
+          "stdev": 0.2075899825615503,
+          "min": 0.630306,
+          "max": 1.113491,
+          "p50": 0.9862,
+          "p95": 1.1132381,
+          "p99": 1.1134404199999999,
+          "ci": {
+            "point": 0.9862,
+            "low": 0.662802,
+            "high": 1.112648,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50728.57142857143,
+          "stdev": 298.5335587740275,
+          "min": 50228.0,
+          "max": 51032.0,
+          "p50": 50864.0,
+          "p95": 50981.6,
+          "p99": 51021.92,
+          "ci": {
+            "point": 50864.0,
+            "low": 50384.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          8
+        ]
+      },
+      "surface": {
+        "trials": 7,
+        "payload_bytes": [
+          524288
+        ],
+        "goodput_mbps": {
+          "n": 7,
+          "mean": 111.10632857142856,
+          "stdev": 28.71817648648757,
+          "min": 64.4052,
+          "max": 143.7572,
+          "p50": 115.0581,
+          "p95": 140.18912,
+          "p99": 143.043584,
+          "ci": {
+            "point": 115.0581,
+            "low": 80.6616,
+            "high": 131.8636,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "ttfb_ms": {
+          "n": 0
+        },
+        "total_ms": {
+          "n": 7,
+          "mean": 40.600385714285714,
+          "stdev": 13.128080940415293,
+          "min": 29.1763,
+          "max": 65.1237,
+          "p50": 36.4538,
+          "p95": 61.18622999999999,
+          "p99": 64.33620599999999,
+          "ci": {
+            "point": 36.4538,
+            "low": 31.8079,
+            "high": 51.9988,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "setup_ms": {
+          "n": 7,
+          "mean": 7.0323,
+          "stdev": 1.2283549894065637,
+          "min": 5.2788,
+          "max": 8.9004,
+          "p50": 6.8907,
+          "p95": 8.58258,
+          "p99": 8.836836,
+          "ci": {
+            "point": 6.8907,
+            "low": 5.8227,
+            "high": 7.841,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wall_ms": {
+          "n": 7,
+          "mean": 44.63227142857142,
+          "stdev": 14.151488436876438,
+          "min": 32.3032,
+          "max": 71.0957,
+          "p50": 39.6838,
+          "p95": 66.85129999999998,
+          "p99": 70.24681999999999,
+          "ci": {
+            "point": 39.6838,
+            "low": 35.1895,
+            "high": 56.9477,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_up_ratio": {
+          "n": 7,
+          "mean": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "ci": {
+            "point": 1.0,
+            "low": 1.0,
+            "high": 1.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "wire_down_ratio": {
+          "n": 7,
+          "mean": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "ci": {
+            "point": 1.0,
+            "low": 1.0,
+            "high": 1.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "cpu_fraction_of_one_core": {
+          "n": 7,
+          "mean": 0.8957457142857143,
+          "stdev": 0.282338391460622,
+          "min": 0.428543,
+          "max": 1.318102,
+          "p50": 0.852223,
+          "p95": 1.2620494,
+          "p99": 1.30689148,
+          "ci": {
+            "point": 0.852223,
+            "low": 0.780637,
+            "high": 1.13126,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "peak_rss_kb": {
+          "n": 7,
+          "mean": 50634.28571428572,
+          "stdev": 320.4901008797382,
+          "min": 50056.0,
+          "max": 50864.0,
+          "p50": 50864.0,
+          "p95": 50864.0,
+          "p99": 50864.0,
+          "ci": {
+            "point": 50864.0,
+            "low": 50384.0,
+            "high": 50864.0,
+            "confidence": 0.95,
+            "resamples": 2000,
+            "reliable": 1.0
+          },
+          "reliable_ci": true
+        },
+        "latency_p50_ms": {
+          "n": 0
+        },
+        "latency_p95_ms": {
+          "n": 0
+        },
+        "latency_p99_ms": {
+          "n": 0
+        },
+        "ttfb_first_body_ms": {
+          "n": 0
+        },
+        "connections_per_trial": [
+          8
+        ]
+      }
+    }
+  },
+  "claim_scope": "Derived from one THOR run. Loopback/lab ratios are not public-network performance and do not establish anonymity or Tor equivalence.",
+  "gates": [
+    {
+      "workload": "bulk_echo:1048576x1@c16384i4",
+      "candidate": "aegis_combined",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.1038615307592355,
+          0.15994180590853918,
+          0.09521752141014864,
+          0.10487949929166182,
+          0.11025824728736437,
+          0.09078644912944013,
+          0.11771671513121702
+        ],
+        "point": 0.10487949929166182,
+        "low": 0.09521752141014864,
+        "high": 0.11771671513121702,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 8.5813,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          8.309554755653108,
+          5.180344491993775,
+          9.356643977414313,
+          7.561164194281771,
+          7.298385821199935,
+          8.659708197791833,
+          6.287526292958807
+        ],
+        "point": 7.561164194281771,
+        "low": 6.287526292958807,
+        "high": 8.659708197791833,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "bulk_echo:1048576x1@c16384i4",
+      "candidate": "aegis_io_batch",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.1418648265030411,
+          0.08078147608336343,
+          0.11743790700656911,
+          0.11204034038641399,
+          0.12782444677789445,
+          0.08015781038096413,
+          0.15518391843446405
+        ],
+        "point": 0.11743790700656911,
+        "low": 0.08078147608336343,
+        "high": 0.1418648265030411,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 7.6636,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          6.0582896654018885,
+          9.712368416451852,
+          7.422898285149055,
+          7.794677457171233,
+          6.324780988375803,
+          9.65036943876749,
+          4.899431990243983
+        ],
+        "point": 7.422898285149055,
+        "low": 6.0582896654018885,
+        "high": 9.65036943876749,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "bulk_echo:1048576x1@c16384i4",
+      "candidate": "aegis_lean_dispatch",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.1363672800705422,
+          0.14805222686545103,
+          0.1150522250879918,
+          0.09181925437886136,
+          0.1099790232567184,
+          0.08862641953999369,
+          0.14982573921034018
+        ],
+        "point": 0.1150522250879918,
+        "low": 0.09181925437886136,
+        "high": 0.14805222686545103,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 7.8225,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          6.196398940732722,
+          5.4901405824156395,
+          7.434596935524268,
+          8.618080417710548,
+          7.322863509347363,
+          9.252240213802862,
+          4.867413918694396
+        ],
+        "point": 7.322863509347363,
+        "low": 5.4901405824156395,
+        "high": 8.618080417710548,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "bulk_echo:1048576x1@c16384i4",
+      "candidate": "aegis_telescope3",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.10313143662461305,
+          0.1226066096134633,
+          0.10211465294897189,
+          0.13017482157112156,
+          0.12518412378952282,
+          0.1023540048493815,
+          0.14694053671718668
+        ],
+        "point": 0.1226066096134633,
+        "low": 0.1023540048493815,
+        "high": 0.13017482157112156,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 7.3406,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          8.049079134157623,
+          6.804503610231027,
+          8.744592148271673,
+          6.366798123253064,
+          6.525325430322807,
+          7.827784697616486,
+          5.032406839033892
+        ],
+        "point": 6.804503610231027,
+        "low": 6.366798123253064,
+        "high": 8.049079134157623,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "bulk_echo:1048576x1@c16384i4",
+      "candidate": "relay3_plain",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.45965305888322006,
+          0.416413742920958,
+          0.34337888481981277,
+          0.47318237483091746,
+          0.47065990452300394,
+          0.45875861313168675,
+          0.5999596464606772
+        ],
+        "point": 0.45965305888322006,
+        "low": 0.416413742920958,
+        "high": 0.47318237483091746,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 1.958,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          1.9243605254385208,
+          2.018207530493194,
+          2.5051629409582747,
+          1.8030469476518274,
+          1.7584475912190003,
+          1.7755462977519259,
+          1.298900811091741
+        ],
+        "point": 1.8030469476518274,
+        "low": 1.7584475912190003,
+        "high": 2.018207530493194,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "bulk_echo:262144x1@c16384i4",
+      "candidate": "aegis_combined",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.10192051736253914,
+          0.0990361793336362,
+          0.11165396124437696,
+          0.14623153418528936,
+          0.2123805521652051,
+          0.17169650286067195,
+          0.20561772672892242
+        ],
+        "point": 0.14623153418528936,
+        "low": 0.10192051736253914,
+        "high": 0.20561772672892242,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 6.1546,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          7.675528206778207,
+          8.989487411507957,
+          8.454497847084838,
+          7.140886033720264,
+          5.262211053167266,
+          5.694453022029749,
+          5.050080351369174
+        ],
+        "point": 7.140886033720264,
+        "low": 5.262211053167266,
+        "high": 8.454497847084838,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "bulk_echo:262144x1@c16384i4",
+      "candidate": "aegis_io_batch",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.09699009381567826,
+          0.08765767277325179,
+          0.10822876435292043,
+          0.18358239178376054,
+          0.24127995325585566,
+          0.17071006424717577,
+          0.15639651498383803
+        ],
+        "point": 0.15639651498383803,
+        "low": 0.09699009381567826,
+        "high": 0.18358239178376054,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 5.7546,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          9.356680341055341,
+          11.282695480917656,
+          9.161445362504365,
+          5.605681633491014,
+          4.701882417132723,
+          5.690468838260214,
+          6.1664521829322165
+        ],
+        "point": 6.1664521829322165,
+        "low": 5.605681633491014,
+        "high": 9.356680341055341,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "bulk_echo:262144x1@c16384i4",
+      "candidate": "aegis_lean_dispatch",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.1190377497190711,
+          0.10759050066410054,
+          0.09531726355555045,
+          0.1547814160104032,
+          0.2720056436354372,
+          0.17914883214245889,
+          0.15984690210934638
+        ],
+        "point": 0.1547814160104032,
+        "low": 0.10759050066410054,
+        "high": 0.17914883214245889,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 5.8147,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          6.962998712998713,
+          8.502714643104275,
+          9.000989177237287,
+          7.453991770955406,
+          4.362349558775694,
+          5.642620975334212,
+          6.3335062008208
+        ],
+        "point": 6.962998712998713,
+        "low": 5.642620975334212,
+        "high": 8.502714643104275,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "bulk_echo:262144x1@c16384i4",
+      "candidate": "aegis_telescope3",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.11256100285948374,
+          0.0744829386178794,
+          0.09879878219857172,
+          0.13297126784092744,
+          0.20307810744368654,
+          0.1772115524828231,
+          0.1772333903182638
+        ],
+        "point": 0.13297126784092744,
+        "low": 0.09879878219857172,
+        "high": 0.1772333903182638,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 6.7684,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          7.232866795366795,
+          12.947649970724436,
+          9.611753753054812,
+          8.006150398193373,
+          5.341447803322036,
+          5.335138392016569,
+          5.7722694940104615
+        ],
+        "point": 7.232866795366795,
+        "low": 5.341447803322036,
+        "high": 9.611753753054812,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "bulk_echo:262144x1@c16384i4",
+      "candidate": "relay3_plain",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.346068776574902,
+          0.30175969470672137,
+          0.36974447655711384,
+          0.3320271343460199,
+          0.8133529577509643,
+          0.5515632907592146,
+          0.5814700234580431
+        ],
+        "point": 0.36974447655711384,
+        "low": 0.3320271343460199,
+        "high": 0.5814700234580431,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 2.4341,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          1.9832220613470615,
+          2.575752736821561,
+          2.159606656580938,
+          2.5266759621224435,
+          1.2324323473552774,
+          1.5794389003954057,
+          1.547804262784191
+        ],
+        "point": 1.9832220613470615,
+        "low": 1.547804262784191,
+        "high": 2.5266759621224435,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "bulk_echo:262144x1@c262144i4",
+      "candidate": "aegis_combined",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.1116891571388848,
+          0.14318387521968368,
+          0.07889540691428787,
+          0.12172021355175192,
+          0.12327907128528275,
+          0.13386964965558984,
+          0.15377290327466356
+        ],
+        "point": 0.12327907128528275,
+        "low": 0.1116891571388848,
+        "high": 0.14318387521968368,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 7.3005,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          5.805728946574101,
+          7.250376702008164,
+          11.492499127805559,
+          6.4402577625909965,
+          7.882046565232328,
+          6.127383006076323,
+          7.661757361054648
+        ],
+        "point": 7.250376702008164,
+        "low": 6.127383006076323,
+        "high": 7.882046565232328,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "bulk_echo:262144x1@c262144i4",
+      "candidate": "aegis_io_batch",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.13303073425258027,
+          0.10413598418277681,
+          0.09887706039644978,
+          0.12915946070161255,
+          0.15828320281954122,
+          0.12281379427275972,
+          0.17210541291944892
+        ],
+        "point": 0.12915946070161255,
+        "low": 0.10413598418277681,
+        "high": 0.15828320281954122,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 6.9681,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          4.929188047087232,
+          9.531314210569573,
+          9.265134188729956,
+          6.630589808349428,
+          6.208136171721762,
+          6.468569042622159,
+          6.605250014518845
+        ],
+        "point": 6.605250014518845,
+        "low": 6.208136171721762,
+        "high": 9.265134188729956,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "bulk_echo:262144x1@c262144i4",
+      "candidate": "aegis_lean_dispatch",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.12691430721167216,
+          0.13955250439367312,
+          0.1298381543008506,
+          0.14319192092324842,
+          0.12208382027148675,
+          0.12958440612550085,
+          0.17148489146102006
+        ],
+        "point": 0.1298381543008506,
+        "low": 0.12691430721167216,
+        "high": 0.14319192092324842,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 6.9317,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          5.325487473588892,
+          7.205651899947946,
+          8.217919396312233,
+          6.0796686970732425,
+          7.7111226853134465,
+          6.532353943016625,
+          6.302108136360997
+        ],
+        "point": 6.532353943016625,
+        "low": 6.0796686970732425,
+        "high": 7.7111226853134465,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "bulk_echo:262144x1@c262144i4",
+      "candidate": "aegis_telescope3",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.11685329669430951,
+          0.11913620386643234,
+          0.13817591136282525,
+          0.11575695358753199,
+          0.13950153131530565,
+          0.13141937639269277,
+          0.16183826938938822
+        ],
+        "point": 0.13141937639269277,
+        "low": 0.11685329669430951,
+        "high": 0.13950153131530565,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 6.8483,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          5.723863567763356,
+          9.489068792635818,
+          7.765179413626908,
+          7.546074134601098,
+          6.803532840567826,
+          7.288839565317716,
+          6.7744352169115505
+        ],
+        "point": 7.288839565317716,
+        "low": 6.7744352169115505,
+        "high": 7.765179413626908,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "bulk_echo:262144x1@c262144i4",
+      "candidate": "relay3_plain",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.31488951044375746,
+          0.3428055799648506,
+          0.09619749138717967,
+          0.3399340365153325,
+          0.4060166468197038,
+          0.30155156626517005,
+          0.49502551456515886
+        ],
+        "point": 0.3399340365153325,
+        "low": 0.30155156626517005,
+        "high": 0.4060166468197038,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 2.6476,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          1.6722789012979171,
+          2.3240870113147585,
+          6.943068315437196,
+          1.8226489377507056,
+          1.8201221201476083,
+          2.1008032172642266,
+          1.8651257332016957
+        ],
+        "point": 1.8651257332016957,
+        "low": 1.8201221201476083,
+        "high": 2.3240870113147585,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "parallel_bulk:8x65536@c16384i4",
+      "candidate": "aegis_combined",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.10720590714788696,
+          0.11087876472842852,
+          0.10729875416718489,
+          0.11193108936456748,
+          0.13136360575679287,
+          0.25528062951438707,
+          0.1138416884663696
+        ],
+        "point": 0.11193108936456748,
+        "low": 0.10729875416718489,
+        "high": 0.13136360575679287,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 8.0407,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          8.602215717228264,
+          8.349966485064435,
+          8.333148414945821,
+          8.153080809331584,
+          6.972106565659031,
+          3.649874746292674,
+          8.223796871225792
+        ],
+        "point": 8.223796871225792,
+        "low": 6.972106565659031,
+        "high": 8.349966485064435,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "parallel_bulk:8x65536@c16384i4",
+      "candidate": "aegis_io_batch",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.11501879456891506,
+          0.12192361945834322,
+          0.09924952754209654,
+          0.08774795279819027,
+          0.14760198602974794,
+          0.2611590368479564,
+          0.11622532916389815
+        ],
+        "point": 0.11622532916389815,
+        "low": 0.09924952754209654,
+        "high": 0.14760198602974794,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 7.7436,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          8.017568751679173,
+          7.60054480669694,
+          8.962988722738338,
+          10.425861834121697,
+          6.210856693789691,
+          3.5448388580462673,
+          8.014683357251451
+        ],
+        "point": 8.014683357251451,
+        "low": 6.210856693789691,
+        "high": 8.962988722738338,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "parallel_bulk:8x65536@c16384i4",
+      "candidate": "aegis_lean_dispatch",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.13690281373044916,
+          0.12563826449419901,
+          0.10668524141613,
+          0.08806098059784136,
+          0.13868629306342609,
+          0.23904125753821123,
+          0.12271645207705091
+        ],
+        "point": 0.12563826449419901,
+        "low": 0.10668524141613,
+        "high": 0.13868629306342609,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 7.1634,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          6.7465428805728775,
+          7.377277377670485,
+          8.329298248519272,
+          10.43889150300899,
+          6.649209982964724,
+          3.8821489907265843,
+          7.6430526151266704
+        ],
+        "point": 7.377277377670485,
+        "low": 6.649209982964724,
+        "high": 8.329298248519272,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "parallel_bulk:8x65536@c16384i4",
+      "candidate": "aegis_telescope3",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.1287440368155355,
+          0.10610204757422555,
+          0.0965232255148502,
+          0.11964826805196538,
+          0.14330140234113356,
+          0.22910261904318288,
+          0.1056584749346009
+        ],
+        "point": 0.11964826805196538,
+        "low": 0.1056584749346009,
+        "high": 0.14330140234113356,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 7.522,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          7.163339344696976,
+          8.737867845317233,
+          9.210257726552625,
+          7.623935090022042,
+          6.399989749547272,
+          4.047372766566755,
+          8.808400233024054
+        ],
+        "point": 7.623935090022042,
+        "low": 6.399989749547272,
+        "high": 8.808400233024054,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    },
+    {
+      "workload": "parallel_bulk:8x65536@c16384i4",
+      "candidate": "relay3_plain",
+      "reference": "surface",
+      "tier": "lab",
+      "metric": "goodput_mbps",
+      "criterion": "candidate/surface median goodput >= 0.90",
+      "status": "not_met",
+      "paired_trials": 7,
+      "goodput_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          0.557785860930108,
+          0.6856866226715025,
+          0.4342965003230611,
+          0.41390692083596503,
+          0.5544403925279352,
+          0.992503710880488,
+          0.43657951431965564
+        ],
+        "point": 0.5544403925279352,
+        "low": 0.4342965003230611,
+        "high": 0.6856866226715025,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "headroom_needed_factor": 1.6233,
+      "latency_ratio": {
+        "paired_trials": 7,
+        "ratios": [
+          1.715280862967249,
+          1.4062942560944265,
+          2.1724819359575185,
+          2.28550731816043,
+          1.7177318188696193,
+          1.039522784078362,
+          2.1927251026584633
+        ],
+        "point": 1.7177318188696193,
+        "low": 1.4062942560944265,
+        "high": 2.1927251026584633,
+        "confidence": 0.95,
+        "resamples": 2000,
+        "reliable": 1.0
+      },
+      "ci_reliable": true
+    }
+  ]
+}

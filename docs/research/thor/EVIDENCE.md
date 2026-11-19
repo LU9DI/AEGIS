@@ -129,3 +129,47 @@ Conclusão: o teto de 30 s era apertado demais para um host compartilhado, e a f
 
 Nenhum artefato de medição foi alterado por esta correção: os quatro runs, o `fastpath-01.json` e seus digests permanecem exatamente como no commit C.
 
+## 8. P1 — experimento de batching e despacho (`perf/thor-dispatch-batching-lab`)
+
+### 8.1 Commits da fase
+
+| SHA completo | Assunto |
+|---|---|
+| `b17b983b43fa48d614768110397a91f6c1bb8d7e` | base obrigatória (HEAD da fase de pesquisa anterior) |
+| `592132bc37a6421ba504f8a36310bf8dd7fd58b1` | `perf(thor)`: variantes de dispatch, perfilador, braços, 30 testes |
+| `0217dd06d9a79aeaa6fedc67dad05729d82cdd44` | `fix(thor)`: perfilador em modo duplex + timeouts (correção de um deadlock de flow-control do próprio instrumento) |
+| `bbb0e3f4affbe305cd10053e3b980021f5233c1d` | `docs(thor)`: índice dos documentos 09/10/11 |
+| commit seguinte | `docs(thor)`: artefatos P1, resultados e evidências (resolve com `git log -1 -- experiments/thor-dispatch-lab`) |
+
+Nenhum merge, deploy, force push, rebase destrutivo ou alteração do PR #34; a branch da fase anterior não foi tocada.
+
+### 8.2 Comandos e códigos de saída (medição oficial, árvore limpa em `bbb0e3f`)
+
+| Comando | Resultado | Código |
+|---|---|---|
+| `python -m anonlab.thor_lab.dispatch_profile --variants control,io_batch,lean_dispatch,combined --chunk-bytes 65536 --commands 48 --batch-size 4 --repeats 2 --output experiments/thor-dispatch-lab/profile-01.json` | 8 runs, 4 variantes, integridade ok | 0 |
+| `python -m anonlab.thor_lab run --tier lab --out experiments/thor-dispatch-lab/campaign-01 --arms surface,relay3_plain,aegis_telescope3,aegis_io_batch,aegis_lean_dispatch,aegis_combined --workloads 'bulk_echo:1048576,bulk_echo:262144,bulk_echo:262144@262144i4,parallel_bulk:65536x8' --trials 7 --warmup 1 --seed 20261118` | 192 registros, 0 erros, `dirty: false` | 0 |
+| `python -m anonlab.thor_lab run --tier lab --out experiments/thor-dispatch-lab/ab-io-batch-01 --arms aegis_telescope3,aegis_io_batch --workloads 'bulk_echo:1048576,bulk_echo:262144' --trials 20 --warmup 2 --seed 20261119` | 88 registros, 0 erros, `dirty: false` | 0 |
+| `python -m anonlab.thor_lab.dispatch_profile --variants control,combined --chunk-bytes 65536 --commands 128 --batch-size 4 --streams 4 --repeats 1 --output experiments/thor-dispatch-lab/soak-01.json` | 2 runs duplex, integridade ok | 0 |
+| `python -m pytest tests/test_thor_lab_*.py` (5 arquivos, 63 testes) | `63 passed` | 0 |
+| `python -m pytest tests/` (suíte completa) | `352 passed, 11 skipped, 76 subtests passed in 308.13s` | 0 |
+
+Uma execução exploratória anterior foi descartada porque a árvore estava suja (`dirty: true`) no momento da medição; os artefatos dela foram preservados fora do repositório e **não** são citados como evidência.
+
+### 8.3 Artefatos e digests
+
+| Diretório/arquivo | Registros | SHA-256 do bruto / arquivo |
+|---|---|---|
+| `campaign-01/` | 192 | `c9f3c3e1177b397eea0d89c6b347116ab462d32512094900cacda99a8037deb8` |
+| `ab-io-batch-01/` | 88 | `b72186c0b907920824facc32a50fe5462c27dcf293f0298ec145aa26a67aae58` |
+| `profile-01.json` | — | `a012c837a8f9f335a3097697c9237cae953df775fa3e2b46b8b2f5b968b2ca9a` |
+| `soak-01.json` | — | `80a8efe1ad66a24841b0262cd93293325389cab30aad27f06bcdb195581417e4` |
+
+### 8.4 Resultado e decisão
+
+- Meta de 90% da Surface: **não atingida** em nenhum braço (razões 0,082–0,152 no workload de 1 MiB).
+- `io_batch`: A/B de 20 trials com medianas 1,004 e 1,047 e sinal 10/20 e 11/20 → **rejeitado para adoção**.
+- `lean_dispatch`: medianas 1,02–1,06, sinais 4–5/7, CPU igual → **rejeitado**.
+- `combined`: medianas 0,89–1,10, inversões entre workloads → **rejeitado para adoção**.
+- Custo de despacho medido (Fase 1): AEAD ~25% do parede; primitivas asyncio ~2–3%; **~71–74% de espera encadeada por hop** → o próximo alvo é crédito/ACK no relay e tamanho de evento de resposta, não o cliente (ver `10` §7).
+

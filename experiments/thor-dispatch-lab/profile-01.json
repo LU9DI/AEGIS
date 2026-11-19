@@ -1,0 +1,1138 @@
+{
+  "schema_version": 1,
+  "kind": "thor_dispatch_profile_suite",
+  "config": {
+    "variants": [
+      "control",
+      "io_batch",
+      "lean_dispatch",
+      "combined"
+    ],
+    "chunk_bytes": 65536,
+    "commands": 48,
+    "streams": 1,
+    "batch_size": 4,
+    "repeats": 2
+  },
+  "summary": {
+    "control": {
+      "runs": 2,
+      "goodput_mbps_median": 33.11077254085986,
+      "wall_per_command_us_median": 16303.095833333333,
+      "cpu_per_command_us_median": 12695.3125,
+      "crypto_ns_per_command": 1824300.0,
+      "aead_measured_ns_per_command_median": 4093404.166666667,
+      "aead_share_of_wall_median": 0.2524184296187082,
+      "residual_ns_per_command_median": 14138404.166666666,
+      "integrity": true,
+      "counters_per_command": {
+        "futures_created": 22.5,
+        "wait_for_calls": 11.416666666666666,
+        "gather_calls": 0.2916666666666667,
+        "lock_acquires": 23.708333333333332,
+        "loop_iterations": 15.291666666666666,
+        "timeout_contexts": 0.0
+      }
+    },
+    "io_batch": {
+      "runs": 2,
+      "goodput_mbps_median": 42.16758950079503,
+      "wall_per_command_us_median": 12469.720833333333,
+      "cpu_per_command_us_median": 11230.46875,
+      "crypto_ns_per_command": 1838100.0,
+      "aead_measured_ns_per_command_median": 3535182.2916666665,
+      "aead_share_of_wall_median": 0.2833413447339401,
+      "residual_ns_per_command_median": 10328195.833333332,
+      "integrity": true,
+      "counters_per_command": {
+        "futures_created": 22.25,
+        "wait_for_calls": 11.416666666666666,
+        "gather_calls": 0.2916666666666667,
+        "lock_acquires": 23.708333333333332,
+        "loop_iterations": 15.291666666666666,
+        "timeout_contexts": 0.0
+      }
+    },
+    "lean_dispatch": {
+      "runs": 2,
+      "goodput_mbps_median": 45.28725235365938,
+      "wall_per_command_us_median": 11593.769791666666,
+      "cpu_per_command_us_median": 10904.947916666668,
+      "crypto_ns_per_command": 1929900.0,
+      "aead_measured_ns_per_command_median": 3185873.9583333335,
+      "aead_share_of_wall_median": 0.2749780228359019,
+      "residual_ns_per_command_median": 9378042.708333334,
+      "integrity": true,
+      "counters_per_command": {
+        "futures_created": 22.5,
+        "wait_for_calls": 11.416666666666666,
+        "gather_calls": 0.2916666666666667,
+        "lock_acquires": 23.708333333333332,
+        "loop_iterations": 15.291666666666666,
+        "timeout_contexts": 0.0
+      }
+    },
+    "combined": {
+      "runs": 2,
+      "goodput_mbps_median": 42.7007106875142,
+      "wall_per_command_us_median": 12374.244791666668,
+      "cpu_per_command_us_median": 11555.989583333334,
+      "crypto_ns_per_command": 1815900.0,
+      "aead_measured_ns_per_command_median": 3360921.875,
+      "aead_share_of_wall_median": 0.2719179163349833,
+      "residual_ns_per_command_median": 10152246.875,
+      "integrity": true,
+      "counters_per_command": {
+        "futures_created": 22.25,
+        "wait_for_calls": 11.416666666666666,
+        "gather_calls": 0.2916666666666667,
+        "lock_acquires": 23.708333333333332,
+        "loop_iterations": 15.291666666666666,
+        "timeout_contexts": 0.0
+      }
+    }
+  },
+  "runs": [
+    {
+      "schema_version": 1,
+      "kind": "thor_dispatch_profile",
+      "variant": {
+        "variant": "control",
+        "io_batch": false,
+        "lean_dispatch": false
+      },
+      "config": {
+        "chunk_bytes": 65536,
+        "commands": 48,
+        "commands_per_stream": 48,
+        "batch_size": 4,
+        "streams": 1,
+        "collect_relay_metrics": true,
+        "with_counters": true
+      },
+      "result": {
+        "wall_ms": 915.2388,
+        "cpu_ms": 578.125,
+        "goodput_mbps": 27.496456662457927,
+        "payload_bytes": 3145728,
+        "received_bytes": 3145728,
+        "integrity": true,
+        "wall_per_command_us": 19067.475,
+        "cpu_per_command_us": 12044.270833333334,
+        "wall_per_byte_ns": 290.9465789794922,
+        "cpu_fraction_of_one_core": 0.6316657466881868
+      },
+      "primitive_counters": {
+        "futures_created": 1080,
+        "wait_for_calls": 548,
+        "gather_calls": 14,
+        "lock_acquires": 1138,
+        "loop_iterations": 734,
+        "timeout_contexts": 0
+      },
+      "primitive_counters_per_command": {
+        "futures_created": 22.5,
+        "wait_for_calls": 11.416666666666666,
+        "gather_calls": 0.2916666666666667,
+        "lock_acquires": 23.708333333333332,
+        "loop_iterations": 15.291666666666666,
+        "timeout_contexts": 0.0
+      },
+      "primitive_costs": {
+        "future_create_ns": 1600,
+        "future_set_result_ns": 600,
+        "lock_acquire_ns": 3100,
+        "wait_for_arm_disarm_ns": 17900,
+        "gather_two_futures_ns": 23000,
+        "monotonic_call_ns": 500
+      },
+      "crypto": {
+        "seal_ns": 144550.0,
+        "open_ns": 159500.0,
+        "command_crypto_ns": 1824300.0,
+        "payload_bytes": 65536
+      },
+      "aead_measured": {
+        "seal_calls_per_command": 24.1875,
+        "open_calls_per_command": 24.1875,
+        "ns_per_command": 4662631.25,
+        "share_of_wall": 0.24453323001603516,
+        "share_of_cpu": 0.38712441081081084
+      },
+      "attribution_ns_per_command": {
+        "crypto_estimate": 1824300.0,
+        "aead_measured": 4662631.25,
+        "asyncio_primitives": 320562.5,
+        "residual_after_measured_aead": 14084281.25,
+        "residual_dispatch_and_io": 16922612.5
+      },
+      "client_write_metrics": {
+        "write_batch": {
+          "events": 12,
+          "metrics": {
+            "frame_prepare_ms": {
+              "samples": 12,
+              "median": 4.5114,
+              "p95": 11.4692
+            },
+            "lock_wait_ms": {
+              "samples": 12,
+              "median": 0.00535,
+              "p95": 0.0114
+            },
+            "response_decode_ms": {
+              "samples": 12,
+              "median": 0.38925,
+              "p95": 0.5421
+            },
+            "response_wait_ms": {
+              "samples": 12,
+              "median": 47.705799999999996,
+              "p95": 84.4446
+            },
+            "socket_drain_ms": {
+              "samples": 12,
+              "median": 2.3455000000000004,
+              "p95": 7.4846
+            },
+            "total_ms": {
+              "samples": 12,
+              "median": 56.18935,
+              "p95": 90.6989
+            }
+          }
+        }
+      },
+      "relay_stage_summary": {
+        "relay_reply_send": {
+          "samples": 303,
+          "median_ms": 0.1311,
+          "p95_ms": 0.4743,
+          "total_ms": 81.6881
+        },
+        "command_dispatch": {
+          "samples": 303,
+          "median_ms": 0.4443,
+          "p95_ms": 16.2054,
+          "total_ms": 1149.0542
+        },
+        "downstream_response_wait": {
+          "samples": 201,
+          "median_ms": 9.1023,
+          "p95_ms": 30.6025,
+          "total_ms": 2426.3377
+        },
+        "relay_event_send": {
+          "samples": 579,
+          "median_ms": 0.034,
+          "p95_ms": 1.6413,
+          "total_ms": 186.5957
+        },
+        "flow_credit_wait": {
+          "samples": 193,
+          "median_ms": 0.0059,
+          "p95_ms": 25.0194,
+          "total_ms": 708.5652
+        },
+        "destination_write_drain": {
+          "samples": 48,
+          "median_ms": 0.0045,
+          "p95_ms": 0.0067,
+          "total_ms": 1.2221
+        },
+        "destination_read_wait": {
+          "samples": 193,
+          "median_ms": 0.0161,
+          "p95_ms": 0.0453,
+          "total_ms": 69.24600000000001
+        }
+      },
+      "relay_event_count": 1820,
+      "notes": "Loopback testbed with three real relay hops in one process. CPU is process-wide and includes the relays. The crypto estimate uses the real seal/open helpers. The residual is dispatch, event-loop scheduling, socket I/O and relay-side bookkeeping that is not represented by the measured primitives."
+    },
+    {
+      "schema_version": 1,
+      "kind": "thor_dispatch_profile",
+      "variant": {
+        "variant": "control",
+        "io_batch": false,
+        "lean_dispatch": false
+      },
+      "config": {
+        "chunk_bytes": 65536,
+        "commands": 48,
+        "commands_per_stream": 48,
+        "batch_size": 4,
+        "streams": 1,
+        "collect_relay_metrics": true,
+        "with_counters": true
+      },
+      "result": {
+        "wall_ms": 649.8584,
+        "cpu_ms": 640.625,
+        "goodput_mbps": 38.7250884192618,
+        "payload_bytes": 3145728,
+        "received_bytes": 3145728,
+        "integrity": true,
+        "wall_per_command_us": 13538.716666666665,
+        "cpu_per_command_us": 13346.354166666666,
+        "wall_per_byte_ns": 206.58442179361978,
+        "cpu_fraction_of_one_core": 0.9857916740015978
+      },
+      "primitive_counters": {
+        "futures_created": 1080,
+        "wait_for_calls": 548,
+        "gather_calls": 14,
+        "lock_acquires": 1138,
+        "loop_iterations": 734,
+        "timeout_contexts": 0
+      },
+      "primitive_counters_per_command": {
+        "futures_created": 22.5,
+        "wait_for_calls": 11.416666666666666,
+        "gather_calls": 0.2916666666666667,
+        "lock_acquires": 23.708333333333332,
+        "loop_iterations": 15.291666666666666,
+        "timeout_contexts": 0.0
+      },
+      "primitive_costs": {
+        "future_create_ns": 1900,
+        "future_set_result_ns": 700,
+        "lock_acquire_ns": 3300,
+        "wait_for_arm_disarm_ns": 20100,
+        "gather_two_futures_ns": 24200,
+        "monotonic_call_ns": 500
+      },
+      "crypto": {
+        "seal_ns": 152350.0,
+        "open_ns": 152150.0,
+        "command_crypto_ns": 1827000.0,
+        "payload_bytes": 65536
+      },
+      "aead_measured": {
+        "seal_calls_per_command": 24.1875,
+        "open_calls_per_command": 24.1875,
+        "ns_per_command": 3524177.0833333335,
+        "share_of_wall": 0.26030362922138117,
+        "share_of_cpu": 0.26405541463414633
+      },
+      "attribution_ns_per_command": {
+        "crypto_estimate": 1827000.0,
+        "aead_measured": 3524177.0833333335,
+        "asyncio_primitives": 357520.8333333333,
+        "residual_after_measured_aead": 9657018.749999998,
+        "residual_dispatch_and_io": 11354195.833333332
+      },
+      "client_write_metrics": {
+        "write_batch": {
+          "events": 12,
+          "metrics": {
+            "frame_prepare_ms": {
+              "samples": 12,
+              "median": 3.46825,
+              "p95": 3.7351
+            },
+            "lock_wait_ms": {
+              "samples": 12,
+              "median": 0.00555,
+              "p95": 0.0076
+            },
+            "response_decode_ms": {
+              "samples": 12,
+              "median": 0.489,
+              "p95": 0.7575
+            },
+            "response_wait_ms": {
+              "samples": 12,
+              "median": 26.467149999999997,
+              "p95": 40.169
+            },
+            "socket_drain_ms": {
+              "samples": 12,
+              "median": 2.1764,
+              "p95": 2.8882
+            },
+            "total_ms": {
+              "samples": 12,
+              "median": 32.96675,
+              "p95": 45.8131
+            }
+          }
+        }
+      },
+      "relay_stage_summary": {
+        "relay_reply_send": {
+          "samples": 303,
+          "median_ms": 0.1234,
+          "p95_ms": 0.2406,
+          "total_ms": 59.2635
+        },
+        "command_dispatch": {
+          "samples": 303,
+          "median_ms": 0.2924,
+          "p95_ms": 10.8223,
+          "total_ms": 797.3781
+        },
+        "downstream_response_wait": {
+          "samples": 201,
+          "median_ms": 6.6272,
+          "p95_ms": 16.2746,
+          "total_ms": 1609.7693
+        },
+        "relay_event_send": {
+          "samples": 579,
+          "median_ms": 0.0323,
+          "p95_ms": 1.4584,
+          "total_ms": 117.1085
+        },
+        "flow_credit_wait": {
+          "samples": 193,
+          "median_ms": 0.0057,
+          "p95_ms": 15.7679,
+          "total_ms": 528.9386
+        },
+        "destination_write_drain": {
+          "samples": 48,
+          "median_ms": 0.00415,
+          "p95_ms": 0.0059,
+          "total_ms": 0.2055
+        },
+        "destination_read_wait": {
+          "samples": 193,
+          "median_ms": 0.0147,
+          "p95_ms": 0.0435,
+          "total_ms": 20.6362
+        }
+      },
+      "relay_event_count": 1820,
+      "notes": "Loopback testbed with three real relay hops in one process. CPU is process-wide and includes the relays. The crypto estimate uses the real seal/open helpers. The residual is dispatch, event-loop scheduling, socket I/O and relay-side bookkeeping that is not represented by the measured primitives."
+    },
+    {
+      "schema_version": 1,
+      "kind": "thor_dispatch_profile",
+      "variant": {
+        "variant": "io_batch",
+        "io_batch": true,
+        "lean_dispatch": false
+      },
+      "config": {
+        "chunk_bytes": 65536,
+        "commands": 48,
+        "commands_per_stream": 48,
+        "batch_size": 4,
+        "streams": 1,
+        "collect_relay_metrics": true,
+        "with_counters": true
+      },
+      "result": {
+        "wall_ms": 630.8342,
+        "cpu_ms": 531.25,
+        "goodput_mbps": 39.89292907708555,
+        "payload_bytes": 3145728,
+        "received_bytes": 3145728,
+        "integrity": true,
+        "wall_per_command_us": 13142.379166666666,
+        "cpu_per_command_us": 11067.708333333334,
+        "wall_per_byte_ns": 200.5367914835612,
+        "cpu_fraction_of_one_core": 0.8421388694525439
+      },
+      "primitive_counters": {
+        "futures_created": 1068,
+        "wait_for_calls": 548,
+        "gather_calls": 14,
+        "lock_acquires": 1138,
+        "loop_iterations": 734,
+        "timeout_contexts": 0
+      },
+      "primitive_counters_per_command": {
+        "futures_created": 22.25,
+        "wait_for_calls": 11.416666666666666,
+        "gather_calls": 0.2916666666666667,
+        "lock_acquires": 23.708333333333332,
+        "loop_iterations": 15.291666666666666,
+        "timeout_contexts": 0.0
+      },
+      "primitive_costs": {
+        "future_create_ns": 1800,
+        "future_set_result_ns": 600,
+        "lock_acquire_ns": 3100,
+        "wait_for_arm_disarm_ns": 17800,
+        "gather_two_futures_ns": 23200,
+        "monotonic_call_ns": 500
+      },
+      "crypto": {
+        "seal_ns": 157350.0,
+        "open_ns": 149000.0,
+        "command_crypto_ns": 1838100.0,
+        "payload_bytes": 65536
+      },
+      "aead_measured": {
+        "seal_calls_per_command": 24.1875,
+        "open_calls_per_command": 24.1875,
+        "ns_per_command": 3762754.1666666665,
+        "share_of_wall": 0.2863069250208692,
+        "share_of_cpu": 0.33997590588235294
+      },
+      "attribution_ns_per_command": {
+        "crypto_estimate": 1838100.0,
+        "aead_measured": 3762754.1666666665,
+        "asyncio_primitives": 323529.1666666667,
+        "residual_after_measured_aead": 9056095.833333334,
+        "residual_dispatch_and_io": 10980750.0
+      },
+      "client_write_metrics": {},
+      "relay_stage_summary": {
+        "relay_reply_send": {
+          "samples": 303,
+          "median_ms": 0.1244,
+          "p95_ms": 0.4033,
+          "total_ms": 71.1324
+        },
+        "command_dispatch": {
+          "samples": 303,
+          "median_ms": 0.3517,
+          "p95_ms": 11.3299,
+          "total_ms": 807.5285
+        },
+        "downstream_response_wait": {
+          "samples": 201,
+          "median_ms": 6.8811,
+          "p95_ms": 17.1202,
+          "total_ms": 1678.0848
+        },
+        "relay_event_send": {
+          "samples": 579,
+          "median_ms": 0.0319,
+          "p95_ms": 1.4047,
+          "total_ms": 109.829
+        },
+        "flow_credit_wait": {
+          "samples": 193,
+          "median_ms": 0.0061,
+          "p95_ms": 16.6381,
+          "total_ms": 504.5222
+        },
+        "destination_write_drain": {
+          "samples": 48,
+          "median_ms": 0.0043,
+          "p95_ms": 0.0058,
+          "total_ms": 0.2144
+        },
+        "destination_read_wait": {
+          "samples": 193,
+          "median_ms": 0.0138,
+          "p95_ms": 0.0444,
+          "total_ms": 29.757199999999997
+        }
+      },
+      "relay_event_count": 1820,
+      "notes": "Loopback testbed with three real relay hops in one process. CPU is process-wide and includes the relays. The crypto estimate uses the real seal/open helpers. The residual is dispatch, event-loop scheduling, socket I/O and relay-side bookkeeping that is not represented by the measured primitives."
+    },
+    {
+      "schema_version": 1,
+      "kind": "thor_dispatch_profile",
+      "variant": {
+        "variant": "io_batch",
+        "io_batch": true,
+        "lean_dispatch": false
+      },
+      "config": {
+        "chunk_bytes": 65536,
+        "commands": 48,
+        "commands_per_stream": 48,
+        "batch_size": 4,
+        "streams": 1,
+        "collect_relay_metrics": true,
+        "with_counters": true
+      },
+      "result": {
+        "wall_ms": 566.259,
+        "cpu_ms": 546.875,
+        "goodput_mbps": 44.44224992450451,
+        "payload_bytes": 3145728,
+        "received_bytes": 3145728,
+        "integrity": true,
+        "wall_per_command_us": 11797.0625,
+        "cpu_per_command_us": 11393.229166666666,
+        "wall_per_byte_ns": 180.0088882446289,
+        "cpu_fraction_of_one_core": 0.9657683144991956
+      },
+      "primitive_counters": {
+        "futures_created": 1068,
+        "wait_for_calls": 548,
+        "gather_calls": 14,
+        "lock_acquires": 1138,
+        "loop_iterations": 734,
+        "timeout_contexts": 0
+      },
+      "primitive_counters_per_command": {
+        "futures_created": 22.25,
+        "wait_for_calls": 11.416666666666666,
+        "gather_calls": 0.2916666666666667,
+        "lock_acquires": 23.708333333333332,
+        "loop_iterations": 15.291666666666666,
+        "timeout_contexts": 0.0
+      },
+      "primitive_costs": {
+        "future_create_ns": 1700,
+        "future_set_result_ns": 600,
+        "lock_acquire_ns": 2900,
+        "wait_for_arm_disarm_ns": 17500,
+        "gather_two_futures_ns": 22800,
+        "monotonic_call_ns": 500
+      },
+      "crypto": {
+        "seal_ns": 150500.0,
+        "open_ns": 150900.0,
+        "command_crypto_ns": 1808400.0,
+        "payload_bytes": 65536
+      },
+      "aead_measured": {
+        "seal_calls_per_command": 24.1875,
+        "open_calls_per_command": 24.1875,
+        "ns_per_command": 3307610.4166666665,
+        "share_of_wall": 0.280375764447011,
+        "share_of_cpu": 0.29031369142857144
+      },
+      "attribution_ns_per_command": {
+        "crypto_estimate": 1808400.0,
+        "aead_measured": 3307610.4166666665,
+        "asyncio_primitives": 313020.8333333333,
+        "residual_after_measured_aead": 8176431.250000001,
+        "residual_dispatch_and_io": 9675641.666666666
+      },
+      "client_write_metrics": {},
+      "relay_stage_summary": {
+        "relay_reply_send": {
+          "samples": 303,
+          "median_ms": 0.1157,
+          "p95_ms": 0.2905,
+          "total_ms": 54.5336
+        },
+        "command_dispatch": {
+          "samples": 303,
+          "median_ms": 0.3372,
+          "p95_ms": 10.0141,
+          "total_ms": 712.3408
+        },
+        "downstream_response_wait": {
+          "samples": 201,
+          "median_ms": 6.2167,
+          "p95_ms": 14.6288,
+          "total_ms": 1495.5747
+        },
+        "relay_event_send": {
+          "samples": 579,
+          "median_ms": 0.0326,
+          "p95_ms": 1.3216,
+          "total_ms": 103.9266
+        },
+        "flow_credit_wait": {
+          "samples": 193,
+          "median_ms": 0.0058,
+          "p95_ms": 15.3102,
+          "total_ms": 457.38
+        },
+        "destination_write_drain": {
+          "samples": 48,
+          "median_ms": 0.004,
+          "p95_ms": 0.0051,
+          "total_ms": 0.1946
+        },
+        "destination_read_wait": {
+          "samples": 193,
+          "median_ms": 0.013,
+          "p95_ms": 0.0416,
+          "total_ms": 19.9239
+        }
+      },
+      "relay_event_count": 1820,
+      "notes": "Loopback testbed with three real relay hops in one process. CPU is process-wide and includes the relays. The crypto estimate uses the real seal/open helpers. The residual is dispatch, event-loop scheduling, socket I/O and relay-side bookkeeping that is not represented by the measured primitives."
+    },
+    {
+      "schema_version": 1,
+      "kind": "thor_dispatch_profile",
+      "variant": {
+        "variant": "lean_dispatch",
+        "io_batch": false,
+        "lean_dispatch": true
+      },
+      "config": {
+        "chunk_bytes": 65536,
+        "commands": 48,
+        "commands_per_stream": 48,
+        "batch_size": 4,
+        "streams": 1,
+        "collect_relay_metrics": true,
+        "with_counters": true
+      },
+      "result": {
+        "wall_ms": 577.701,
+        "cpu_ms": 531.25,
+        "goodput_mbps": 43.56202256876827,
+        "payload_bytes": 3145728,
+        "received_bytes": 3145728,
+        "integrity": true,
+        "wall_per_command_us": 12035.4375,
+        "cpu_per_command_us": 11067.708333333334,
+        "wall_per_byte_ns": 183.64620208740234,
+        "cpu_fraction_of_one_core": 0.9195933536552646
+      },
+      "primitive_counters": {
+        "futures_created": 1080,
+        "wait_for_calls": 548,
+        "gather_calls": 14,
+        "lock_acquires": 1138,
+        "loop_iterations": 734,
+        "timeout_contexts": 0
+      },
+      "primitive_counters_per_command": {
+        "futures_created": 22.5,
+        "wait_for_calls": 11.416666666666666,
+        "gather_calls": 0.2916666666666667,
+        "lock_acquires": 23.708333333333332,
+        "loop_iterations": 15.291666666666666,
+        "timeout_contexts": 0.0
+      },
+      "primitive_costs": {
+        "future_create_ns": 1700,
+        "future_set_result_ns": 600,
+        "lock_acquire_ns": 3100,
+        "wait_for_arm_disarm_ns": 17800,
+        "gather_two_futures_ns": 23200,
+        "monotonic_call_ns": 500
+      },
+      "crypto": {
+        "seal_ns": 157500.0,
+        "open_ns": 164150.0,
+        "command_crypto_ns": 1929900.0,
+        "payload_bytes": 65536
+      },
+      "aead_measured": {
+        "seal_calls_per_command": 24.1875,
+        "open_calls_per_command": 24.1875,
+        "ns_per_command": 3250677.0833333335,
+        "share_of_wall": 0.2700921410902872,
+        "share_of_cpu": 0.29370823529411766
+      },
+      "attribution_ns_per_command": {
+        "crypto_estimate": 1929900.0,
+        "aead_measured": 3250677.0833333335,
+        "asyncio_primitives": 321729.1666666667,
+        "residual_after_measured_aead": 8463031.25,
+        "residual_dispatch_and_io": 9783808.333333334
+      },
+      "client_write_metrics": {},
+      "relay_stage_summary": {
+        "relay_reply_send": {
+          "samples": 303,
+          "median_ms": 0.1091,
+          "p95_ms": 0.3229,
+          "total_ms": 57.0789
+        },
+        "command_dispatch": {
+          "samples": 303,
+          "median_ms": 0.3494,
+          "p95_ms": 10.9873,
+          "total_ms": 733.5668
+        },
+        "downstream_response_wait": {
+          "samples": 201,
+          "median_ms": 6.6625,
+          "p95_ms": 14.9052,
+          "total_ms": 1528.1725
+        },
+        "relay_event_send": {
+          "samples": 579,
+          "median_ms": 0.0328,
+          "p95_ms": 1.318,
+          "total_ms": 110.177
+        },
+        "flow_credit_wait": {
+          "samples": 193,
+          "median_ms": 0.0057,
+          "p95_ms": 15.2589,
+          "total_ms": 464.8651
+        },
+        "destination_write_drain": {
+          "samples": 48,
+          "median_ms": 0.0039,
+          "p95_ms": 0.0052,
+          "total_ms": 0.1923
+        },
+        "destination_read_wait": {
+          "samples": 193,
+          "median_ms": 0.0137,
+          "p95_ms": 0.0487,
+          "total_ms": 16.941
+        }
+      },
+      "relay_event_count": 1820,
+      "notes": "Loopback testbed with three real relay hops in one process. CPU is process-wide and includes the relays. The crypto estimate uses the real seal/open helpers. The residual is dispatch, event-loop scheduling, socket I/O and relay-side bookkeeping that is not represented by the measured primitives."
+    },
+    {
+      "schema_version": 1,
+      "kind": "thor_dispatch_profile",
+      "variant": {
+        "variant": "lean_dispatch",
+        "io_batch": false,
+        "lean_dispatch": true
+      },
+      "config": {
+        "chunk_bytes": 65536,
+        "commands": 48,
+        "commands_per_stream": 48,
+        "batch_size": 4,
+        "streams": 1,
+        "collect_relay_metrics": true,
+        "with_counters": true
+      },
+      "result": {
+        "wall_ms": 535.3009,
+        "cpu_ms": 515.625,
+        "goodput_mbps": 47.01248213855049,
+        "payload_bytes": 3145728,
+        "received_bytes": 3145728,
+        "integrity": true,
+        "wall_per_command_us": 11152.102083333333,
+        "cpu_per_command_us": 10742.1875,
+        "wall_per_byte_ns": 170.16757329305014,
+        "cpu_fraction_of_one_core": 0.9632432898954588
+      },
+      "primitive_counters": {
+        "futures_created": 1080,
+        "wait_for_calls": 548,
+        "gather_calls": 14,
+        "lock_acquires": 1138,
+        "loop_iterations": 734,
+        "timeout_contexts": 0
+      },
+      "primitive_counters_per_command": {
+        "futures_created": 22.5,
+        "wait_for_calls": 11.416666666666666,
+        "gather_calls": 0.2916666666666667,
+        "lock_acquires": 23.708333333333332,
+        "loop_iterations": 15.291666666666666,
+        "timeout_contexts": 0.0
+      },
+      "primitive_costs": {
+        "future_create_ns": 1900,
+        "future_set_result_ns": 600,
+        "lock_acquire_ns": 2900,
+        "wait_for_arm_disarm_ns": 23900,
+        "gather_two_futures_ns": 15300,
+        "monotonic_call_ns": 300
+      },
+      "crypto": {
+        "seal_ns": 153000.0,
+        "open_ns": 145500.0,
+        "command_crypto_ns": 1791000.0,
+        "payload_bytes": 65536
+      },
+      "aead_measured": {
+        "seal_calls_per_command": 24.1875,
+        "open_calls_per_command": 24.1875,
+        "ns_per_command": 3121070.8333333335,
+        "share_of_wall": 0.27986390458151666,
+        "share_of_cpu": 0.29054332121212123
+      },
+      "attribution_ns_per_command": {
+        "crypto_estimate": 1791000.0,
+        "aead_measured": 3121070.8333333335,
+        "asyncio_primitives": 388825.0,
+        "residual_after_measured_aead": 7642206.25,
+        "residual_dispatch_and_io": 8972277.083333334
+      },
+      "client_write_metrics": {},
+      "relay_stage_summary": {
+        "relay_reply_send": {
+          "samples": 303,
+          "median_ms": 0.0961,
+          "p95_ms": 0.2139,
+          "total_ms": 50.9865
+        },
+        "command_dispatch": {
+          "samples": 303,
+          "median_ms": 0.3005,
+          "p95_ms": 9.6459,
+          "total_ms": 678.1708
+        },
+        "downstream_response_wait": {
+          "samples": 201,
+          "median_ms": 5.9128,
+          "p95_ms": 13.5349,
+          "total_ms": 1376.103
+        },
+        "relay_event_send": {
+          "samples": 579,
+          "median_ms": 0.0329,
+          "p95_ms": 1.3232,
+          "total_ms": 102.9687
+        },
+        "flow_credit_wait": {
+          "samples": 193,
+          "median_ms": 0.0058,
+          "p95_ms": 13.3401,
+          "total_ms": 427.0812
+        },
+        "destination_write_drain": {
+          "samples": 48,
+          "median_ms": 0.0038,
+          "p95_ms": 0.0054,
+          "total_ms": 0.1783
+        },
+        "destination_read_wait": {
+          "samples": 193,
+          "median_ms": 0.0138,
+          "p95_ms": 0.0496,
+          "total_ms": 17.0458
+        }
+      },
+      "relay_event_count": 1820,
+      "notes": "Loopback testbed with three real relay hops in one process. CPU is process-wide and includes the relays. The crypto estimate uses the real seal/open helpers. The residual is dispatch, event-loop scheduling, socket I/O and relay-side bookkeeping that is not represented by the measured primitives."
+    },
+    {
+      "schema_version": 1,
+      "kind": "thor_dispatch_profile",
+      "variant": {
+        "variant": "combined",
+        "io_batch": true,
+        "lean_dispatch": true
+      },
+      "config": {
+        "chunk_bytes": 65536,
+        "commands": 48,
+        "commands_per_stream": 48,
+        "batch_size": 4,
+        "streams": 1,
+        "collect_relay_metrics": true,
+        "with_counters": true
+      },
+      "result": {
+        "wall_ms": 541.6362,
+        "cpu_ms": 531.25,
+        "goodput_mbps": 46.46259611155975,
+        "payload_bytes": 3145728,
+        "received_bytes": 3145728,
+        "integrity": true,
+        "wall_per_command_us": 11284.0875,
+        "cpu_per_command_us": 11067.708333333334,
+        "wall_per_byte_ns": 172.18151092529297,
+        "cpu_fraction_of_one_core": 0.9808243983692375
+      },
+      "primitive_counters": {
+        "futures_created": 1068,
+        "wait_for_calls": 548,
+        "gather_calls": 14,
+        "lock_acquires": 1138,
+        "loop_iterations": 734,
+        "timeout_contexts": 0
+      },
+      "primitive_counters_per_command": {
+        "futures_created": 22.25,
+        "wait_for_calls": 11.416666666666666,
+        "gather_calls": 0.2916666666666667,
+        "lock_acquires": 23.708333333333332,
+        "loop_iterations": 15.291666666666666,
+        "timeout_contexts": 0.0
+      },
+      "primitive_costs": {
+        "future_create_ns": 700,
+        "future_set_result_ns": 300,
+        "lock_acquire_ns": 3000,
+        "wait_for_arm_disarm_ns": 19700,
+        "gather_two_futures_ns": 26300,
+        "monotonic_call_ns": 500
+      },
+      "crypto": {
+        "seal_ns": 159950.0,
+        "open_ns": 142700.0,
+        "command_crypto_ns": 1815900.0,
+        "payload_bytes": 65536
+      },
+      "aead_measured": {
+        "seal_calls_per_command": 24.1875,
+        "open_calls_per_command": 24.1875,
+        "ns_per_command": 3108268.75,
+        "share_of_wall": 0.27545592410551584,
+        "share_of_cpu": 0.28084122352941177
+      },
+      "attribution_ns_per_command": {
+        "crypto_estimate": 1815900.0,
+        "aead_measured": 3108268.75,
+        "asyncio_primitives": 319279.1666666667,
+        "residual_after_measured_aead": 7856539.583333333,
+        "residual_dispatch_and_io": 9148908.333333334
+      },
+      "client_write_metrics": {},
+      "relay_stage_summary": {
+        "relay_reply_send": {
+          "samples": 303,
+          "median_ms": 0.0977,
+          "p95_ms": 0.2426,
+          "total_ms": 51.7692
+        },
+        "command_dispatch": {
+          "samples": 303,
+          "median_ms": 0.2842,
+          "p95_ms": 10.0929,
+          "total_ms": 696.3154
+        },
+        "downstream_response_wait": {
+          "samples": 201,
+          "median_ms": 6.2659,
+          "p95_ms": 14.8684,
+          "total_ms": 1425.0426
+        },
+        "relay_event_send": {
+          "samples": 579,
+          "median_ms": 0.0316,
+          "p95_ms": 1.281,
+          "total_ms": 102.8646
+        },
+        "flow_credit_wait": {
+          "samples": 193,
+          "median_ms": 0.0058,
+          "p95_ms": 13.2116,
+          "total_ms": 436.0582
+        },
+        "destination_write_drain": {
+          "samples": 48,
+          "median_ms": 0.0039,
+          "p95_ms": 0.0057,
+          "total_ms": 0.19039999999999999
+        },
+        "destination_read_wait": {
+          "samples": 193,
+          "median_ms": 0.0137,
+          "p95_ms": 0.0454,
+          "total_ms": 16.968700000000002
+        }
+      },
+      "relay_event_count": 1820,
+      "notes": "Loopback testbed with three real relay hops in one process. CPU is process-wide and includes the relays. The crypto estimate uses the real seal/open helpers. The residual is dispatch, event-loop scheduling, socket I/O and relay-side bookkeeping that is not represented by the measured primitives."
+    },
+    {
+      "schema_version": 1,
+      "kind": "thor_dispatch_profile",
+      "variant": {
+        "variant": "combined",
+        "io_batch": true,
+        "lean_dispatch": true
+      },
+      "config": {
+        "chunk_bytes": 65536,
+        "commands": 48,
+        "commands_per_stream": 48,
+        "batch_size": 4,
+        "streams": 1,
+        "collect_relay_metrics": true,
+        "with_counters": true
+      },
+      "result": {
+        "wall_ms": 646.2913,
+        "cpu_ms": 578.125,
+        "goodput_mbps": 38.93882526346865,
+        "payload_bytes": 3145728,
+        "received_bytes": 3145728,
+        "integrity": true,
+        "wall_per_command_us": 13464.402083333334,
+        "cpu_per_command_us": 12044.270833333334,
+        "wall_per_byte_ns": 205.4504712422689,
+        "cpu_fraction_of_one_core": 0.8945269725896047
+      },
+      "primitive_counters": {
+        "futures_created": 1068,
+        "wait_for_calls": 548,
+        "gather_calls": 14,
+        "lock_acquires": 1138,
+        "loop_iterations": 734,
+        "timeout_contexts": 0
+      },
+      "primitive_counters_per_command": {
+        "futures_created": 22.25,
+        "wait_for_calls": 11.416666666666666,
+        "gather_calls": 0.2916666666666667,
+        "lock_acquires": 23.708333333333332,
+        "loop_iterations": 15.291666666666666,
+        "timeout_contexts": 0.0
+      },
+      "primitive_costs": {
+        "future_create_ns": 1600,
+        "future_set_result_ns": 600,
+        "lock_acquire_ns": 3000,
+        "wait_for_arm_disarm_ns": 22200,
+        "gather_two_futures_ns": 26200,
+        "monotonic_call_ns": 600
+      },
+      "crypto": {
+        "seal_ns": 162950.0,
+        "open_ns": 160550.0,
+        "command_crypto_ns": 1941000.0,
+        "payload_bytes": 65536
+      },
+      "aead_measured": {
+        "seal_calls_per_command": 24.1875,
+        "open_calls_per_command": 24.1875,
+        "ns_per_command": 3613575.0,
+        "share_of_wall": 0.2683799085644507,
+        "share_of_cpu": 0.30002438918918917
+      },
+      "attribution_ns_per_command": {
+        "crypto_estimate": 1941000.0,
+        "aead_measured": 3613575.0,
+        "asyncio_primitives": 367816.6666666667,
+        "residual_after_measured_aead": 9483010.416666668,
+        "residual_dispatch_and_io": 11155585.416666668
+      },
+      "client_write_metrics": {},
+      "relay_stage_summary": {
+        "relay_reply_send": {
+          "samples": 303,
+          "median_ms": 0.127,
+          "p95_ms": 0.3274,
+          "total_ms": 60.9448
+        },
+        "command_dispatch": {
+          "samples": 303,
+          "median_ms": 0.3288,
+          "p95_ms": 12.0204,
+          "total_ms": 820.0885
+        },
+        "downstream_response_wait": {
+          "samples": 201,
+          "median_ms": 6.7109,
+          "p95_ms": 16.954,
+          "total_ms": 1718.828
+        },
+        "relay_event_send": {
+          "samples": 579,
+          "median_ms": 0.033,
+          "p95_ms": 1.3949,
+          "total_ms": 127.6875
+        },
+        "flow_credit_wait": {
+          "samples": 193,
+          "median_ms": 0.006,
+          "p95_ms": 16.8245,
+          "total_ms": 520.9321
+        },
+        "destination_write_drain": {
+          "samples": 48,
+          "median_ms": 0.00395,
+          "p95_ms": 0.0055,
+          "total_ms": 0.2053
+        },
+        "destination_read_wait": {
+          "samples": 193,
+          "median_ms": 0.0147,
+          "p95_ms": 0.0434,
+          "total_ms": 18.5773
+        }
+      },
+      "relay_event_count": 1820,
+      "notes": "Loopback testbed with three real relay hops in one process. CPU is process-wide and includes the relays. The crypto estimate uses the real seal/open helpers. The residual is dispatch, event-loop scheduling, socket I/O and relay-side bookkeeping that is not represented by the measured primitives."
+    }
+  ],
+  "notes": "Loopback only; see per-run notes for the attribution caveats."
+}
