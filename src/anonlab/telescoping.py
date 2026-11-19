@@ -411,6 +411,9 @@ class RelayNode:
     authorized_peer_ids: frozenset[bytes] | None = None
     # Opt-in, bounded relay-side timings for research benchmarks. Default off.
     collect_relay_metrics: bool = False
+    # Lab knob: how many bytes the exit may read from the destination per event.
+    # Defaults to the protocol chunk size, so the standard path is unchanged.
+    stream_read_chunk_bytes: int = STREAM_CHUNK_BYTES
     bound_host: str | None = field(default=None, init=False, repr=False)
     _active_connections: int = field(default=0, init=False, repr=False)
     _descriptor_cache_key: tuple[Any, ...] | None = field(default=None, init=False, repr=False)
@@ -424,6 +427,14 @@ class RelayNode:
         relay_id_for(self.identity_digest)
         if not isinstance(self.collect_relay_metrics, bool):
             raise ValueError("collect_relay_metrics must be a boolean")
+        if (
+            not isinstance(self.stream_read_chunk_bytes, int)
+            or isinstance(self.stream_read_chunk_bytes, bool)
+            or not 1 <= self.stream_read_chunk_bytes <= MAX_STREAM_WINDOW_BYTES
+        ):
+            raise ValueError(
+                f"stream_read_chunk_bytes must be within 1..{MAX_STREAM_WINDOW_BYTES}"
+            )
         if self.identity_private_key is not None:
             public_bytes = _ed25519_raw_public(self.identity_private_key.public_key())
             expected = hashlib.sha256(b"MALEBOLGE/relay-identity/v1\x00" + public_bytes).digest()[:20]
@@ -771,7 +782,7 @@ class RelayNode:
                             )
                         if state.read_closed:
                             return
-                        requested = min(STREAM_CHUNK_BYTES, state.read_credit)
+                        requested = min(self.stream_read_chunk_bytes, state.read_credit)
                         # Reserve credit before awaiting socket I/O so WINDOW cannot over-credit.
                         state.read_credit -= requested
                     read_started_ns = time.perf_counter_ns() if self.collect_relay_metrics else 0
@@ -1630,6 +1641,10 @@ class DuplexCircuitStream:
         self._closed = False
         self._error: BaseException | None = None
         self._pending_window_credit = 0
+        # Lab variant D: bounded single-flight credit backlog. Empty in the
+        # default path, where credit updates are awaited inline.
+        self._credit_backlog = 0
+        self._credit_task: asyncio.Task[None] | None = None
 
     @property
     def stream_id(self) -> int:
@@ -1676,7 +1691,7 @@ class DuplexCircuitStream:
             current_sequence, current_stream_id = child_sequence, child_stream_id
             current_kind, current_envelope = child_kind, child_envelope
         if current_kind == LINK_EVENT_DATA:
-            if not final_payload or len(final_payload) > STREAM_CHUNK_BYTES:
+            if not final_payload or len(final_payload) > self._client.max_event_bytes:
                 raise ValueError("duplex data event has an invalid payload length")
             if len(self._receive_buffer) + len(final_payload) > MAX_STREAM_WINDOW_BYTES:
                 raise ValueError("duplex receive window exceeded; refusing unbounded buffering")
@@ -1786,7 +1801,15 @@ class DuplexCircuitStream:
                         timeout=self._client.window_update_max_delay_seconds,
                     )
                 except asyncio.TimeoutError:
-                    await self._flush_window_credit()
+                    # The deadline exists so a sparse stream cannot deadlock
+                    # waiting for credit. When the caller sets a floor, a flush
+                    # is only needed once the bytes still unreturned could
+                    # starve the relay (buffered data is empty here, so the
+                    # relay holds window - pending); below the floor it still
+                    # has credit and data will arrive without a control round
+                    # trip. The control default (0) flushes on every deadline.
+                    if self._pending_window_credit >= self._client.window_update_flush_floor_bytes:
+                        await self._flush_window_credit()
                 continue
             await self._receive_signal.wait()
 
@@ -1800,11 +1823,41 @@ class DuplexCircuitStream:
         # Reserve the batch before awaiting I/O so concurrently delivered events
         # cannot be included twice. On transport failure, the circuit is unusable.
         self._pending_window_credit = 0
+        if self._client.window_credit_pipeline:
+            # The acknowledgement is still validated, in order, but off the read
+            # path. Amounts are never merged across ACKs and the backlog is
+            # bounded, so the relay is never granted more than bytes already
+            # consumed and the client never buffers beyond one window.
+            self._credit_backlog += amount
+            if self._credit_backlog > MAX_STREAM_WINDOW_BYTES:
+                self._credit_backlog = 0
+                raise ValueError("pipelined credit backlog exceeds the stream window")
+            if self._credit_task is None or self._credit_task.done():
+                self._credit_task = asyncio.create_task(self._pump_credit_updates())
+            return
         reply = await self._client._send_duplex_command(
             self, "V", _encode_window_update_body(amount), FORWARD_WINDOW_UPDATE
         )
         if reply != b"WINDOW_UPDATED":
             raise ValueError("invalid stream-window acknowledgement")
+
+    async def _pump_credit_updates(self) -> None:
+        """Send queued WINDOW_UPDATE commands one at a time, off the read path."""
+        try:
+            while self._credit_backlog and not self._closed and not self._remote_eof_received:
+                amount = self._credit_backlog
+                self._credit_backlog = 0
+                reply = await self._client._send_duplex_command(
+                    self, "V", _encode_window_update_body(amount), FORWARD_WINDOW_UPDATE
+                )
+                if reply != b"WINDOW_UPDATED":
+                    raise ValueError("invalid stream-window acknowledgement")
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            self._fail(exc)
+            with contextlib.suppress(Exception):
+                await self._client.close()
 
     async def write_eof(self) -> None:
         # EOF may not overtake any pipelined WRITE on this stream.
@@ -1829,6 +1882,11 @@ class DuplexCircuitStream:
             if reply != b"STREAM_CLOSED":
                 raise ValueError("invalid stream-close acknowledgement")
             self._closed = True
+            credit_task = self._credit_task
+            self._credit_task = None
+            if credit_task is not None and credit_task is not asyncio.current_task():
+                credit_task.cancel()
+                await asyncio.gather(credit_task, return_exceptions=True)
             self._fail(ConnectionError("duplex stream closed by caller"))
             self._client._active_duplex_streams.pop(self.logical_id, None)
             self._client._ignored_events.update(
@@ -1872,6 +1930,9 @@ class TelescopingClient:
         max_active_streams: int = MAX_ACTIVE_STREAMS,
         window_update_batch_bytes: int = WINDOW_UPDATE_BATCH_BYTES,
         window_update_max_delay_seconds: float = WINDOW_UPDATE_MAX_DELAY_SECONDS,
+        max_event_bytes: int = STREAM_CHUNK_BYTES,
+        window_credit_pipeline: bool = False,
+        window_update_flush_floor_bytes: int = 0,
         fair_write_scheduling: bool = False,
         collect_write_metrics: bool = False,
     ) -> None:
@@ -1899,6 +1960,22 @@ class TelescopingClient:
             or not 0 < window_update_max_delay_seconds <= 1.0
         ):
             raise ValueError("window_update_max_delay_seconds must be finite and within (0, 1.0]")
+        if (
+            not isinstance(max_event_bytes, int)
+            or isinstance(max_event_bytes, bool)
+            or not 1 <= max_event_bytes <= MAX_STREAM_WINDOW_BYTES
+        ):
+            raise ValueError(f"max_event_bytes must be within 1..{MAX_STREAM_WINDOW_BYTES}")
+        if not isinstance(window_credit_pipeline, bool):
+            raise ValueError("window_credit_pipeline must be a boolean")
+        if (
+            not isinstance(window_update_flush_floor_bytes, int)
+            or isinstance(window_update_flush_floor_bytes, bool)
+            or not 0 <= window_update_flush_floor_bytes <= MAX_STREAM_WINDOW_BYTES
+        ):
+            raise ValueError(
+                f"window_update_flush_floor_bytes must be within 0..{MAX_STREAM_WINDOW_BYTES}"
+            )
         self.idle_timeout_seconds = float(idle_timeout_seconds)
         self.max_lifetime_seconds = float(max_lifetime_seconds)
         if not isinstance(fair_write_scheduling, bool):
@@ -1908,6 +1985,9 @@ class TelescopingClient:
         self.max_active_streams = max_active_streams
         self.window_update_batch_bytes = window_update_batch_bytes
         self.window_update_max_delay_seconds = float(window_update_max_delay_seconds)
+        self.max_event_bytes = max_event_bytes
+        self.window_credit_pipeline = window_credit_pipeline
+        self.window_update_flush_floor_bytes = window_update_flush_floor_bytes
         self.fair_write_scheduling = fair_write_scheduling
         self.collect_write_metrics = collect_write_metrics
         self.hops: list[ClientHop] = []
