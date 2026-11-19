@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
 import json
 import os
 import statistics
@@ -142,6 +143,7 @@ async def profile_dispatch(
     batch_size: int = 4,
     collect_relay_metrics: bool = True,
     with_counters: bool = True,
+    transfer_timeout_s: float = 180.0,
 ) -> dict[str, Any]:
     """Run one instrumented transfer and return a per-command cost breakdown.
 
@@ -180,22 +182,33 @@ async def profile_dispatch(
         payload = os.urandom(chunk_bytes)
 
         async def one_stream(stream: Any) -> dict[str, float]:
-            received = 0
-            started = time.perf_counter_ns()
             batches = max(1, per_stream_commands // batch_size)
             block = payload * batch_size
             block_bytes = len(block)
-            sent = 0
-            for _ in range(batches):
-                await stream.write_pipelined(
-                    block, chunk_bytes=chunk_bytes, max_in_flight=batch_size
-                )
-                sent += block_bytes
-            while received < sent:
-                chunk = await stream.read_chunk()
-                if not chunk:
-                    break
-                received += len(chunk)
+            sent = batches * block_bytes
+            received = 0
+            started = time.perf_counter_ns()
+
+            async def writer() -> None:
+                for _ in range(batches):
+                    await stream.write_pipelined(
+                        block, chunk_bytes=chunk_bytes, max_in_flight=batch_size
+                    )
+                await stream.write_eof()
+
+            async def reader() -> None:
+                nonlocal received
+                while received < sent:
+                    chunk = await stream.read_chunk()
+                    if not chunk:
+                        return
+                    received += len(chunk)
+
+            # Duplex streams are bounded by a read-credit window: writing the whole
+            # payload before reading can deadlock once the exit stalls on exhausted
+            # credit. The benchmark workloads do the same thing, which is why this
+            # profiler drives writer and reader concurrently.
+            await asyncio.gather(writer(), reader())
             elapsed_ns = time.perf_counter_ns() - started
             return {"elapsed_ns": elapsed_ns, "received": received, "sent": sent}
 
@@ -208,7 +221,10 @@ async def profile_dispatch(
         try:
             wall_started = time.perf_counter_ns()
             cpu_started = time.process_time_ns()
-            results = await asyncio.gather(*(one_stream(stream) for stream in duplex_streams))
+            results = await asyncio.wait_for(
+                asyncio.gather(*(one_stream(stream) for stream in duplex_streams)),
+                timeout=transfer_timeout_s,
+            )
             wall_ns = time.perf_counter_ns() - wall_started
             cpu_ns = time.process_time_ns() - cpu_started
         finally:
@@ -217,7 +233,8 @@ async def profile_dispatch(
                 context.__exit__(None, None, None)
 
         for stream in duplex_streams:
-            await stream.close()
+            with contextlib.suppress(Exception):
+                await asyncio.wait_for(stream.close(), timeout=10)
 
         batches_per_stream = max(1, per_stream_commands // batch_size)
         total_commands = batches_per_stream * batch_size * streams
@@ -308,10 +325,11 @@ async def profile_dispatch(
         }
     finally:
         try:
-            await client.close()
+            await asyncio.wait_for(client.close(), timeout=15)
         except Exception:  # noqa: BLE001 - teardown must not hide the profile
             pass
-        await testbed.close()
+        with contextlib.suppress(Exception):
+            await asyncio.wait_for(testbed.close(), timeout=15)
 
 
 async def profile_variants(
@@ -322,6 +340,7 @@ async def profile_variants(
     streams: int,
     repeats: int,
     batch_size: int = 4,
+    transfer_timeout_s: float = 180.0,
 ) -> dict[str, Any]:
     if not 1 <= repeats <= 20:
         raise ValueError("repeats must be within 1..20")
@@ -335,6 +354,7 @@ async def profile_variants(
                     commands=commands,
                     streams=streams,
                     batch_size=batch_size,
+                    transfer_timeout_s=transfer_timeout_s,
                 )
             )
     grouped: dict[str, list[dict[str, Any]]] = {}
