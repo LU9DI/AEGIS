@@ -1,0 +1,74 @@
+{
+  "output": "experiments\\thor-p2-lab\\campaign-01",
+  "manifest": "experiments\\thor-p2-lab\\campaign-01\\manifest.json",
+  "duration_s": 368.8911337852478,
+  "failures": 0,
+  "accepted": [],
+  "decisions": {
+    "credit-window-128k": {
+      "workloads_with_ci_lower_bound_above_1": 0,
+      "workloads_measured": 5,
+      "p95_within_5_percent": false,
+      "p99_within_5_percent": false,
+      "integrity_ok": true,
+      "accepted": false
+    },
+    "credit-window-256k": {
+      "workloads_with_ci_lower_bound_above_1": 1,
+      "workloads_measured": 5,
+      "p95_within_5_percent": false,
+      "p99_within_5_percent": false,
+      "integrity_ok": true,
+      "accepted": false
+    },
+    "credit-policy-32k-1ms": {
+      "workloads_with_ci_lower_bound_above_1": 0,
+      "workloads_measured": 5,
+      "p95_within_5_percent": false,
+      "p99_within_5_percent": false,
+      "integrity_ok": true,
+      "accepted": false
+    },
+    "credit-policy-128k-4ms": {
+      "workloads_with_ci_lower_bound_above_1": 2,
+      "workloads_measured": 5,
+      "p95_within_5_percent": false,
+      "p99_within_5_percent": false,
+      "integrity_ok": true,
+      "accepted": false
+    },
+    "events-32k": {
+      "workloads_with_ci_lower_bound_above_1": 1,
+      "workloads_measured": 5,
+      "p95_within_5_percent": false,
+      "p99_within_5_percent": false,
+      "integrity_ok": true,
+      "accepted": false
+    },
+    "events-64k": {
+      "workloads_with_ci_lower_bound_above_1": 1,
+      "workloads_measured": 5,
+      "p95_within_5_percent": false,
+      "p99_within_5_percent": false,
+      "integrity_ok": true,
+      "accepted": false
+    },
+    "credit-policy-window-aware": {
+      "workloads_with_ci_lower_bound_above_1": 3,
+      "workloads_measured": 5,
+      "p95_within_5_percent": false,
+      "p99_within_5_percent": false,
+      "integrity_ok": true,
+      "accepted": false
+    },
+    "ack-pipeline": {
+      "workloads_with_ci_lower_bound_above_1": 0,
+      "workloads_measured": 5,
+      "p95_within_5_percent": false,
+      "p99_within_5_percent": false,
+      "integrity_ok": true,
+      "accepted": false
+    }
+  }
+}
+EXIT=0

@@ -1,0 +1,3417 @@
+{
+  "schema_version": 1,
+  "experiment": "THOR P2 relay credit, WINDOW_UPDATE policy, response-event size and ACK pipelining",
+  "tier": "loopback",
+  "metadata": {
+    "aegis_version": "0.26.0",
+    "python": "3.14.6",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "started_at_unix": 1795099986.8383725,
+    "finished_at_unix": 1795100355.7295063,
+    "duration_s": 368.8911337852478,
+    "git": {
+      "commit": "8c35be6b7794e77117023cb779feae3424a3fabe",
+      "branch": "perf/thor-relay-credit-event-lab",
+      "dirty": false
+    },
+    "trials_per_cell": 7,
+    "warmups_per_cell": 1,
+    "base_seed": 20261118,
+    "bootstrap_seed": 7717,
+    "arms": [
+      "control",
+      "credit-window-128k",
+      "credit-window-256k",
+      "credit-policy-32k-1ms",
+      "credit-policy-128k-4ms",
+      "events-32k",
+      "events-64k",
+      "credit-policy-window-aware",
+      "ack-pipeline"
+    ],
+    "workloads": [
+      "bulk_1mib_c16k",
+      "bulk_256k_c16k",
+      "bulk_256k_c256k",
+      "parallel_8x64k",
+      "duplex_4x128cmd"
+    ],
+    "workload_definitions": {
+      "bulk_1mib_c16k": {
+        "name": "bulk_1mib_c16k",
+        "streams": 1,
+        "payload_bytes_per_stream": 1048576,
+        "total_bytes": 1048576,
+        "write_chunk_bytes": 16384,
+        "max_in_flight": 4,
+        "commands_per_stream": 64,
+        "command_count": 64
+      },
+      "bulk_256k_c16k": {
+        "name": "bulk_256k_c16k",
+        "streams": 1,
+        "payload_bytes_per_stream": 262144,
+        "total_bytes": 262144,
+        "write_chunk_bytes": 16384,
+        "max_in_flight": 4,
+        "commands_per_stream": 16,
+        "command_count": 16
+      },
+      "bulk_256k_c256k": {
+        "name": "bulk_256k_c256k",
+        "streams": 1,
+        "payload_bytes_per_stream": 262144,
+        "total_bytes": 262144,
+        "write_chunk_bytes": 262144,
+        "max_in_flight": 1,
+        "commands_per_stream": 1,
+        "command_count": 1
+      },
+      "parallel_8x64k": {
+        "name": "parallel_8x64k",
+        "streams": 8,
+        "payload_bytes_per_stream": 65536,
+        "total_bytes": 524288,
+        "write_chunk_bytes": 16384,
+        "max_in_flight": 4,
+        "commands_per_stream": 4,
+        "command_count": 32
+      },
+      "duplex_4x128cmd": {
+        "name": "duplex_4x128cmd",
+        "streams": 4,
+        "payload_bytes_per_stream": 524288,
+        "total_bytes": 2097152,
+        "write_chunk_bytes": 4096,
+        "max_in_flight": 4,
+        "commands_per_stream": 128,
+        "command_count": 512
+      }
+    },
+    "variant_definitions": {
+      "control": {
+        "name": "control",
+        "description": "Protocol default: 64 KiB window, 64 KiB/2 ms credit updates, 16 KiB events, ACK awaited inline.",
+        "credit_window_bytes": 65536,
+        "credit_batch_bytes": 65536,
+        "credit_delay_seconds": 0.002,
+        "flush_floor_bytes": 0,
+        "relay_read_chunk_bytes": 16384,
+        "max_event_bytes": 16384,
+        "credit_pipeline": false
+      },
+      "credit-window-128k": {
+        "name": "credit-window-128k",
+        "description": "Control plus a 128 KiB total read window granted right after STREAM_STARTED.",
+        "credit_window_bytes": 131072,
+        "credit_batch_bytes": 65536,
+        "credit_delay_seconds": 0.002,
+        "flush_floor_bytes": 0,
+        "relay_read_chunk_bytes": 16384,
+        "max_event_bytes": 16384,
+        "credit_pipeline": false
+      },
+      "credit-window-256k": {
+        "name": "credit-window-256k",
+        "description": "Control plus the maximum 256 KiB total read window granted right after STREAM_STARTED.",
+        "credit_window_bytes": 262144,
+        "credit_batch_bytes": 65536,
+        "credit_delay_seconds": 0.002,
+        "flush_floor_bytes": 0,
+        "relay_read_chunk_bytes": 16384,
+        "max_event_bytes": 16384,
+        "credit_pipeline": false
+      },
+      "credit-policy-32k-1ms": {
+        "name": "credit-policy-32k-1ms",
+        "description": "Control with finer credit updates: 32 KiB batch, 1 ms deadline flush.",
+        "credit_window_bytes": 65536,
+        "credit_batch_bytes": 32768,
+        "credit_delay_seconds": 0.001,
+        "flush_floor_bytes": 0,
+        "relay_read_chunk_bytes": 16384,
+        "max_event_bytes": 16384,
+        "credit_pipeline": false
+      },
+      "credit-policy-128k-4ms": {
+        "name": "credit-policy-128k-4ms",
+        "description": "Control with coarser credit updates: 128 KiB batch, 4 ms deadline flush.",
+        "credit_window_bytes": 65536,
+        "credit_batch_bytes": 131072,
+        "credit_delay_seconds": 0.004,
+        "flush_floor_bytes": 0,
+        "relay_read_chunk_bytes": 16384,
+        "max_event_bytes": 16384,
+        "credit_pipeline": false
+      },
+      "events-32k": {
+        "name": "events-32k",
+        "description": "Control with 32 KiB destination reads and a 32 KiB client event bound.",
+        "credit_window_bytes": 65536,
+        "credit_batch_bytes": 65536,
+        "credit_delay_seconds": 0.002,
+        "flush_floor_bytes": 0,
+        "relay_read_chunk_bytes": 32768,
+        "max_event_bytes": 32768,
+        "credit_pipeline": false
+      },
+      "events-64k": {
+        "name": "events-64k",
+        "description": "Control with 64 KiB destination reads and a 64 KiB client event bound.",
+        "credit_window_bytes": 65536,
+        "credit_batch_bytes": 65536,
+        "credit_delay_seconds": 0.002,
+        "flush_floor_bytes": 0,
+        "relay_read_chunk_bytes": 65536,
+        "max_event_bytes": 65536,
+        "credit_pipeline": false
+      },
+      "credit-policy-window-aware": {
+        "name": "credit-policy-window-aware",
+        "description": "Control with the deadline flush gated by outstanding credit: no WINDOW_UPDATE while the relay still holds at least half the window (bounded and deadlock-free; the 2 ms deadline still applies above it).",
+        "credit_window_bytes": 65536,
+        "credit_batch_bytes": 65536,
+        "credit_delay_seconds": 0.002,
+        "flush_floor_bytes": 32768,
+        "relay_read_chunk_bytes": 16384,
+        "max_event_bytes": 16384,
+        "credit_pipeline": false
+      },
+      "ack-pipeline": {
+        "name": "ack-pipeline",
+        "description": "Control with the WINDOW_UPDATE acknowledgement validated off the read path (single-flight, bounded backlog, same relay-side credit limits).",
+        "credit_window_bytes": 65536,
+        "credit_batch_bytes": 65536,
+        "credit_delay_seconds": 0.002,
+        "flush_floor_bytes": 0,
+        "relay_read_chunk_bytes": 16384,
+        "max_event_bytes": 16384,
+        "credit_pipeline": true
+      }
+    },
+    "warning": "Loopback only, one host, relays in the same Python process. No WAN, Tor, anonymity or 90%-of-Surface claim follows from these numbers."
+  },
+  "summary": {
+    "cells": {
+      "bulk_1mib_c16k/control": {
+        "workload": "bulk_1mib_c16k",
+        "arm": "control",
+        "variant_config": {
+          "name": "control",
+          "description": "Protocol default: 64 KiB window, 64 KiB/2 ms credit updates, 16 KiB events, ACK awaited inline.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 15.739214784933628,
+        "goodput_mbps_p95": 17.670658637225007,
+        "wall_ms_median": 532.975,
+        "ttfb_ms_median": 5.2117,
+        "read_latency_ms_p95_median": 11.3399,
+        "read_latency_ms_p99_median": 18.9147,
+        "downstream_response_wait_ms_median": 446.8059,
+        "flow_credit_wait_ms_median": 0.4697,
+        "client_visible_events_median": 65.0,
+        "window_updates_median": 55.0,
+        "aead_ops_per_kib_median": 1.787109375,
+        "peak_rss_kb_median": 50048.0
+      },
+      "bulk_1mib_c16k/credit-window-128k": {
+        "workload": "bulk_1mib_c16k",
+        "arm": "credit-window-128k",
+        "variant_config": {
+          "name": "credit-window-128k",
+          "description": "Control plus a 128 KiB total read window granted right after STREAM_STARTED.",
+          "credit_window_bytes": 131072,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 17.885086202724317,
+        "goodput_mbps_p95": 20.93297193218688,
+        "wall_ms_median": 469.0281,
+        "ttfb_ms_median": 4.9039,
+        "read_latency_ms_p95_median": 10.1686,
+        "read_latency_ms_p99_median": 12.7628,
+        "downstream_response_wait_ms_median": 434.89799999999997,
+        "flow_credit_wait_ms_median": 0.4421,
+        "client_visible_events_median": 65.0,
+        "window_updates_median": 54.0,
+        "aead_ops_per_kib_median": 1.763671875,
+        "peak_rss_kb_median": 50124.0
+      },
+      "bulk_1mib_c16k/credit-window-256k": {
+        "workload": "bulk_1mib_c16k",
+        "arm": "credit-window-256k",
+        "variant_config": {
+          "name": "credit-window-256k",
+          "description": "Control plus the maximum 256 KiB total read window granted right after STREAM_STARTED.",
+          "credit_window_bytes": 262144,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 16.618910902308965,
+        "goodput_mbps_p95": 19.832377958623596,
+        "wall_ms_median": 504.7628000000001,
+        "ttfb_ms_median": 5.7016,
+        "read_latency_ms_p95_median": 10.6909,
+        "read_latency_ms_p99_median": 14.0617,
+        "downstream_response_wait_ms_median": 450.647,
+        "flow_credit_wait_ms_median": 0.5028,
+        "client_visible_events_median": 65.0,
+        "window_updates_median": 57.0,
+        "aead_ops_per_kib_median": 1.798828125,
+        "peak_rss_kb_median": 50124.0
+      },
+      "bulk_1mib_c16k/credit-policy-32k-1ms": {
+        "workload": "bulk_1mib_c16k",
+        "arm": "credit-policy-32k-1ms",
+        "variant_config": {
+          "name": "credit-policy-32k-1ms",
+          "description": "Control with finer credit updates: 32 KiB batch, 1 ms deadline flush.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 32768,
+          "credit_delay_seconds": 0.001,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 16.718630574739993,
+        "goodput_mbps_p95": 18.18317155428621,
+        "wall_ms_median": 501.75210000000004,
+        "ttfb_ms_median": 5.4933,
+        "read_latency_ms_p95_median": 10.4454,
+        "read_latency_ms_p99_median": 11.9872,
+        "downstream_response_wait_ms_median": 549.512,
+        "flow_credit_wait_ms_median": 0.4552,
+        "client_visible_events_median": 65.0,
+        "window_updates_median": 63.0,
+        "aead_ops_per_kib_median": 1.880859375,
+        "peak_rss_kb_median": 50124.0
+      },
+      "bulk_1mib_c16k/credit-policy-128k-4ms": {
+        "workload": "bulk_1mib_c16k",
+        "arm": "credit-policy-128k-4ms",
+        "variant_config": {
+          "name": "credit-policy-128k-4ms",
+          "description": "Control with coarser credit updates: 128 KiB batch, 4 ms deadline flush.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 131072,
+          "credit_delay_seconds": 0.004,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 20.713967704059648,
+        "goodput_mbps_p95": 23.618378541831316,
+        "wall_ms_median": 404.9735,
+        "ttfb_ms_median": 4.6368,
+        "read_latency_ms_p95_median": 12.395,
+        "read_latency_ms_p99_median": 13.4303,
+        "downstream_response_wait_ms_median": 343.2009,
+        "flow_credit_wait_ms_median": 41.679,
+        "client_visible_events_median": 65.0,
+        "window_updates_median": 28.0,
+        "aead_ops_per_kib_median": 1.470703125,
+        "peak_rss_kb_median": 50124.0
+      },
+      "bulk_1mib_c16k/events-32k": {
+        "workload": "bulk_1mib_c16k",
+        "arm": "events-32k",
+        "variant_config": {
+          "name": "events-32k",
+          "description": "Control with 32 KiB destination reads and a 32 KiB client event bound.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 32768,
+          "max_event_bytes": 32768,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 18.285634566674076,
+        "goodput_mbps_p95": 20.305912494347773,
+        "wall_ms_median": 458.754,
+        "ttfb_ms_median": 4.9738,
+        "read_latency_ms_p95_median": 10.9948,
+        "read_latency_ms_p99_median": 11.3194,
+        "downstream_response_wait_ms_median": 425.47139999999996,
+        "flow_credit_wait_ms_median": 0.4054,
+        "client_visible_events_median": 65.0,
+        "window_updates_median": 51.0,
+        "aead_ops_per_kib_median": 1.740234375,
+        "peak_rss_kb_median": 49828.0
+      },
+      "bulk_1mib_c16k/events-64k": {
+        "workload": "bulk_1mib_c16k",
+        "arm": "events-64k",
+        "variant_config": {
+          "name": "events-64k",
+          "description": "Control with 64 KiB destination reads and a 64 KiB client event bound.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 65536,
+          "max_event_bytes": 65536,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 16.193367377864572,
+        "goodput_mbps_p95": 20.866794773729346,
+        "wall_ms_median": 518.0274,
+        "ttfb_ms_median": 6.5824,
+        "read_latency_ms_p95_median": 11.5868,
+        "read_latency_ms_p99_median": 13.3296,
+        "downstream_response_wait_ms_median": 470.78700000000003,
+        "flow_credit_wait_ms_median": 0.4101,
+        "client_visible_events_median": 65.0,
+        "window_updates_median": 53.0,
+        "aead_ops_per_kib_median": 1.763671875,
+        "peak_rss_kb_median": 50048.0
+      },
+      "bulk_1mib_c16k/credit-policy-window-aware": {
+        "workload": "bulk_1mib_c16k",
+        "arm": "credit-policy-window-aware",
+        "variant_config": {
+          "name": "credit-policy-window-aware",
+          "description": "Control with the deadline flush gated by outstanding credit: no WINDOW_UPDATE while the relay still holds at least half the window (bounded and deadlock-free; the 2 ms deadline still applies above it).",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 32768,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 19.76860530909302,
+        "goodput_mbps_p95": 23.120864461413582,
+        "wall_ms_median": 424.3399,
+        "ttfb_ms_median": 5.1412,
+        "read_latency_ms_p95_median": 11.3687,
+        "read_latency_ms_p99_median": 12.0919,
+        "downstream_response_wait_ms_median": 450.2238,
+        "flow_credit_wait_ms_median": 0.4605,
+        "client_visible_events_median": 65.0,
+        "window_updates_median": 31.0,
+        "aead_ops_per_kib_median": 1.505859375,
+        "peak_rss_kb_median": 50048.0
+      },
+      "bulk_1mib_c16k/ack-pipeline": {
+        "workload": "bulk_1mib_c16k",
+        "arm": "ack-pipeline",
+        "variant_config": {
+          "name": "ack-pipeline",
+          "description": "Control with the WINDOW_UPDATE acknowledgement validated off the read path (single-flight, bounded backlog, same relay-side credit limits).",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": true
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 15.399960566621665,
+        "goodput_mbps_p95": 19.209099525371784,
+        "wall_ms_median": 544.7162,
+        "ttfb_ms_median": 5.2678,
+        "read_latency_ms_p95_median": 12.155,
+        "read_latency_ms_p99_median": 14.3891,
+        "downstream_response_wait_ms_median": 776.4696,
+        "flow_credit_wait_ms_median": 0.4965,
+        "client_visible_events_median": 65.0,
+        "window_updates_median": 63.0,
+        "aead_ops_per_kib_median": 1.880859375,
+        "peak_rss_kb_median": 50048.0
+      },
+      "bulk_256k_c16k/control": {
+        "workload": "bulk_256k_c16k",
+        "arm": "control",
+        "variant_config": {
+          "name": "control",
+          "description": "Protocol default: 64 KiB window, 64 KiB/2 ms credit updates, 16 KiB events, ACK awaited inline.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 13.513961804076576,
+        "goodput_mbps_p95": 23.507852757572802,
+        "wall_ms_median": 155.1841,
+        "ttfb_ms_median": 5.8034,
+        "read_latency_ms_p95_median": 11.9982,
+        "read_latency_ms_p99_median": 14.8516,
+        "downstream_response_wait_ms_median": 139.95659999999998,
+        "flow_credit_wait_ms_median": 0.1317,
+        "client_visible_events_median": 17.0,
+        "window_updates_median": 15.0,
+        "aead_ops_per_kib_median": 1.8984375,
+        "peak_rss_kb_median": 51492.0
+      },
+      "bulk_256k_c16k/credit-window-128k": {
+        "workload": "bulk_256k_c16k",
+        "arm": "credit-window-128k",
+        "variant_config": {
+          "name": "credit-window-128k",
+          "description": "Control plus a 128 KiB total read window granted right after STREAM_STARTED.",
+          "credit_window_bytes": 131072,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 14.158188909344878,
+        "goodput_mbps_p95": 22.09512330545216,
+        "wall_ms_median": 148.1229,
+        "ttfb_ms_median": 4.9271,
+        "read_latency_ms_p95_median": 12.5033,
+        "read_latency_ms_p99_median": 14.8103,
+        "downstream_response_wait_ms_median": 141.47299999999998,
+        "flow_credit_wait_ms_median": 0.1341,
+        "client_visible_events_median": 17.0,
+        "window_updates_median": 16.0,
+        "aead_ops_per_kib_median": 1.8984375,
+        "peak_rss_kb_median": 51492.0
+      },
+      "bulk_256k_c16k/credit-window-256k": {
+        "workload": "bulk_256k_c16k",
+        "arm": "credit-window-256k",
+        "variant_config": {
+          "name": "credit-window-256k",
+          "description": "Control plus the maximum 256 KiB total read window granted right after STREAM_STARTED.",
+          "credit_window_bytes": 262144,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 12.595515072381426,
+        "goodput_mbps_p95": 24.690473135015427,
+        "wall_ms_median": 166.4999,
+        "ttfb_ms_median": 5.141,
+        "read_latency_ms_p95_median": 15.1015,
+        "read_latency_ms_p99_median": 18.4242,
+        "downstream_response_wait_ms_median": 159.2002,
+        "flow_credit_wait_ms_median": 0.1307,
+        "client_visible_events_median": 17.0,
+        "window_updates_median": 16.0,
+        "aead_ops_per_kib_median": 1.8984375,
+        "peak_rss_kb_median": 51492.0
+      },
+      "bulk_256k_c16k/credit-policy-32k-1ms": {
+        "workload": "bulk_256k_c16k",
+        "arm": "credit-policy-32k-1ms",
+        "variant_config": {
+          "name": "credit-policy-32k-1ms",
+          "description": "Control with finer credit updates: 32 KiB batch, 1 ms deadline flush.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 32768,
+          "credit_delay_seconds": 0.001,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 13.959952418451362,
+        "goodput_mbps_p95": 17.639742984778096,
+        "wall_ms_median": 150.2263,
+        "ttfb_ms_median": 5.9018,
+        "read_latency_ms_p95_median": 13.1519,
+        "read_latency_ms_p99_median": 14.1275,
+        "downstream_response_wait_ms_median": 174.3784,
+        "flow_credit_wait_ms_median": 0.1511,
+        "client_visible_events_median": 17.0,
+        "window_updates_median": 15.0,
+        "aead_ops_per_kib_median": 1.8984375,
+        "peak_rss_kb_median": 51492.0
+      },
+      "bulk_256k_c16k/credit-policy-128k-4ms": {
+        "workload": "bulk_256k_c16k",
+        "arm": "credit-policy-128k-4ms",
+        "variant_config": {
+          "name": "credit-policy-128k-4ms",
+          "description": "Control with coarser credit updates: 128 KiB batch, 4 ms deadline flush.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 131072,
+          "credit_delay_seconds": 0.004,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 16.885091472398862,
+        "goodput_mbps_p95": 28.942362364683213,
+        "wall_ms_median": 124.2014,
+        "ttfb_ms_median": 5.1645,
+        "read_latency_ms_p95_median": 12.6314,
+        "read_latency_ms_p99_median": 12.6479,
+        "downstream_response_wait_ms_median": 109.77940000000001,
+        "flow_credit_wait_ms_median": 0.1477,
+        "client_visible_events_median": 17.0,
+        "window_updates_median": 7.0,
+        "aead_ops_per_kib_median": 1.5234375,
+        "peak_rss_kb_median": 51492.0
+      },
+      "bulk_256k_c16k/events-32k": {
+        "workload": "bulk_256k_c16k",
+        "arm": "events-32k",
+        "variant_config": {
+          "name": "events-32k",
+          "description": "Control with 32 KiB destination reads and a 32 KiB client event bound.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 32768,
+          "max_event_bytes": 32768,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 12.927157020595654,
+        "goodput_mbps_p95": 21.1918945110201,
+        "wall_ms_median": 162.2284,
+        "ttfb_ms_median": 5.2206,
+        "read_latency_ms_p95_median": 13.8172,
+        "read_latency_ms_p99_median": 16.2986,
+        "downstream_response_wait_ms_median": 137.12380000000002,
+        "flow_credit_wait_ms_median": 0.1182,
+        "client_visible_events_median": 17.0,
+        "window_updates_median": 15.0,
+        "aead_ops_per_kib_median": 1.8984375,
+        "peak_rss_kb_median": 51492.0
+      },
+      "bulk_256k_c16k/events-64k": {
+        "workload": "bulk_256k_c16k",
+        "arm": "events-64k",
+        "variant_config": {
+          "name": "events-64k",
+          "description": "Control with 64 KiB destination reads and a 64 KiB client event bound.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 65536,
+          "max_event_bytes": 65536,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 15.236633856151025,
+        "goodput_mbps_p95": 20.824168185916456,
+        "wall_ms_median": 137.6388,
+        "ttfb_ms_median": 5.1099,
+        "read_latency_ms_p95_median": 9.6498,
+        "read_latency_ms_p99_median": 11.579,
+        "downstream_response_wait_ms_median": 133.524,
+        "flow_credit_wait_ms_median": 0.1164,
+        "client_visible_events_median": 17.0,
+        "window_updates_median": 14.0,
+        "aead_ops_per_kib_median": 1.8515625,
+        "peak_rss_kb_median": 51492.0
+      },
+      "bulk_256k_c16k/credit-policy-window-aware": {
+        "workload": "bulk_256k_c16k",
+        "arm": "credit-policy-window-aware",
+        "variant_config": {
+          "name": "credit-policy-window-aware",
+          "description": "Control with the deadline flush gated by outstanding credit: no WINDOW_UPDATE while the relay still holds at least half the window (bounded and deadlock-free; the 2 ms deadline still applies above it).",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 32768,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 16.38994135374073,
+        "goodput_mbps_p95": 25.422859276428404,
+        "wall_ms_median": 127.9536,
+        "ttfb_ms_median": 4.9803,
+        "read_latency_ms_p95_median": 11.3916,
+        "read_latency_ms_p99_median": 12.1911,
+        "downstream_response_wait_ms_median": 142.0793,
+        "flow_credit_wait_ms_median": 0.1273,
+        "client_visible_events_median": 17.0,
+        "window_updates_median": 7.0,
+        "aead_ops_per_kib_median": 1.5234375,
+        "peak_rss_kb_median": 51492.0
+      },
+      "bulk_256k_c16k/ack-pipeline": {
+        "workload": "bulk_256k_c16k",
+        "arm": "ack-pipeline",
+        "variant_config": {
+          "name": "ack-pipeline",
+          "description": "Control with the WINDOW_UPDATE acknowledgement validated off the read path (single-flight, bounded backlog, same relay-side credit limits).",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": true
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 13.79699816974407,
+        "goodput_mbps_p95": 21.223785919438445,
+        "wall_ms_median": 152.0006,
+        "ttfb_ms_median": 5.188,
+        "read_latency_ms_p95_median": 13.622,
+        "read_latency_ms_p99_median": 15.0967,
+        "downstream_response_wait_ms_median": 216.4602,
+        "flow_credit_wait_ms_median": 0.1301,
+        "client_visible_events_median": 17.0,
+        "window_updates_median": 15.0,
+        "aead_ops_per_kib_median": 1.8984375,
+        "peak_rss_kb_median": 51492.0
+      },
+      "bulk_256k_c256k/control": {
+        "workload": "bulk_256k_c256k",
+        "arm": "control",
+        "variant_config": {
+          "name": "control",
+          "description": "Protocol default: 64 KiB window, 64 KiB/2 ms credit updates, 16 KiB events, ACK awaited inline.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 38.51377359876589,
+        "goodput_mbps_p95": 47.500073611850375,
+        "wall_ms_median": 54.452,
+        "ttfb_ms_median": 23.3718,
+        "read_latency_ms_p95_median": 8.1409,
+        "read_latency_ms_p99_median": 12.3064,
+        "downstream_response_wait_ms_median": 49.0039,
+        "flow_credit_wait_ms_median": 29.0451,
+        "client_visible_events_median": 17.0,
+        "window_updates_median": 4.0,
+        "aead_ops_per_kib_median": 0.6796875,
+        "peak_rss_kb_median": 53504.0
+      },
+      "bulk_256k_c256k/credit-window-128k": {
+        "workload": "bulk_256k_c256k",
+        "arm": "credit-window-128k",
+        "variant_config": {
+          "name": "credit-window-128k",
+          "description": "Control plus a 128 KiB total read window granted right after STREAM_STARTED.",
+          "credit_window_bytes": 131072,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 39.55718777645112,
+        "goodput_mbps_p95": 41.65338237893687,
+        "wall_ms_median": 53.0157,
+        "ttfb_ms_median": 23.0971,
+        "read_latency_ms_p95_median": 8.3586,
+        "read_latency_ms_p99_median": 13.2644,
+        "downstream_response_wait_ms_median": 46.7629,
+        "flow_credit_wait_ms_median": 27.3818,
+        "client_visible_events_median": 17.0,
+        "window_updates_median": 4.0,
+        "aead_ops_per_kib_median": 0.6328125,
+        "peak_rss_kb_median": 53504.0
+      },
+      "bulk_256k_c256k/credit-window-256k": {
+        "workload": "bulk_256k_c256k",
+        "arm": "credit-window-256k",
+        "variant_config": {
+          "name": "credit-window-256k",
+          "description": "Control plus the maximum 256 KiB total read window granted right after STREAM_STARTED.",
+          "credit_window_bytes": 262144,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 43.7090608964606,
+        "goodput_mbps_p95": 58.27899079330938,
+        "wall_ms_median": 47.9798,
+        "ttfb_ms_median": 26.9082,
+        "read_latency_ms_p95_median": 5.7541,
+        "read_latency_ms_p99_median": 13.0121,
+        "downstream_response_wait_ms_median": 38.1061,
+        "flow_credit_wait_ms_median": 16.619300000000003,
+        "client_visible_events_median": 17.0,
+        "window_updates_median": 2.0,
+        "aead_ops_per_kib_median": 0.5390625,
+        "peak_rss_kb_median": 53504.0
+      },
+      "bulk_256k_c256k/credit-policy-32k-1ms": {
+        "workload": "bulk_256k_c256k",
+        "arm": "credit-policy-32k-1ms",
+        "variant_config": {
+          "name": "credit-policy-32k-1ms",
+          "description": "Control with finer credit updates: 32 KiB batch, 1 ms deadline flush.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 32768,
+          "credit_delay_seconds": 0.001,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 30.433732701773938,
+        "goodput_mbps_p95": 47.65637178820017,
+        "wall_ms_median": 68.9088,
+        "ttfb_ms_median": 21.271,
+        "read_latency_ms_p95_median": 7.1556,
+        "read_latency_ms_p99_median": 10.571,
+        "downstream_response_wait_ms_median": 66.19749999999999,
+        "flow_credit_wait_ms_median": 47.4677,
+        "client_visible_events_median": 17.0,
+        "window_updates_median": 7.0,
+        "aead_ops_per_kib_median": 0.8203125,
+        "peak_rss_kb_median": 53504.0
+      },
+      "bulk_256k_c256k/credit-policy-128k-4ms": {
+        "workload": "bulk_256k_c256k",
+        "arm": "credit-policy-128k-4ms",
+        "variant_config": {
+          "name": "credit-policy-128k-4ms",
+          "description": "Control with coarser credit updates: 128 KiB batch, 4 ms deadline flush.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 131072,
+          "credit_delay_seconds": 0.004,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 26.25680473965454,
+        "goodput_mbps_p95": 31.258413970320817,
+        "wall_ms_median": 79.8708,
+        "ttfb_ms_median": 21.9676,
+        "read_latency_ms_p95_median": 16.5549,
+        "read_latency_ms_p99_median": 23.2256,
+        "downstream_response_wait_ms_median": 53.3658,
+        "flow_credit_wait_ms_median": 53.737300000000005,
+        "client_visible_events_median": 16.0,
+        "window_updates_median": 3.0,
+        "aead_ops_per_kib_median": 0.609375,
+        "peak_rss_kb_median": 53504.0
+      },
+      "bulk_256k_c256k/events-32k": {
+        "workload": "bulk_256k_c256k",
+        "arm": "events-32k",
+        "variant_config": {
+          "name": "events-32k",
+          "description": "Control with 32 KiB destination reads and a 32 KiB client event bound.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 32768,
+          "max_event_bytes": 32768,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 38.37971384753908,
+        "goodput_mbps_p95": 54.420734951045645,
+        "wall_ms_median": 54.6422,
+        "ttfb_ms_median": 19.078,
+        "read_latency_ms_p95_median": 6.1312,
+        "read_latency_ms_p99_median": 11.2488,
+        "downstream_response_wait_ms_median": 44.4249,
+        "flow_credit_wait_ms_median": 29.5401,
+        "client_visible_events_median": 9.0,
+        "window_updates_median": 4.0,
+        "aead_ops_per_kib_median": 0.4921875,
+        "peak_rss_kb_median": 53504.0
+      },
+      "bulk_256k_c256k/events-64k": {
+        "workload": "bulk_256k_c256k",
+        "arm": "events-64k",
+        "variant_config": {
+          "name": "events-64k",
+          "description": "Control with 64 KiB destination reads and a 64 KiB client event bound.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 65536,
+          "max_event_bytes": 65536,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 41.21890625491368,
+        "goodput_mbps_p95": 46.60109950180214,
+        "wall_ms_median": 50.8784,
+        "ttfb_ms_median": 21.3446,
+        "read_latency_ms_p95_median": 6.517,
+        "read_latency_ms_p99_median": 9.694,
+        "downstream_response_wait_ms_median": 48.64190000000001,
+        "flow_credit_wait_ms_median": 28.8533,
+        "client_visible_events_median": 5.0,
+        "window_updates_median": 4.0,
+        "aead_ops_per_kib_median": 0.3984375,
+        "peak_rss_kb_median": 53504.0
+      },
+      "bulk_256k_c256k/credit-policy-window-aware": {
+        "workload": "bulk_256k_c256k",
+        "arm": "credit-policy-window-aware",
+        "variant_config": {
+          "name": "credit-policy-window-aware",
+          "description": "Control with the deadline flush gated by outstanding credit: no WINDOW_UPDATE while the relay still holds at least half the window (bounded and deadlock-free; the 2 ms deadline still applies above it).",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 32768,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 37.10348414856595,
+        "goodput_mbps_p95": 55.17252991255116,
+        "wall_ms_median": 56.5217,
+        "ttfb_ms_median": 19.8945,
+        "read_latency_ms_p95_median": 8.1902,
+        "read_latency_ms_p99_median": 11.6934,
+        "downstream_response_wait_ms_median": 52.6392,
+        "flow_credit_wait_ms_median": 31.7719,
+        "client_visible_events_median": 17.0,
+        "window_updates_median": 4.0,
+        "aead_ops_per_kib_median": 0.6796875,
+        "peak_rss_kb_median": 53504.0
+      },
+      "bulk_256k_c256k/ack-pipeline": {
+        "workload": "bulk_256k_c256k",
+        "arm": "ack-pipeline",
+        "variant_config": {
+          "name": "ack-pipeline",
+          "description": "Control with the WINDOW_UPDATE acknowledgement validated off the read path (single-flight, bounded backlog, same relay-side credit limits).",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": true
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 41.07303105616824,
+        "goodput_mbps_p95": 54.543733257041794,
+        "wall_ms_median": 51.0591,
+        "ttfb_ms_median": 19.5388,
+        "read_latency_ms_p95_median": 6.9248,
+        "read_latency_ms_p99_median": 11.4382,
+        "downstream_response_wait_ms_median": 49.8688,
+        "flow_credit_wait_ms_median": 23.2008,
+        "client_visible_events_median": 16.0,
+        "window_updates_median": 3.0,
+        "aead_ops_per_kib_median": 0.62109375,
+        "peak_rss_kb_median": 53504.0
+      },
+      "parallel_8x64k/control": {
+        "workload": "parallel_8x64k",
+        "arm": "control",
+        "variant_config": {
+          "name": "control",
+          "description": "Protocol default: 64 KiB window, 64 KiB/2 ms credit updates, 16 KiB events, ACK awaited inline.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 19.267767645910375,
+        "goodput_mbps_p95": 23.226589582571908,
+        "wall_ms_median": 217.685,
+        "ttfb_ms_median": 31.991,
+        "read_latency_ms_p95_median": 58.3141,
+        "read_latency_ms_p99_median": 59.644,
+        "downstream_response_wait_ms_median": 815.5002999999999,
+        "flow_credit_wait_ms_median": 0.2454,
+        "client_visible_events_median": 40.0,
+        "window_updates_median": 24.0,
+        "aead_ops_per_kib_median": 1.96875,
+        "peak_rss_kb_median": 53504.0
+      },
+      "parallel_8x64k/credit-window-128k": {
+        "workload": "parallel_8x64k",
+        "arm": "credit-window-128k",
+        "variant_config": {
+          "name": "credit-window-128k",
+          "description": "Control plus a 128 KiB total read window granted right after STREAM_STARTED.",
+          "credit_window_bytes": 131072,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 19.79557383416816,
+        "goodput_mbps_p95": 22.99739502373319,
+        "wall_ms_median": 211.8809,
+        "ttfb_ms_median": 30.2847,
+        "read_latency_ms_p95_median": 51.8765,
+        "read_latency_ms_p99_median": 52.468,
+        "downstream_response_wait_ms_median": 807.3706999999999,
+        "flow_credit_wait_ms_median": 0.2576,
+        "client_visible_events_median": 40.0,
+        "window_updates_median": 32.0,
+        "aead_ops_per_kib_median": 1.96875,
+        "peak_rss_kb_median": 53504.0
+      },
+      "parallel_8x64k/credit-window-256k": {
+        "workload": "parallel_8x64k",
+        "arm": "credit-window-256k",
+        "variant_config": {
+          "name": "credit-window-256k",
+          "description": "Control plus the maximum 256 KiB total read window granted right after STREAM_STARTED.",
+          "credit_window_bytes": 262144,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 17.939003255646057,
+        "goodput_mbps_p95": 21.234337393924605,
+        "wall_ms_median": 233.8092,
+        "ttfb_ms_median": 41.5528,
+        "read_latency_ms_p95_median": 57.9836,
+        "read_latency_ms_p99_median": 58.3375,
+        "downstream_response_wait_ms_median": 974.6848,
+        "flow_credit_wait_ms_median": 0.2606,
+        "client_visible_events_median": 40.0,
+        "window_updates_median": 32.0,
+        "aead_ops_per_kib_median": 1.96875,
+        "peak_rss_kb_median": 53504.0
+      },
+      "parallel_8x64k/credit-policy-32k-1ms": {
+        "workload": "parallel_8x64k",
+        "arm": "credit-policy-32k-1ms",
+        "variant_config": {
+          "name": "credit-policy-32k-1ms",
+          "description": "Control with finer credit updates: 32 KiB batch, 1 ms deadline flush.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 32768,
+          "credit_delay_seconds": 0.001,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 16.34042977591781,
+        "goodput_mbps_p95": 21.965307384657766,
+        "wall_ms_median": 256.6826,
+        "ttfb_ms_median": 34.207449999999994,
+        "read_latency_ms_p95_median": 66.3919,
+        "read_latency_ms_p99_median": 68.5989,
+        "downstream_response_wait_ms_median": 957.5201,
+        "flow_credit_wait_ms_median": 0.2803,
+        "client_visible_events_median": 40.0,
+        "window_updates_median": 24.0,
+        "aead_ops_per_kib_median": 1.96875,
+        "peak_rss_kb_median": 53504.0
+      },
+      "parallel_8x64k/credit-policy-128k-4ms": {
+        "workload": "parallel_8x64k",
+        "arm": "credit-policy-128k-4ms",
+        "variant_config": {
+          "name": "credit-policy-128k-4ms",
+          "description": "Control with coarser credit updates: 128 KiB batch, 4 ms deadline flush.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 131072,
+          "credit_delay_seconds": 0.004,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 15.876287489112812,
+        "goodput_mbps_p95": 22.01455878810082,
+        "wall_ms_median": 264.1867,
+        "ttfb_ms_median": 42.40475,
+        "read_latency_ms_p95_median": 66.8302,
+        "read_latency_ms_p99_median": 69.7616,
+        "downstream_response_wait_ms_median": 971.8228,
+        "flow_credit_wait_ms_median": 0.2717,
+        "client_visible_events_median": 40.0,
+        "window_updates_median": 24.0,
+        "aead_ops_per_kib_median": 1.96875,
+        "peak_rss_kb_median": 53504.0
+      },
+      "parallel_8x64k/events-32k": {
+        "workload": "parallel_8x64k",
+        "arm": "events-32k",
+        "variant_config": {
+          "name": "events-32k",
+          "description": "Control with 32 KiB destination reads and a 32 KiB client event bound.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 32768,
+          "max_event_bytes": 32768,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 18.350130462858775,
+        "goodput_mbps_p95": 19.92996034253859,
+        "wall_ms_median": 228.5708,
+        "ttfb_ms_median": 35.1208,
+        "read_latency_ms_p95_median": 60.263,
+        "read_latency_ms_p99_median": 60.5206,
+        "downstream_response_wait_ms_median": 925.3675000000001,
+        "flow_credit_wait_ms_median": 0.2544,
+        "client_visible_events_median": 40.0,
+        "window_updates_median": 24.0,
+        "aead_ops_per_kib_median": 1.96875,
+        "peak_rss_kb_median": 53504.0
+      },
+      "parallel_8x64k/events-64k": {
+        "workload": "parallel_8x64k",
+        "arm": "events-64k",
+        "variant_config": {
+          "name": "events-64k",
+          "description": "Control with 64 KiB destination reads and a 64 KiB client event bound.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 65536,
+          "max_event_bytes": 65536,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 18.250800209560047,
+        "goodput_mbps_p95": 22.655589242994104,
+        "wall_ms_median": 229.8148,
+        "ttfb_ms_median": 32.636250000000004,
+        "read_latency_ms_p95_median": 58.6673,
+        "read_latency_ms_p99_median": 60.7347,
+        "downstream_response_wait_ms_median": 929.535,
+        "flow_credit_wait_ms_median": 0.2403,
+        "client_visible_events_median": 40.0,
+        "window_updates_median": 24.0,
+        "aead_ops_per_kib_median": 1.96875,
+        "peak_rss_kb_median": 53504.0
+      },
+      "parallel_8x64k/credit-policy-window-aware": {
+        "workload": "parallel_8x64k",
+        "arm": "credit-policy-window-aware",
+        "variant_config": {
+          "name": "credit-policy-window-aware",
+          "description": "Control with the deadline flush gated by outstanding credit: no WINDOW_UPDATE while the relay still holds at least half the window (bounded and deadlock-free; the 2 ms deadline still applies above it).",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 32768,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 23.379972831252196,
+        "goodput_mbps_p95": 30.821162036724058,
+        "wall_ms_median": 179.3973,
+        "ttfb_ms_median": 31.9735,
+        "read_latency_ms_p95_median": 57.3735,
+        "read_latency_ms_p99_median": 57.8609,
+        "downstream_response_wait_ms_median": 822.1718,
+        "flow_credit_wait_ms_median": 0.2403,
+        "client_visible_events_median": 40.0,
+        "window_updates_median": 8.0,
+        "aead_ops_per_kib_median": 1.59375,
+        "peak_rss_kb_median": 53504.0
+      },
+      "parallel_8x64k/ack-pipeline": {
+        "workload": "parallel_8x64k",
+        "arm": "ack-pipeline",
+        "variant_config": {
+          "name": "ack-pipeline",
+          "description": "Control with the WINDOW_UPDATE acknowledgement validated off the read path (single-flight, bounded backlog, same relay-side credit limits).",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": true
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 19.158739250826088,
+        "goodput_mbps_p95": 21.90942982673791,
+        "wall_ms_median": 218.9238,
+        "ttfb_ms_median": 35.34065,
+        "read_latency_ms_p95_median": 58.6293,
+        "read_latency_ms_p99_median": 58.648,
+        "downstream_response_wait_ms_median": 798.4828,
+        "flow_credit_wait_ms_median": 0.2548,
+        "client_visible_events_median": 40.0,
+        "window_updates_median": 24.0,
+        "aead_ops_per_kib_median": 1.96875,
+        "peak_rss_kb_median": 53504.0
+      },
+      "duplex_4x128cmd/control": {
+        "workload": "duplex_4x128cmd",
+        "arm": "control",
+        "variant_config": {
+          "name": "control",
+          "description": "Protocol default: 64 KiB window, 64 KiB/2 ms credit updates, 16 KiB events, ACK awaited inline.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 6.202365837348904,
+        "goodput_mbps_p95": 7.0664030744543815,
+        "wall_ms_median": 2704.9704,
+        "ttfb_ms_median": 12.6432,
+        "read_latency_ms_p95_median": 27.2353,
+        "read_latency_ms_p99_median": 35.1536,
+        "downstream_response_wait_ms_median": 9686.8619,
+        "flow_credit_wait_ms_median": 2.7141,
+        "client_visible_events_median": 516.0,
+        "window_updates_median": 508.0,
+        "aead_ops_per_kib_median": 7.51171875,
+        "peak_rss_kb_median": 79616.0
+      },
+      "duplex_4x128cmd/credit-window-128k": {
+        "workload": "duplex_4x128cmd",
+        "arm": "credit-window-128k",
+        "variant_config": {
+          "name": "credit-window-128k",
+          "description": "Control plus a 128 KiB total read window granted right after STREAM_STARTED.",
+          "credit_window_bytes": 131072,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 5.537283704393456,
+        "goodput_mbps_p95": 6.480206097024087,
+        "wall_ms_median": 3029.8639,
+        "ttfb_ms_median": 15.242049999999999,
+        "read_latency_ms_p95_median": 28.8511,
+        "read_latency_ms_p99_median": 36.9003,
+        "downstream_response_wait_ms_median": 10937.2153,
+        "flow_credit_wait_ms_median": 2.9439,
+        "client_visible_events_median": 516.0,
+        "window_updates_median": 512.0,
+        "aead_ops_per_kib_median": 7.51171875,
+        "peak_rss_kb_median": 79616.0
+      },
+      "duplex_4x128cmd/credit-window-256k": {
+        "workload": "duplex_4x128cmd",
+        "arm": "credit-window-256k",
+        "variant_config": {
+          "name": "credit-window-256k",
+          "description": "Control plus the maximum 256 KiB total read window granted right after STREAM_STARTED.",
+          "credit_window_bytes": 262144,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 5.810057042202697,
+        "goodput_mbps_p95": 6.603178521483256,
+        "wall_ms_median": 2887.6164,
+        "ttfb_ms_median": 15.2652,
+        "read_latency_ms_p95_median": 28.8817,
+        "read_latency_ms_p99_median": 35.8057,
+        "downstream_response_wait_ms_median": 10455.6586,
+        "flow_credit_wait_ms_median": 2.7952,
+        "client_visible_events_median": 516.0,
+        "window_updates_median": 512.0,
+        "aead_ops_per_kib_median": 7.51171875,
+        "peak_rss_kb_median": 79616.0
+      },
+      "duplex_4x128cmd/credit-policy-32k-1ms": {
+        "workload": "duplex_4x128cmd",
+        "arm": "credit-policy-32k-1ms",
+        "variant_config": {
+          "name": "credit-policy-32k-1ms",
+          "description": "Control with finer credit updates: 32 KiB batch, 1 ms deadline flush.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 32768,
+          "credit_delay_seconds": 0.001,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 5.442703236541925,
+        "goodput_mbps_p95": 6.428773804875413,
+        "wall_ms_median": 3082.5153,
+        "ttfb_ms_median": 15.1643,
+        "read_latency_ms_p95_median": 33.1654,
+        "read_latency_ms_p99_median": 45.1588,
+        "downstream_response_wait_ms_median": 10506.0599,
+        "flow_credit_wait_ms_median": 2.7977,
+        "client_visible_events_median": 516.0,
+        "window_updates_median": 508.0,
+        "aead_ops_per_kib_median": 7.51171875,
+        "peak_rss_kb_median": 79616.0
+      },
+      "duplex_4x128cmd/credit-policy-128k-4ms": {
+        "workload": "duplex_4x128cmd",
+        "arm": "credit-policy-128k-4ms",
+        "variant_config": {
+          "name": "credit-policy-128k-4ms",
+          "description": "Control with coarser credit updates: 128 KiB batch, 4 ms deadline flush.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 131072,
+          "credit_delay_seconds": 0.004,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 5.14320768877118,
+        "goodput_mbps_p95": 6.145977411213711,
+        "wall_ms_median": 3262.0141,
+        "ttfb_ms_median": 14.4413,
+        "read_latency_ms_p95_median": 32.2833,
+        "read_latency_ms_p99_median": 45.7421,
+        "downstream_response_wait_ms_median": 12124.0614,
+        "flow_credit_wait_ms_median": 2.941,
+        "client_visible_events_median": 516.0,
+        "window_updates_median": 508.0,
+        "aead_ops_per_kib_median": 7.51171875,
+        "peak_rss_kb_median": 79616.0
+      },
+      "duplex_4x128cmd/events-32k": {
+        "workload": "duplex_4x128cmd",
+        "arm": "events-32k",
+        "variant_config": {
+          "name": "events-32k",
+          "description": "Control with 32 KiB destination reads and a 32 KiB client event bound.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 32768,
+          "max_event_bytes": 32768,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 5.099045487507697,
+        "goodput_mbps_p95": 6.571157310940169,
+        "wall_ms_median": 3290.266,
+        "ttfb_ms_median": 15.5718,
+        "read_latency_ms_p95_median": 36.247,
+        "read_latency_ms_p99_median": 56.6006,
+        "downstream_response_wait_ms_median": 11349.0923,
+        "flow_credit_wait_ms_median": 2.9546,
+        "client_visible_events_median": 516.0,
+        "window_updates_median": 508.0,
+        "aead_ops_per_kib_median": 7.51171875,
+        "peak_rss_kb_median": 79616.0
+      },
+      "duplex_4x128cmd/events-64k": {
+        "workload": "duplex_4x128cmd",
+        "arm": "events-64k",
+        "variant_config": {
+          "name": "events-64k",
+          "description": "Control with 64 KiB destination reads and a 64 KiB client event bound.",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 65536,
+          "max_event_bytes": 65536,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 5.216219900090637,
+        "goodput_mbps_p95": 5.8009675185269325,
+        "wall_ms_median": 3216.3552,
+        "ttfb_ms_median": 14.2915,
+        "read_latency_ms_p95_median": 31.6302,
+        "read_latency_ms_p99_median": 51.5792,
+        "downstream_response_wait_ms_median": 11339.0581,
+        "flow_credit_wait_ms_median": 3.0456,
+        "client_visible_events_median": 516.0,
+        "window_updates_median": 508.0,
+        "aead_ops_per_kib_median": 7.51171875,
+        "peak_rss_kb_median": 79616.0
+      },
+      "duplex_4x128cmd/credit-policy-window-aware": {
+        "workload": "duplex_4x128cmd",
+        "arm": "credit-policy-window-aware",
+        "variant_config": {
+          "name": "credit-policy-window-aware",
+          "description": "Control with the deadline flush gated by outstanding credit: no WINDOW_UPDATE while the relay still holds at least half the window (bounded and deadlock-free; the 2 ms deadline still applies above it).",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 32768,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": false
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 7.653700797480996,
+        "goodput_mbps_p95": 10.193027711287984,
+        "wall_ms_median": 2192.0397,
+        "ttfb_ms_median": 15.7958,
+        "read_latency_ms_p95_median": 26.5641,
+        "read_latency_ms_p99_median": 31.6244,
+        "downstream_response_wait_ms_median": 6545.8302,
+        "flow_credit_wait_ms_median": 2.903,
+        "client_visible_events_median": 516.0,
+        "window_updates_median": 60.0,
+        "aead_ops_per_kib_median": 4.88671875,
+        "peak_rss_kb_median": 79616.0
+      },
+      "duplex_4x128cmd/ack-pipeline": {
+        "workload": "duplex_4x128cmd",
+        "arm": "ack-pipeline",
+        "variant_config": {
+          "name": "ack-pipeline",
+          "description": "Control with the WINDOW_UPDATE acknowledgement validated off the read path (single-flight, bounded backlog, same relay-side credit limits).",
+          "credit_window_bytes": 65536,
+          "credit_batch_bytes": 65536,
+          "credit_delay_seconds": 0.002,
+          "flush_floor_bytes": 0,
+          "relay_read_chunk_bytes": 16384,
+          "max_event_bytes": 16384,
+          "credit_pipeline": true
+        },
+        "trials": 7,
+        "integrity_verified": true,
+        "errors": [],
+        "goodput_mbps_median": 5.349783554504511,
+        "goodput_mbps_p95": 6.646700805529198,
+        "wall_ms_median": 3136.0551,
+        "ttfb_ms_median": 14.1316,
+        "read_latency_ms_p95_median": 31.7815,
+        "read_latency_ms_p99_median": 56.6093,
+        "downstream_response_wait_ms_median": 10870.2907,
+        "flow_credit_wait_ms_median": 2.9484,
+        "client_visible_events_median": 516.0,
+        "window_updates_median": 508.0,
+        "aead_ops_per_kib_median": 7.51171875,
+        "peak_rss_kb_median": 79616.0
+      }
+    },
+    "paired": {
+      "bulk_1mib_c16k/control": {
+        "goodput_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "wall_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "downstream_response_wait_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "flow_credit_wait_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "read_latency_p95_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "read_latency_p99_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "wins": 0,
+        "losses": 0
+      },
+      "bulk_1mib_c16k/credit-window-128k": {
+        "goodput_ratio": {
+          "median": 1.0575957680939152,
+          "ci_low": 0.9540206697467647,
+          "ci_high": 1.2312706151621793,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.9455408485628504,
+          "ci_low": 0.8121691427422584,
+          "ci_high": 1.0481953187297715,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.9674030386994122,
+          "ci_low": 0.8818256349877674,
+          "ci_high": 1.117088426988095,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.9511617900172117,
+          "ci_low": 0.87196227783823,
+          "ci_high": 0.9823291462635725,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.9203976890543366,
+          "ci_low": 0.7594266029281443,
+          "ci_high": 0.96689495417464,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.8525464143247053,
+          "ci_low": 0.6359079630496955,
+          "ci_high": 1.0738234880120114,
+          "samples": 7
+        },
+        "wins": 5,
+        "losses": 2
+      },
+      "bulk_1mib_c16k/credit-window-256k": {
+        "goodput_ratio": {
+          "median": 1.0355097188262248,
+          "ci_low": 0.9775189455324365,
+          "ci_high": 1.1060469716035128,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.9657079811221128,
+          "ci_low": 0.9041207341766244,
+          "ci_high": 1.0229980754545058,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.9873003148394384,
+          "ci_low": 0.9311188594420978,
+          "ci_high": 1.0469320956692987,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.035128805620609,
+          "ci_low": 0.9639195583596215,
+          "ci_high": 1.3140777803047532,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.9850912676108249,
+          "ci_low": 0.6944964282120937,
+          "ci_high": 1.0073219861013194,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.8483323835517832,
+          "ci_low": 0.6895069783274708,
+          "ci_high": 1.1252237870062676,
+          "samples": 7
+        },
+        "wins": 4,
+        "losses": 3
+      },
+      "bulk_1mib_c16k/credit-policy-32k-1ms": {
+        "goodput_ratio": {
+          "median": 0.9833844243003668,
+          "ci_low": 0.9659165932718076,
+          "ci_high": 1.143907035701661,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.0168963177461903,
+          "ci_low": 0.8741969135512923,
+          "ci_high": 1.0352860764227512,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.2760815369571932,
+          "ci_low": 1.103449171105395,
+          "ci_high": 1.3109321470026434,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.9962413452027695,
+          "ci_low": 0.9205441640378549,
+          "ci_high": 1.0432190760059612,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.9373519953559943,
+          "ci_low": 0.6164392965463873,
+          "ci_high": 1.1320676805317755,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.7587579856632974,
+          "ci_low": 0.6716310594405409,
+          "ci_high": 1.1248721437620233,
+          "samples": 7
+        },
+        "wins": 3,
+        "losses": 4
+      },
+      "bulk_1mib_c16k/credit-policy-128k-4ms": {
+        "goodput_ratio": {
+          "median": 1.2110871384674542,
+          "ci_low": 1.1251864801173774,
+          "ci_high": 1.5006071690717393,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.8257044173265928,
+          "ci_low": 0.6663969229325953,
+          "ci_high": 0.888741570993354,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.7559939351354671,
+          "ci_low": 0.6507816929006532,
+          "ci_high": 0.8508635127390171,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 88.73536299765809,
+          "ci_low": 53.7221198156682,
+          "ci_high": 132.61679361624954,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.2349553567315046,
+          "ci_low": 0.6811118461288832,
+          "ci_high": 1.2536565996586384,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.890559137427629,
+          "ci_low": 0.6247151686254606,
+          "ci_high": 1.2602918406606298,
+          "samples": 7
+        },
+        "wins": 7,
+        "losses": 0
+      },
+      "bulk_1mib_c16k/events-32k": {
+        "goodput_ratio": {
+          "median": 1.1516246650145154,
+          "ci_low": 1.0348020943686593,
+          "ci_high": 1.2901477470010523,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.8683384703187091,
+          "ci_low": 0.7751050236877902,
+          "ci_high": 0.9663683572365666,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.928486055733421,
+          "ci_low": 0.8535883254898827,
+          "ci_high": 1.0479947949968533,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.8653627473277234,
+          "ci_low": 0.7992902208201893,
+          "ci_high": 0.919815668202765,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.9749496776710737,
+          "ci_low": 0.5851108975399093,
+          "ci_high": 1.0271821758640707,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.598828113322239,
+          "ci_low": 0.3700038295699535,
+          "ci_high": 1.1072680990440928,
+          "samples": 7
+        },
+        "wins": 6,
+        "losses": 1
+      },
+      "bulk_1mib_c16k/events-64k": {
+        "goodput_ratio": {
+          "median": 1.0383502221413412,
+          "ci_low": 0.806430628495104,
+          "ci_high": 1.3257837229404923,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.9630661973931558,
+          "ci_low": 0.7542708382194286,
+          "ci_high": 1.2400322664655228,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.9409347188285351,
+          "ci_low": 0.8394076712057741,
+          "ci_high": 1.1947767967466674,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.8742324312030931,
+          "ci_low": 0.8112759643916914,
+          "ci_high": 0.9069124423963134,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.9358636319544265,
+          "ci_low": 0.6276788277437312,
+          "ci_high": 1.4722630677812467,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.9994901172730272,
+          "ci_low": 0.4621475377283559,
+          "ci_high": 1.5254727161826116,
+          "samples": 7
+        },
+        "wins": 5,
+        "losses": 2
+      },
+      "bulk_1mib_c16k/credit-policy-window-aware": {
+        "goodput_ratio": {
+          "median": 1.2626837589394728,
+          "ci_low": 1.061434833264782,
+          "ci_high": 1.545250716970868,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.7919639362748273,
+          "ci_low": 0.6471441747396728,
+          "ci_high": 0.9421209561440345,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.9913783565499545,
+          "ci_low": 0.880965919652798,
+          "ci_high": 1.158567883073645,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.9601382488479263,
+          "ci_low": 0.8646884272997032,
+          "ci_high": 1.0585197934595525,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.001322762987328,
+          "ci_low": 0.6404722974575319,
+          "ci_high": 1.0944729678203116,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.6024802941674722,
+          "ci_low": 0.5480638448046579,
+          "ci_high": 1.3990146858724724,
+          "samples": 7
+        },
+        "wins": 6,
+        "losses": 1
+      },
+      "bulk_1mib_c16k/ack-pipeline": {
+        "goodput_ratio": {
+          "median": 0.9280854389856427,
+          "ci_low": 0.8831923681928803,
+          "ci_high": 1.0150824247836783,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.077487004960402,
+          "ci_low": 0.9851416747887322,
+          "ci_high": 1.132256160734408,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.7629731723626634,
+          "ci_low": 1.6816906359903325,
+          "ci_high": 1.8840001273100209,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.9873271889400922,
+          "ci_low": 0.9792284866468841,
+          "ci_high": 1.570364062167341,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.0718789407313998,
+          "ci_low": 0.981783335022621,
+          "ci_high": 1.1935330931158732,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 1.042320266338742,
+          "ci_low": 0.6684347481014077,
+          "ci_high": 1.3502650964200253,
+          "samples": 7
+        },
+        "wins": 2,
+        "losses": 5
+      },
+      "bulk_256k_c16k/control": {
+        "goodput_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "wall_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "downstream_response_wait_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "flow_credit_wait_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "read_latency_p95_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "read_latency_p99_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "wins": 0,
+        "losses": 0
+      },
+      "bulk_256k_c16k/credit-window-128k": {
+        "goodput_ratio": {
+          "median": 1.0171055488885081,
+          "ci_low": 0.8510747821147736,
+          "ci_high": 1.108160274435888,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.9831821300088266,
+          "ci_low": 0.9023965423314353,
+          "ci_high": 1.174984879137381,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.9901226523079298,
+          "ci_low": 0.9070878458920784,
+          "ci_high": 1.2954019182705658,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.0227790432801822,
+          "ci_low": 0.9861009509875641,
+          "ci_high": 1.1710398445092323,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.0396079515352543,
+          "ci_low": 0.7353615955081053,
+          "ci_high": 1.5033988259983575,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.9979231118707137,
+          "ci_low": 0.5836020401115299,
+          "ci_high": 1.7846535456048764,
+          "samples": 7
+        },
+        "wins": 4,
+        "losses": 3
+      },
+      "bulk_256k_c16k/credit-window-256k": {
+        "goodput_ratio": {
+          "median": 1.0232530194936729,
+          "ci_low": 0.7755151554362242,
+          "ci_high": 1.121599046322083,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.9772753961623502,
+          "ci_low": 0.8915842103104249,
+          "ci_high": 1.2894654514359605,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.9803868583513126,
+          "ci_low": 0.9216660134347705,
+          "ci_high": 1.1997697857764482,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.9864150943396227,
+          "ci_low": 0.9773584905660377,
+          "ci_high": 1.0447035957240038,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.0078432727524014,
+          "ci_low": 0.9126202263672883,
+          "ci_high": 1.9019739043158246,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.9873115115851415,
+          "ci_low": 0.8575574348891702,
+          "ci_high": 1.5793532418966096,
+          "samples": 7
+        },
+        "wins": 4,
+        "losses": 3
+      },
+      "bulk_256k_c16k/credit-policy-32k-1ms": {
+        "goodput_ratio": {
+          "median": 1.0304719197465027,
+          "ci_low": 0.8665934486037211,
+          "ci_high": 1.0804344738469078,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.9704291605015316,
+          "ci_low": 0.9255535844200534,
+          "ci_high": 1.1539436417517663,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.2912055922776267,
+          "ci_low": 1.2248525614369028,
+          "ci_high": 1.4330517164035632,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.3445501097293344,
+          "ci_low": 1.0736522399392558,
+          "ci_high": 1.5033962264150942,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.9419904204364025,
+          "ci_low": 0.839184210964978,
+          "ci_high": 1.0216409831156565,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.7674391984701986,
+          "ci_low": 0.6608325318461421,
+          "ci_high": 1.0017740086104319,
+          "samples": 7
+        },
+        "wins": 4,
+        "losses": 3
+      },
+      "bulk_256k_c16k/credit-policy-128k-4ms": {
+        "goodput_ratio": {
+          "median": 1.2089303298100416,
+          "ci_low": 1.04756853769648,
+          "ci_high": 1.439824349806041,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.8271775265636105,
+          "ci_low": 0.6945291626264761,
+          "ci_high": 0.954591479235259,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.7786833229183243,
+          "ci_low": 0.6888332300856599,
+          "ci_high": 0.8584505872687137,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.0804681784930505,
+          "ci_low": 1.030943396226415,
+          "ci_high": 159.77939747327503,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.0527745828540946,
+          "ci_low": 0.6840881876452771,
+          "ci_high": 1.2316817543132241,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.9693373539552328,
+          "ci_low": 0.568392085297892,
+          "ci_high": 1.3035826320230188,
+          "samples": 7
+        },
+        "wins": 7,
+        "losses": 0
+      },
+      "bulk_256k_c16k/events-32k": {
+        "goodput_ratio": {
+          "median": 0.939724884308741,
+          "ci_low": 0.8868002838027175,
+          "ci_high": 1.0977122937280057,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.0641412361189064,
+          "ci_low": 0.9109855157072542,
+          "ci_high": 1.1276496165651495,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.9929853944053936,
+          "ci_low": 0.8335607168763082,
+          "ci_high": 1.2817207252239213,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.9361702127659575,
+          "ci_low": 0.8958490566037736,
+          "ci_high": 0.9897119341563785,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.0943265842028884,
+          "ci_low": 0.9313923781136896,
+          "ci_high": 1.3396176093080627,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 1.0686346623975076,
+          "ci_low": 0.7236524972169083,
+          "ci_high": 1.2204383760331095,
+          "samples": 7
+        },
+        "wins": 2,
+        "losses": 5
+      },
+      "bulk_256k_c16k/events-64k": {
+        "goodput_ratio": {
+          "median": 1.044416707378589,
+          "ci_low": 0.8637818650802872,
+          "ci_high": 1.1487914934980692,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.9574722358759734,
+          "ci_low": 0.870479983234382,
+          "ci_high": 1.157699692974049,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.9548354105130783,
+          "ci_low": 0.9126141521912517,
+          "ci_high": 1.0762409962945814,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.9350943396226414,
+          "ci_low": 0.8514996342355524,
+          "ci_high": 1.0485952923310553,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.8556687026434155,
+          "ci_low": 0.7292192584932632,
+          "ci_high": 1.1005732817507436,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.8589186496267031,
+          "ci_low": 0.6006405339479358,
+          "ci_high": 1.1762256648786527,
+          "samples": 7
+        },
+        "wins": 4,
+        "losses": 3
+      },
+      "bulk_256k_c16k/credit-policy-window-aware": {
+        "goodput_ratio": {
+          "median": 1.0994946199305236,
+          "ci_low": 0.903417288720583,
+          "ci_high": 1.3909987683035103,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.9095087705505912,
+          "ci_low": 0.7189078975387015,
+          "ci_high": 1.1069081945688655,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.9657834447305295,
+          "ci_low": 0.7958774362909646,
+          "ci_high": 1.4301170201741553,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.9832953682611997,
+          "ci_low": 0.8778908418131359,
+          "ci_high": 1.0080468178493052,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.1984908262151912,
+          "ci_low": 0.8536299765807962,
+          "ci_high": 1.5725563242859677,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 1.180889505732898,
+          "ci_low": 0.6588145650270744,
+          "ci_high": 1.6268886853941662,
+          "samples": 7
+        },
+        "wins": 5,
+        "losses": 2
+      },
+      "bulk_256k_c16k/ack-pipeline": {
+        "goodput_ratio": {
+          "median": 0.9151000522253011,
+          "ci_low": 0.8717530734443394,
+          "ci_high": 0.9726931755892317,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.0927766833454362,
+          "ci_low": 1.0280734203714617,
+          "ci_high": 1.147113822092936,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.5563429345484607,
+          "ci_low": 1.5391007012905935,
+          "ci_high": 1.767520074080108,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.0220197418375094,
+          "ci_low": 1.0123456790123455,
+          "ci_high": 1.1710398445092323,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.9986870292308755,
+          "ci_low": 0.9040272707572802,
+          "ci_high": 1.3738566497952283,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.9584946887912944,
+          "ci_low": 0.8494101645613941,
+          "ci_high": 1.1627215045356103,
+          "samples": 7
+        },
+        "wins": 1,
+        "losses": 6
+      },
+      "bulk_256k_c256k/control": {
+        "goodput_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "wall_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "downstream_response_wait_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "flow_credit_wait_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "read_latency_p95_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "read_latency_p99_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "wins": 0,
+        "losses": 0
+      },
+      "bulk_256k_c256k/credit-window-128k": {
+        "goodput_ratio": {
+          "median": 0.9382708258559692,
+          "ci_low": 0.8755751496076605,
+          "ci_high": 1.7281746600937617,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.0657903586501436,
+          "ci_low": 0.5786452163033944,
+          "ci_high": 1.1421064205032467,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.0171665032793873,
+          "ci_low": 0.9542689459410374,
+          "ci_high": 1.2967235562611628,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.9855513447882557,
+          "ci_low": 0.8459258917872615,
+          "ci_high": 1.3401524072758417,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.9212307607815139,
+          "ci_low": 0.7756284459396318,
+          "ci_high": 1.714403815580286,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 1.4015799168713394,
+          "ci_low": 0.375853607394436,
+          "ci_high": 1.5129449696417463,
+          "samples": 7
+        },
+        "wins": 3,
+        "losses": 4
+      },
+      "bulk_256k_c256k/credit-window-256k": {
+        "goodput_ratio": {
+          "median": 1.3221841504861789,
+          "ci_low": 1.0142049592193416,
+          "ci_high": 1.5006568510482081,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.7563242984211321,
+          "ci_low": 0.6663748606495218,
+          "ci_high": 0.985993995503359,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.7982788066984585,
+          "ci_low": 0.7234840015397985,
+          "ci_high": 0.8176308416268908,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.4960594576695243,
+          "ci_low": 0.3942229698589732,
+          "ci_high": 0.6672059673689621,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.7128582829021747,
+          "ci_low": 0.6131338846364134,
+          "ci_high": 1.291637519872814,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.945784307352272,
+          "ci_low": 0.7525941164136304,
+          "ci_high": 1.4195041193033686,
+          "samples": 7
+        },
+        "wins": 6,
+        "losses": 1
+      },
+      "bulk_256k_c256k/credit-policy-32k-1ms": {
+        "goodput_ratio": {
+          "median": 0.7884306586881915,
+          "ci_low": 0.6467475852140799,
+          "ci_high": 1.8012482571296378,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.2683423570359658,
+          "ci_low": 0.5551705579960092,
+          "ci_high": 1.5461982740437905,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.4681178436818294,
+          "ci_low": 1.0728438182179003,
+          "ci_high": 1.5137672977852228,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.7093557009862659,
+          "ci_low": 1.2487835624357657,
+          "ci_high": 2.515578049232889,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.9934304948059048,
+          "ci_low": 0.7094174344047341,
+          "ci_high": 1.516820349761526,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.9106484980162479,
+          "ci_low": 0.28040825810254055,
+          "ci_high": 1.51381111603486,
+          "samples": 7
+        },
+        "wins": 3,
+        "losses": 4
+      },
+      "bulk_256k_c256k/credit-policy-128k-4ms": {
+        "goodput_ratio": {
+          "median": 0.5956920426488779,
+          "ci_low": 0.5710492267683659,
+          "ci_high": 1.7060401724230443,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.6787197551830242,
+          "ci_low": 0.5861526687145509,
+          "ci_high": 1.7511625147609713,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.10401788187461,
+          "ci_low": 0.8938202024211153,
+          "ci_high": 1.6181745591660197,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.977162515177159,
+          "ci_low": 1.6388561157710386,
+          "ci_high": 2.1437780005385187,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 2.250682698397865,
+          "ci_low": 1.9234974020071491,
+          "ci_high": 3.0053206147323794,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 2.0179372197309418,
+          "ci_low": 0.5466175895543957,
+          "ci_high": 2.1524300963536747,
+          "samples": 7
+        },
+        "wins": 2,
+        "losses": 5
+      },
+      "bulk_256k_c256k/events-32k": {
+        "goodput_ratio": {
+          "median": 1.2346513251279976,
+          "ci_low": 0.7616555693796913,
+          "ci_high": 2.4633933221706172,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.809945269281859,
+          "ci_low": 0.4059441060426561,
+          "ci_high": 1.312929413506976,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.8832019339706056,
+          "ci_low": 0.8349910696566779,
+          "ci_high": 0.9853587667738716,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.7485306397738952,
+          "ci_low": 0.6807102037054106,
+          "ci_high": 1.4058095136138173,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.7218224672668183,
+          "ci_low": 0.5752460360852925,
+          "ci_high": 1.2121038685744567,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.7552672924304072,
+          "ci_low": 0.2578248525136435,
+          "ci_high": 1.602022131298352,
+          "samples": 7
+        },
+        "wins": 4,
+        "losses": 3
+      },
+      "bulk_256k_c256k/events-64k": {
+        "goodput_ratio": {
+          "median": 0.9810742585918023,
+          "ci_low": 0.8278360436820827,
+          "ci_high": 2.110325067895327,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.0192908347583833,
+          "ci_low": 0.47386064602706984,
+          "ci_high": 1.2079686643651795,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.9620226943726532,
+          "ci_low": 0.9139109336195691,
+          "ci_high": 1.3567416418479803,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.0193320043656244,
+          "ci_low": 0.6502949580606507,
+          "ci_high": 1.2097023437212555,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.765284966979254,
+          "ci_low": 0.5956556500430904,
+          "ci_high": 1.3910021945866862,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.8285770005850615,
+          "ci_low": 0.2777475532282652,
+          "ci_high": 0.9222558095597959,
+          "samples": 7
+        },
+        "wins": 3,
+        "losses": 4
+      },
+      "bulk_256k_c256k/credit-policy-window-aware": {
+        "goodput_ratio": {
+          "median": 1.1615251454849673,
+          "ci_low": 0.8638116471434071,
+          "ci_high": 1.9381536169059874,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.8609370222307788,
+          "ci_low": 0.5159549745062887,
+          "ci_high": 1.157659778386831,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.0562891309901694,
+          "ci_low": 1.0052034133756698,
+          "ci_high": 1.1494738173900443,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.8867488718682381,
+          "ci_low": 0.8249534301130524,
+          "ci_high": 1.1477243460024285,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.9388519696839415,
+          "ci_low": 0.6834676588908875,
+          "ci_high": 1.3616745361441778,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.9324254046674901,
+          "ci_low": 0.5520495078121015,
+          "ci_high": 1.0685453007291623,
+          "samples": 7
+        },
+        "wins": 4,
+        "losses": 3
+      },
+      "bulk_256k_c256k/ack-pipeline": {
+        "goodput_ratio": {
+          "median": 1.1591094696871178,
+          "ci_low": 0.9554399951525223,
+          "ci_high": 2.1448529667995415,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.8627312830684862,
+          "ci_low": 0.46623242500960693,
+          "ci_high": 1.046638203417855,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.0622276711411498,
+          "ci_low": 0.939032739158597,
+          "ci_high": 1.3491742493964767,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.8775490530244344,
+          "ci_low": 0.6758122079546709,
+          "ci_high": 0.9605447945096584,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.8958576469457527,
+          "ci_low": 0.6513841725535938,
+          "ci_high": 1.1154636989931106,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 1.009138141005984,
+          "ci_low": 0.3241072895946321,
+          "ci_high": 1.2229005290005668,
+          "samples": 7
+        },
+        "wins": 5,
+        "losses": 2
+      },
+      "parallel_8x64k/control": {
+        "goodput_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "wall_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "downstream_response_wait_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "flow_credit_wait_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "read_latency_p95_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "read_latency_p99_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "wins": 0,
+        "losses": 0
+      },
+      "parallel_8x64k/credit-window-128k": {
+        "goodput_ratio": {
+          "median": 1.038433993917333,
+          "ci_low": 0.9735677625905365,
+          "ci_high": 1.067952541291149,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.9629885056320752,
+          "ci_low": 0.9363711975356179,
+          "ci_high": 1.0271498691977339,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.0355981307899778,
+          "ci_low": 0.9422486499102296,
+          "ci_high": 1.0671473469319024,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.0568127106403467,
+          "ci_low": 1.0004074979625102,
+          "ci_high": 1.2462506047411708,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.9226631916578877,
+          "ci_low": 0.8819024115432824,
+          "ci_high": 1.0497836326367345,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.9340654908955139,
+          "ci_low": 0.837726861369426,
+          "ci_high": 1.0553531661253608,
+          "samples": 7
+        },
+        "wins": 5,
+        "losses": 2
+      },
+      "parallel_8x64k/credit-window-256k": {
+        "goodput_ratio": {
+          "median": 0.9939159083670387,
+          "ci_low": 0.8854628614759215,
+          "ci_high": 1.0115747608146024,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.00612133439232,
+          "ci_low": 0.9885576812876574,
+          "ci_high": 1.129352843024002,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.1177976068786202,
+          "ci_low": 1.0901497687779569,
+          "ci_high": 1.1870820411543355,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.0808339429407463,
+          "ci_low": 1.0290739411342427,
+          "ci_high": 1.1492469192149706,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.0013024147784364,
+          "ci_low": 0.8914495439704502,
+          "ci_high": 1.0948255382487182,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.9954604964865735,
+          "ci_low": 0.9001349053646022,
+          "ci_high": 1.1294280326838468,
+          "samples": 7
+        },
+        "wins": 2,
+        "losses": 5
+      },
+      "parallel_8x64k/credit-policy-32k-1ms": {
+        "goodput_ratio": {
+          "median": 0.9326433036811376,
+          "ci_low": 0.7993229422796784,
+          "ci_high": 1.2173082354565847,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.0722212833706157,
+          "ci_low": 0.8214846255639787,
+          "ci_high": 1.2510587987728568,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.093153123303572,
+          "ci_low": 0.8597517881718584,
+          "ci_high": 1.2232033420748685,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.1707416462917686,
+          "ci_low": 1.008273381294964,
+          "ci_high": 1.2298016448959845,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.0501236863804626,
+          "ci_low": 0.8677749574555408,
+          "ci_high": 1.285271903008262,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 1.014397855708248,
+          "ci_low": 0.8924165492586709,
+          "ci_high": 1.2772062849121768,
+          "samples": 7
+        },
+        "wins": 3,
+        "losses": 4
+      },
+      "parallel_8x64k/credit-policy-128k-4ms": {
+        "goodput_ratio": {
+          "median": 0.9478171003038459,
+          "ci_low": 0.7563245992322853,
+          "ci_high": 1.5032387867045107,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.0550558748934002,
+          "ci_low": 0.665230307283555,
+          "ci_high": 1.3221836246170753,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.0503219091354778,
+          "ci_low": 0.7097009104669267,
+          "ci_high": 1.3949471263223325,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.1495517522412388,
+          "ci_low": 0.9348920863309352,
+          "ci_high": 1.3562831006259028,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.9834226919467456,
+          "ci_low": 0.6819036117368529,
+          "ci_high": 1.3558569827798252,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 1.0082608395875043,
+          "ci_low": 0.680453701528156,
+          "ci_high": 1.357791745233606,
+          "samples": 7
+        },
+        "wins": 2,
+        "losses": 5
+      },
+      "parallel_8x64k/events-32k": {
+        "goodput_ratio": {
+          "median": 1.03436789921892,
+          "ci_low": 0.8118573560214484,
+          "ci_high": 1.1670329198270013,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.9667740083147668,
+          "ci_low": 0.8568738576356852,
+          "ci_high": 1.2317434738789028,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.9449972850388999,
+          "ci_low": 0.8295489218841183,
+          "ci_high": 1.3240511356812343,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.9239209948792978,
+          "ci_low": 0.8922866271109083,
+          "ci_high": 1.2267693789118923,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.0334207335790142,
+          "ci_low": 0.7378568571734795,
+          "ci_high": 1.5792791686403855,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 1.0110908054456442,
+          "ci_low": 0.7376539475755411,
+          "ci_high": 1.5680752541521068,
+          "samples": 7
+        },
+        "wins": 4,
+        "losses": 3
+      },
+      "parallel_8x64k/events-64k": {
+        "goodput_ratio": {
+          "median": 1.1303863826965925,
+          "ci_low": 1.0520797717104378,
+          "ci_high": 1.1741332586064954,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.884653261316233,
+          "ci_low": 0.8516920823679222,
+          "ci_high": 0.9504982672314208,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.9161310360242433,
+          "ci_low": 0.8476850345732552,
+          "ci_high": 1.024175981435468,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.9852517985611509,
+          "ci_low": 0.8899049012435991,
+          "ci_high": 1.0967594705613877,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.8659255230598587,
+          "ci_low": 0.6490949363828362,
+          "ci_high": 1.1885620702051662,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.8280469573672701,
+          "ci_low": 0.619097140063935,
+          "ci_high": 1.1850073329143098,
+          "samples": 7
+        },
+        "wins": 6,
+        "losses": 1
+      },
+      "parallel_8x64k/credit-policy-window-aware": {
+        "goodput_ratio": {
+          "median": 1.3077324586464745,
+          "ci_low": 1.0473398266503653,
+          "ci_high": 1.4682779611596268,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.7646824037961231,
+          "ci_low": 0.6810699516392749,
+          "ci_high": 0.9547999365193921,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.9289768547766417,
+          "ci_low": 0.828523325621495,
+          "ci_high": 1.0625539419172614,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.0017985611510791,
+          "ci_low": 0.9192065795839381,
+          "ci_high": 1.0967594705613877,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.8438432251404882,
+          "ci_low": 0.7810340895255178,
+          "ci_high": 0.9724761757585123,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.9113324952859837,
+          "ci_low": 0.8161449328530337,
+          "ci_high": 0.9596415740587313,
+          "samples": 7
+        },
+        "wins": 7,
+        "losses": 0
+      },
+      "parallel_8x64k/ack-pipeline": {
+        "goodput_ratio": {
+          "median": 1.042295156878251,
+          "ci_low": 0.994341410116214,
+          "ci_high": 1.1418398570701167,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.9594211326809498,
+          "ci_low": 0.87577955333065,
+          "ci_high": 1.0056907917403588,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.9791324417661159,
+          "ci_low": 0.9231461465550485,
+          "ci_high": 1.0625242494446157,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.9766690595836325,
+          "ci_low": 0.931967812728603,
+          "ci_high": 1.0365130077590141,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.0029552175379295,
+          "ci_low": 0.726896409622418,
+          "ci_high": 1.128464900570362,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.9372699975782031,
+          "ci_low": 0.6872279039242206,
+          "ci_high": 1.1322794887911167,
+          "samples": 7
+        },
+        "wins": 5,
+        "losses": 2
+      },
+      "duplex_4x128cmd/control": {
+        "goodput_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "wall_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "downstream_response_wait_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "flow_credit_wait_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "read_latency_p95_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "read_latency_p99_ratio": {
+          "median": null,
+          "ci_low": null,
+          "ci_high": null,
+          "samples": 0
+        },
+        "wins": 0,
+        "losses": 0
+      },
+      "duplex_4x128cmd/credit-window-128k": {
+        "goodput_ratio": {
+          "median": 0.9338211614269643,
+          "ci_low": 0.6562482259269262,
+          "ci_high": 1.0090473358341243,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.0708688572359062,
+          "ci_low": 0.9910337845284084,
+          "ci_high": 1.5238136432102916,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.0922493293376194,
+          "ci_low": 0.9856312517107152,
+          "ci_high": 1.5866030050454214,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.1974121772779491,
+          "ci_low": 1.0027943431589708,
+          "ci_high": 1.28968238311304,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.062698725426321,
+          "ci_low": 1.0006404378265867,
+          "ci_high": 2.0373301455678963,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 1.1881526564812304,
+          "ci_low": 1.0075697038399831,
+          "ci_high": 2.262995471031169,
+          "samples": 7
+        },
+        "wins": 2,
+        "losses": 5
+      },
+      "duplex_4x128cmd/credit-window-256k": {
+        "goodput_ratio": {
+          "median": 0.9563814059297909,
+          "ci_low": 0.8395836649932024,
+          "ci_high": 0.9865995741678573,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.0456079486696035,
+          "ci_low": 1.0135824362618902,
+          "ci_high": 1.191066527012643,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.064388766348161,
+          "ci_low": 1.0141391071445691,
+          "ci_high": 1.219636010295553,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.059124211961152,
+          "ci_low": 0.9655922555382328,
+          "ci_high": 1.1175774314460447,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.0604509588658837,
+          "ci_low": 0.9756779179948473,
+          "ci_high": 1.2372136307236026,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 1.1089956824193319,
+          "ci_low": 0.8211205803991372,
+          "ci_high": 1.6614650105061572,
+          "samples": 7
+        },
+        "wins": 1,
+        "losses": 6
+      },
+      "duplex_4x128cmd/credit-policy-32k-1ms": {
+        "goodput_ratio": {
+          "median": 0.8972964064463965,
+          "ci_low": 0.7730693196981275,
+          "ci_high": 1.076209053353499,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.1144589377777017,
+          "ci_low": 0.9291875002203063,
+          "ci_high": 1.2935450606039902,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.1181565783153142,
+          "ci_low": 0.9267036519823734,
+          "ci_high": 1.3885325029770477,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 0.9858885081610848,
+          "ci_low": 0.9210427670812745,
+          "ci_high": 1.1986585125271256,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.0774458589034843,
+          "ci_low": 0.9422061259514742,
+          "ci_high": 1.4909293120149243,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 1.2645086881908691,
+          "ci_low": 0.9942495411867968,
+          "ci_high": 1.8930593185492275,
+          "samples": 7
+        },
+        "wins": 2,
+        "losses": 5
+      },
+      "duplex_4x128cmd/credit-policy-128k-4ms": {
+        "goodput_ratio": {
+          "median": 0.7644246388315461,
+          "ci_low": 0.7603348256253569,
+          "ci_high": 0.9795211845641771,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.3081734277018335,
+          "ci_low": 1.020906965319933,
+          "ci_high": 1.315210044703035,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.3255025181664373,
+          "ci_low": 1.033350152816581,
+          "ci_high": 1.3954616510017552,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.160386664036299,
+          "ci_low": 0.9793150451524962,
+          "ci_high": 1.7720157310302285,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.286889656904366,
+          "ci_low": 1.0093114450731222,
+          "ci_high": 1.6867676811784054,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 1.417355524053243,
+          "ci_low": 1.0195927215123914,
+          "ci_high": 1.6508983159733501,
+          "samples": 7
+        },
+        "wins": 1,
+        "losses": 6
+      },
+      "duplex_4x128cmd/events-32k": {
+        "goodput_ratio": {
+          "median": 0.8286303655965253,
+          "ci_low": 0.7557991559568694,
+          "ci_high": 1.023209552084476,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.206810710201414,
+          "ci_low": 0.9773169122227275,
+          "ci_high": 1.323102827144552,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.1549128965397573,
+          "ci_low": 0.9916355886507774,
+          "ci_high": 1.3462948629257419,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.0068495484750384,
+          "ci_low": 0.924965233690066,
+          "ci_high": 1.5378970211087,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.4173728172381441,
+          "ci_low": 0.9758291628878699,
+          "ci_high": 1.5415704150126095,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 1.3025526078391663,
+          "ci_low": 1.1709253993916982,
+          "ci_high": 1.6428616130353648,
+          "samples": 7
+        },
+        "wins": 2,
+        "losses": 5
+      },
+      "duplex_4x128cmd/events-64k": {
+        "goodput_ratio": {
+          "median": 0.9352830308065894,
+          "ci_low": 0.7240803495143796,
+          "ci_high": 0.947510996247571,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.0691950640199241,
+          "ci_low": 1.055396722529133,
+          "ci_high": 1.381062199341098,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 1.0681242010700103,
+          "ci_low": 1.0546102140052414,
+          "ci_high": 1.3660899430886762,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.2947926247098496,
+          "ci_low": 1.0260123061051545,
+          "ci_high": 1.792025898790254,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.0747856716591706,
+          "ci_low": 1.0578299488545229,
+          "ci_high": 1.5689280603357212,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 1.5623947476218654,
+          "ci_low": 0.8396749636393762,
+          "ci_high": 1.791803016723291,
+          "samples": 7
+        },
+        "wins": 0,
+        "losses": 7
+      },
+      "duplex_4x128cmd/credit-policy-window-aware": {
+        "goodput_ratio": {
+          "median": 1.4484853079987559,
+          "ci_low": 1.1582236128686834,
+          "ci_high": 1.513197992888875,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 0.6903763500242965,
+          "ci_low": 0.6608520528704119,
+          "ci_high": 0.8633911352603182,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.5781423253636003,
+          "ci_low": 0.5690134158509378,
+          "ci_high": 0.7287633920923319,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.0325097972397344,
+          "ci_low": 0.9533852560148057,
+          "ci_high": 1.271405421976963,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 0.8318173391285412,
+          "ci_low": 0.7554701449626245,
+          "ci_high": 1.2740938120559766,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 0.8565008393575044,
+          "ci_low": 0.7409154985770141,
+          "ci_high": 1.3154567118966727,
+          "samples": 7
+        },
+        "wins": 6,
+        "losses": 1
+      },
+      "duplex_4x128cmd/ack-pipeline": {
+        "goodput_ratio": {
+          "median": 0.9830836424339752,
+          "ci_low": 0.7356667858990789,
+          "ci_high": 1.0073614159969626,
+          "samples": 7
+        },
+        "wall_ratio": {
+          "median": 1.0172074448560067,
+          "ci_low": 0.9926923784452503,
+          "ci_high": 1.359311061974712,
+          "samples": 7
+        },
+        "downstream_response_wait_ratio": {
+          "median": 0.9996007968343262,
+          "ci_low": 0.945364001450159,
+          "ci_high": 1.3509099999659802,
+          "samples": 7
+        },
+        "flow_credit_wait_ratio": {
+          "median": 1.0552128315854412,
+          "ci_low": 0.9777865456697574,
+          "ci_high": 2.4312179739850213,
+          "samples": 7
+        },
+        "read_latency_p95_ratio": {
+          "median": 1.0589270042066399,
+          "ci_low": 0.9352423776046801,
+          "ci_high": 1.532129634325709,
+          "samples": 7
+        },
+        "read_latency_p99_ratio": {
+          "median": 1.641807532776122,
+          "ci_low": 0.9134962350645285,
+          "ci_high": 1.7533372978263428,
+          "samples": 7
+        },
+        "wins": 2,
+        "losses": 5
+      }
+    }
+  },
+  "decisions": {
+    "credit-window-128k": {
+      "workloads_with_ci_lower_bound_above_1": 0,
+      "workloads_measured": 5,
+      "p95_within_5_percent": false,
+      "p99_within_5_percent": false,
+      "integrity_ok": true,
+      "accepted": false
+    },
+    "credit-window-256k": {
+      "workloads_with_ci_lower_bound_above_1": 1,
+      "workloads_measured": 5,
+      "p95_within_5_percent": false,
+      "p99_within_5_percent": false,
+      "integrity_ok": true,
+      "accepted": false
+    },
+    "credit-policy-32k-1ms": {
+      "workloads_with_ci_lower_bound_above_1": 0,
+      "workloads_measured": 5,
+      "p95_within_5_percent": false,
+      "p99_within_5_percent": false,
+      "integrity_ok": true,
+      "accepted": false
+    },
+    "credit-policy-128k-4ms": {
+      "workloads_with_ci_lower_bound_above_1": 2,
+      "workloads_measured": 5,
+      "p95_within_5_percent": false,
+      "p99_within_5_percent": false,
+      "integrity_ok": true,
+      "accepted": false
+    },
+    "events-32k": {
+      "workloads_with_ci_lower_bound_above_1": 1,
+      "workloads_measured": 5,
+      "p95_within_5_percent": false,
+      "p99_within_5_percent": false,
+      "integrity_ok": true,
+      "accepted": false
+    },
+    "events-64k": {
+      "workloads_with_ci_lower_bound_above_1": 1,
+      "workloads_measured": 5,
+      "p95_within_5_percent": false,
+      "p99_within_5_percent": false,
+      "integrity_ok": true,
+      "accepted": false
+    },
+    "credit-policy-window-aware": {
+      "workloads_with_ci_lower_bound_above_1": 3,
+      "workloads_measured": 5,
+      "p95_within_5_percent": false,
+      "p99_within_5_percent": false,
+      "integrity_ok": true,
+      "accepted": false
+    },
+    "ack-pipeline": {
+      "workloads_with_ci_lower_bound_above_1": 0,
+      "workloads_measured": 5,
+      "p95_within_5_percent": false,
+      "p99_within_5_percent": false,
+      "integrity_ok": true,
+      "accepted": false
+    }
+  },
+  "failures": []
+}

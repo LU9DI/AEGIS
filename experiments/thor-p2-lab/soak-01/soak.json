@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "kind": "short_soak",
+  "workload": "bulk_1mib_c16k",
+  "workload_config": {
+    "name": "bulk_1mib_c16k",
+    "streams": 1,
+    "payload_bytes_per_stream": 1048576,
+    "total_bytes": 1048576,
+    "write_chunk_bytes": 16384,
+    "max_in_flight": 4,
+    "commands_per_stream": 64,
+    "command_count": 64
+  },
+  "seconds_requested": 120.0,
+  "seconds_elapsed": 120.24949539999943,
+  "arms": [
+    "control",
+    "credit-policy-window-aware"
+  ],
+  "trials": 166,
+  "integrity_all_ok": true,
+  "per_arm": {
+    "control": {
+      "trials": 83,
+      "goodput_mbps": {
+        "median": 15.453628198432462,
+        "p95": 25.139618461715507,
+        "count": 83
+      },
+      "goodput_drift_second_half_over_first": 1.0436045542801358,
+      "ttfb_ms": {
+        "median": 5.6027,
+        "p95": 8.291,
+        "count": 83
+      },
+      "read_p99_ms": {
+        "median": 12.9151,
+        "p95": 31.7409,
+        "count": 83
+      },
+      "rss_start_kb": 36312,
+      "rss_end_kb": 50492,
+      "peak_rss_kb": 52672,
+      "rss_growth_kb": 14180,
+      "window_updates_median": 63,
+      "errors": []
+    },
+    "credit-policy-window-aware": {
+      "trials": 83,
+      "goodput_mbps": {
+        "median": 18.39879368108218,
+        "p95": 26.885090592791226,
+        "count": 83
+      },
+      "goodput_drift_second_half_over_first": 1.021803186450168,
+      "ttfb_ms": {
+        "median": 5.5382,
+        "p95": 12.2352,
+        "count": 83
+      },
+      "read_p99_ms": {
+        "median": 13.1143,
+        "p95": 35.8339,
+        "count": 83
+      },
+      "rss_start_kb": 41300,
+      "rss_end_kb": 50492,
+      "peak_rss_kb": 52672,
+      "rss_growth_kb": 9192,
+      "window_updates_median": 31,
+      "errors": []
+    }
+  }
+}

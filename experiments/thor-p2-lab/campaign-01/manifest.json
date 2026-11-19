@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "created_unix": 1795100356.2360325,
+  "command": [
+    "C:\\Users\\lucas\\AEGIS\\.venv-onion-lab\\Scripts\\python.exe",
+    "-m",
+    "anonlab.thor_p2_lab",
+    "run",
+    "--output",
+    "experiments/thor-p2-lab/campaign-01"
+  ],
+  "aegis_version": "0.26.0",
+  "python": "3.14.6",
+  "files": [
+    {
+      "path": "summary.json",
+      "bytes": 120644,
+      "sha256": "d29573f82533bb7ff716d58da9f5a10a5b75557a14c7159f19bb8b03930600c0"
+    },
+    {
+      "path": "trials.jsonl",
+      "bytes": 828889,
+      "sha256": "c58e36a5b1d4485fa78e91f357dbe3d3dd3d9336b4a514fd339c4558c5159f67"
+    }
+  ]
+}
