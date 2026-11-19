@@ -21,12 +21,15 @@ Nenhum documento desta pasta reduz essas metas para acomodar a implementação a
 | [`06-LAB-RESULTS.md`](06-LAB-RESULTS.md) | resultados medidos em loopback: Surface × cadeia TCP sem cripto × AEGIS, com CPU, RSS, bytes de fio e IC |
 | [`07-PUBLIC-RESULTS.md`](07-PUBLIC-RESULTS.md) | linha de base real Surface × Tor no mesmo host/alvo, e por que o AEGIS não tem número público |
 | [`08-PROTOTYPE-RESULTS.md`](08-PROTOTYPE-RESULTS.md) | protótipo isolado do caminho quente, comparação antes/depois e decisão de integração com evidência |
+| [`09-DISPATCH-PROFILE.md`](09-DISPATCH-PROFILE.md) | perfil do custo de despacho (Futures, locks, timers, AEAD, resid), medido no caminho real |
+| [`10-DISPATCH-BATCHING-RESULTS.md`](10-DISPATCH-BATCHING-RESULTS.md) | batching/dispatch P1: variantes, benchmark reproduzível, A/B focado e decisão por variante |
+| [`11-DISPATCH-SECURITY-REVIEW.md`](11-DISPATCH-SECURITY-REVIEW.md) | revisão de isolamento, sequências, ACKs, limites e risco residual dos protótipos P1 |
 
 ## Código desta entrega
 
-- `src/anonlab/thor_lab/` — harness de medição reproduzível: braços (`backends.py`), proxy contador (`counting_proxy.py`), SOCKS5 (`socks5.py`), protocolos de aplicação (`appproto.py`), workloads (`workloads.py`), runner imutável (`runner.py`), estatística (`stats.py`), derivados (`metrics.py`), relatório (`report.py`), proveniência (`provenance.py`), recursos (`resources.py`), resolução de timer (`timers.py`), microbenchmark de caminho quente (`fast_path.py`).
-- `tests/test_thor_lab_*.py` — 33 testes (inclui SOCKS5 contra servidor falso, HTTP com `Content-Length` e chunked, braço AEGIS de 3 hops, digest/verificação, gates e gramática de workload).
-- `experiments/thor-lab/<run-id>/` — artefatos brutos e derivados de cada campanha (ver `05-BENCHMARK-PLAN.md` §7).
+- `src/anonlab/thor_lab/` — harness de medição reproduzível: braços (`backends.py`), proxy contador (`counting_proxy.py`), SOCKS5 (`socks5.py`), protocolos de aplicação (`appproto.py`), workloads (`workloads.py`), runner imutável (`runner.py`), estatística (`stats.py`), derivados (`metrics.py`), relatório (`report.py`), proveniência (`provenance.py`), recursos (`resources.py`), resolução de timer (`timers.py`), microbenchmark de caminho quente (`fast_path.py`), laboratório de dispatch (`dispatch_lab.py`) e perfilador (`dispatch_profile.py`).
+- `tests/test_thor_lab_*.py` — 93 testes (33 do harness, 30 das variantes de dispatch, mais os testes de backend/runner/estatística; inclui SOCKS5 contra servidor falso, HTTP com `Content-Length` e chunked, braço AEGIS de 3 hops, digest/verificação, gates, isolamento entre circuitos/streams e falha injetada de ACK).
+- `experiments/thor-lab/<run-id>/` e `experiments/thor-dispatch-lab/<run-id>/` — artefatos brutos e derivados de cada campanha (ver `05-BENCHMARK-PLAN.md` §7 e o README de cada diretório).
 
 ## Como reproduzir
 
