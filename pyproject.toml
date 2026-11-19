@@ -62,6 +62,7 @@ aegis-pir-rpc-tls-demo = "anonlab.pir_rpc_tls_demo:main"
 aegis-share-demo = "anonlab.secret_sharing:main"
 aegis-thor-lab = "anonlab.thor_lab.cli:main"
 aegis-thor-fastpath = "anonlab.thor_lab.fast_path:main"
+aegis-thor-dispatch = "anonlab.thor_lab.dispatch_profile:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

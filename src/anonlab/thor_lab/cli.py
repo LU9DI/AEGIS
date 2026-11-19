@@ -33,7 +33,15 @@ from .workloads import WorkloadSpec
 
 __all__ = ["main", "parse_workload_spec"]
 
-_ARM_CHOICES = ("surface", "relay3_plain", "aegis_telescope3", "tor_socks")
+_ARM_CHOICES = (
+    "surface",
+    "relay3_plain",
+    "aegis_telescope3",
+    "aegis_io_batch",
+    "aegis_lean_dispatch",
+    "aegis_combined",
+    "tor_socks",
+)
 
 
 def _parse_chunked(specification: str, *, chunk_bytes: int, in_flight: int, timeout: float) -> WorkloadSpec:

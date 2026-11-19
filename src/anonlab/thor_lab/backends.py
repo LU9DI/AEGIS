@@ -448,8 +448,9 @@ class AegisTelescopeBackend(Backend):
         *,
         hop_count: int = 3,
         window_update_batch_bytes: int = 64 * 1024,
+        dispatch_variant: str = "control",
         tier: str = "lab",
-        name: str = "aegis_telescope3",
+        name: str | None = None,
     ) -> None:
         super().__init__(proxy=True)
         if not 1 <= int(hop_count) <= 5:
@@ -460,14 +461,22 @@ class AegisTelescopeBackend(Backend):
         self.target_port = int(target_port)
         self.hop_count = int(hop_count)
         self.window_update_batch_bytes = int(window_update_batch_bytes)
+        self.dispatch_variant = dispatch_variant
         self.tier = tier
-        self.name = name
+        self.name = name or (
+            "aegis_telescope3" if dispatch_variant == "control" else f"aegis_{dispatch_variant}"
+        )
         self._nodes: list[Any] = []
         self._servers: list[asyncio.AbstractServer] = []
         self._client: Any | None = None
         self._clients: list[Any] = []
         self._telescoping: Any | None = None
         self._guard_descriptor: Any | None = None
+
+    def describe(self) -> dict[str, object]:
+        described = super().describe()
+        described["dispatch_variant"] = self.dispatch_variant
+        return described
 
     def _module(self) -> Any:
         if self._telescoping is not None:
@@ -480,6 +489,26 @@ class AegisTelescopeBackend(Backend):
             ) from exc
         self._telescoping = telescoping
         return telescoping
+
+    def _client_options(self) -> dict[str, Any]:
+        return {
+            "max_active_streams": 32,
+            "window_update_batch_bytes": self.window_update_batch_bytes,
+        }
+
+    def _make_client(self) -> Any:
+        module = self._module()
+        options = self._client_options()
+        if self.dispatch_variant == "control":
+            return module.TelescopingClient(**options)
+        from .dispatch_lab import DISPATCH_VARIANTS, build_lab_client_class  # noqa: PLC0415
+
+        if self.dispatch_variant not in DISPATCH_VARIANTS:
+            raise BackendUnavailable(
+                self.name, "unknown_dispatch_variant", self.dispatch_variant
+            )
+        client_class = build_lab_client_class(module.TelescopingClient)
+        return client_class(dispatch_variant=self.dispatch_variant, **options)
 
     async def _start(self) -> None:
         module = self._module()
@@ -508,10 +537,7 @@ class AegisTelescopeBackend(Backend):
         module = self._module()
         if self._guard_descriptor is None:
             raise BackendUnavailable(self.name, "arm_not_started")
-        client = module.TelescopingClient(
-            max_active_streams=32,
-            window_update_batch_bytes=self.window_update_batch_bytes,
-        )
+        client = self._make_client()
         steps: list[SetupStep] = []
         loop = asyncio.get_running_loop()
         try:
@@ -680,10 +706,37 @@ async def probe_tor(
             await writer.wait_closed()
 
 
+class AegisIoBatchBackend(AegisTelescopeBackend):
+    """AEGIS arm with the lab ``io_batch`` dispatcher (one write per batch)."""
+
+    def __init__(self, target_host: str, target_port: int, **options: Any) -> None:
+        options.pop("dispatch_variant", None)
+        super().__init__(target_host, target_port, dispatch_variant="io_batch", **options)
+
+
+class AegisLeanDispatchBackend(AegisTelescopeBackend):
+    """AEGIS arm with the lab ``lean_dispatch`` encode/decode loop."""
+
+    def __init__(self, target_host: str, target_port: int, **options: Any) -> None:
+        options.pop("dispatch_variant", None)
+        super().__init__(target_host, target_port, dispatch_variant="lean_dispatch", **options)
+
+
+class AegisCombinedBackend(AegisTelescopeBackend):
+    """AEGIS arm with both lab dispatcher changes (``combined``)."""
+
+    def __init__(self, target_host: str, target_port: int, **options: Any) -> None:
+        options.pop("dispatch_variant", None)
+        super().__init__(target_host, target_port, dispatch_variant="combined", **options)
+
+
 ARMS: dict[str, type[Backend]] = {
     "surface": SurfaceBackend,
     "relay3_plain": PlainChainBackend,
     "aegis_telescope3": AegisTelescopeBackend,
+    "aegis_io_batch": AegisIoBatchBackend,
+    "aegis_lean_dispatch": AegisLeanDispatchBackend,
+    "aegis_combined": AegisCombinedBackend,
     "tor_socks": TorSocksBackend,
 }
 

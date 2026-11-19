@@ -104,16 +104,7 @@ def _build_backend(
 ) -> Backend:
     options = dict(arm.options)
     backend_class = ARMS[arm.name]
-    if arm.name == "surface":
-        backend = backend_class(target_host, target_port, tier=tier, name=arm.name)
-    elif arm.name == "relay3_plain":
-        backend = backend_class(target_host, target_port, tier=tier, name=arm.name, **options)
-    elif arm.name == "aegis_telescope3":
-        backend = backend_class(target_host, target_port, tier=tier, name=arm.name, **options)
-    elif arm.name == "tor_socks":
-        backend = backend_class(target_host, target_port, tier=tier, name=arm.name, **options)
-    else:  # pragma: no cover - guarded by ArmSpec validation
-        raise ValueError(f"unsupported arm {arm.name!r}")
+    backend = backend_class(target_host, target_port, tier=tier, name=arm.name, **options)
     backend.set_link_profile(link_profile)
     return backend
 
