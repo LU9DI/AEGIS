@@ -2,14 +2,14 @@
 
 **Status:** research proposal; not implemented or adopted  
 **Branch:** research/oblivious-edge-five-layer-roadmap  
-**Purpose:** Preserve the complete proposed direction for research toward ≥90% of direct Surface Web performance (latency and goodput) while targeting anonymity equal to or stronger than Tor. These are goals, not established results.
+**Purpose:** Preserve the complete proposed direction for research toward ≥90% of direct Surface Web performance (latency and goodput) while pursuing AEGIS's own explicit anonymity and privacy objectives. Tor is mentioned only as an illustrative example/reference where useful; AEGIS is not a Tor implementation or clone. These are goals, not established results.
 
 > There is no single silver bullet. Each layer addresses a distinct bottleneck. Privacy and performance claims must be demonstrated independently, and no optimization may silently weaken the threat model.
 
 ## Goals and non-negotiable constraints
 
 - Target at least 90% of direct Surface Web performance in latency and throughput/goodput, measured against fair, controlled baselines.
-- Target anonymity equal to or better than Tor; this is an aspiration and must not be claimed without rigorous evidence.
+- Develop and validate AEGIS's own anonymity and privacy guarantees against its explicit threat model. Tor may be used as one optional external reference for selected comparisons, not as the product definition, architecture to reproduce, or sole success criterion.
 - Do not trade away privacy/security to reach speed targets.
 - Treat the project as production-oriented, but do not equate research approval with production readiness.
 - Preserve the existing AEGIS/THOR baseline and PR #34 (OPEN, Draft). Do not alter PR #34 as part of this roadmap.
@@ -128,7 +128,7 @@ Respect browser security and privacy: avoid speculative requests that reveal bro
 
 ### Performance
 
-Compare direct Surface Web, Tor, current AEGIS/THOR baseline and candidate Edge/hybrid paths under matched conditions: source/destination, content/payload, duration, network conditions, cache state, browser/runtime, repetitions and workload.
+Compare direct Surface Web, current AEGIS/THOR baseline and candidate Edge/hybrid paths under matched conditions. Other privacy systems (including Tor) may be optional contextual references where methodologically appropriate, but are not the design target: source/destination, content/payload, duration, network conditions, cache state, browser/runtime, repetitions and workload.
 
 Report:
 - RTT and latency distributions p50/p95/p99;
@@ -173,7 +173,7 @@ Only after EDGE-01 approval. Isolated prototype and controlled browser corpus. M
 Evaluate WF classifiers, bidirectional timing correlation, fixed cells, cover traffic, concurrency/mixing and rotation. Quantify attack reduction against bandwidth/latency/resource cost. Privacy gate independent of EDGE-02.
 
 ### EDGE-04 — Comparative architecture
-Compare multi-hop Tor-like routing, Oblivious Edge, and any hybrid under common performance and threat-model assumptions. Evaluate privacy, latency, throughput, cost, failure, operator trust, scalability and availability. Produce evidence-backed recommendation, not preselected winner.
+Compare AEGIS candidate architectures (Oblivious Edge, multi-stage/multi-hop variants, and hybrids) under common performance and AEGIS threat-model assumptions. External systems such as Tor may be included only as contextual references, not as the architecture AEGIS is intended to reproduce. Evaluate privacy, latency, throughput, cost, failure, operator trust, scalability and availability. Produce evidence-backed recommendation, not preselected winner.
 
 ## Dependencies and isolation
 
@@ -187,4 +187,4 @@ Compare multi-hop Tor-like routing, Oblivious Edge, and any hybrid under common 
 
 ## Decision discipline
 
-All ideas A–M are saved as hypotheses. None are implemented, accepted, deployed, or proven. Performance targets (≥90% of direct Surface) and anonymity targets (Tor-equivalent or stronger) remain unchanged. Each future phase must report full commit SHA, changed files, test results, reproducible artifacts, limitations and a clear verdict. PR #34 remains untouched.
+All ideas A–M are saved as hypotheses. None are implemented, accepted, deployed, or proven. Performance targets (≥90% of direct Surface) and AEGIS anonymity/privacy objectives remain defined by its own threat model; Tor is an illustrative reference only, not the target product or required architecture. Each future phase must report full commit SHA, changed files, test results, reproducible artifacts, limitations and a clear verdict. PR #34 remains untouched.
